@@ -3289,7 +3289,51 @@ function filteredMutations(){
 
 function monthKeyNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function monthLabel(m){if(!m)return '';const d=new Date(m+'-01T00:00:00');return d.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
-function mutationGender(x){const jk=String(x?.jk||x?.JK||'').trim().toLowerCase();if(jk.includes('perempuan')||jk==='p'||jk==='wanita')return 'p';if(jk.includes('laki')||jk==='l'||jk==='pria')return 'l';return ''}
+function latestMutationPerson(x){
+  const name=String(x?.name||'').trim().toLowerCase();
+  const kk=String(x?.kk||'').trim();
+  const birth=String(x?.meta?.tanggalLahir||'').slice(0,10);
+  let candidates=data.filter(r=>{
+    if(!r)return false;
+    if(name&&String(r['NAMA LENGKAP']||'').trim().toLowerCase()!==name)return false;
+    if(kk&&String(r['NO KK']||'').trim()!==kk)return false;
+    return true;
+  });
+  if(birth){
+    const byBirth=candidates.filter(r=>String(r.TGL_LHR||'').slice(0,10)===birth);
+    if(byBirth.length)candidates=byBirth;
+  }
+  if(candidates.length){
+    const nonTemp=candidates.find(r=>isValidNik(r.NIK)&&!String(r.NIK).startsWith(BIRTH_NIK_PREFIX));
+    return nonTemp||candidates.find(r=>isValidNik(r.NIK))||candidates[0];
+  }
+  const hist=getHistory().filter(h=>{
+    if(!h||!h.NIK)return false;
+    if(name&&String(h.name||'').trim().toLowerCase()!==name)return false;
+    if(kk&&String(h.kk||h.meta?.noKK||h.meta?.['NO KK']||'').trim()!==kk)return false;
+    return !x?.at || String(h.at||'')<=String(x.at||'');
+  }).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
+  return hist[0]||null;
+}
+function latestMutationNik(x){
+  const person=latestMutationPerson(x);
+  return String(person?.NIK||x?.NIK||'').trim();
+}
+function genderFromNik(nik){
+  const n=String(nik||'').replace(/\D/g,'');
+  if(n.length!==16)return '';
+  const dd=Number(n.slice(6,8));
+  if(dd>=1&&dd<=31)return 'l';
+  if(dd>=41&&dd<=71)return 'p';
+  return '';
+}
+function mutationGender(x){
+  const person=latestMutationPerson(x);
+  const raw=String(person?.JK||person?.jk||x?.jk||x?.JK||'').trim().toLowerCase();
+  if(raw==='2'||raw.includes('perempuan')||raw==='p'||raw==='wanita')return 'p';
+  if(raw==='1'||raw.includes('laki')||raw==='l'||raw==='pria')return 'l';
+  return genderFromNik(latestMutationNik(x));
+}
 function mutationGenderCounts(rows,types=['Lahir','Mati','Pindah','Datang','Penghapusan']){const out=Object.fromEntries(types.map(t=>[t,{l:0,p:0,j:0}]));rows.forEach(x=>{if(!out[x.jenis])return;const g=mutationGender(x);if(g==='l')out[x.jenis].l++;else if(g==='p')out[x.jenis].p++;out[x.jenis].j++;});return out}
 function monthMutationCounts(key){const types=['Lahir','Mati','Pindah','Datang','Penghapusan'],rows=syncMutationRegister().filter(x=>mutationDateValue(x).slice(0,7)===key),counts=mutationGenderCounts(rows,types);return {types,rows,counts,total:rows.length}}
 function populationSnapshotCounts(cutoff){const state=new Map(data.filter(r=>r&&r.NIK).map(r=>[String(r.NIK),r]));const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));for(const h of hist){const nik=String(h.NIK||'');if(!nik)continue;const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';const remove=(h.type==='Penduduk Meninggal'&&h.meta?.kategori==='KEMATIAN')||(h.type==='Penduduk Pindah'&&h.meta?.kategori==='PERPINDAHAN')||(h.type==='Data Dihapus'&&h.meta?.kategori==='PENGHAPUSAN');if(add){state.delete(nik);continue}if(remove&&!state.has(nik)){state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''})}}const rows=[...state.values()],l=rows.filter(r=>mutationGender(r)==='l').length,p=rows.filter(r=>mutationGender(r)==='p').length;return {l,p,j:rows.length}}
@@ -3354,9 +3398,10 @@ function renderMutationRegister(){
   if(body){
     body.innerHTML=rows.length?rows.map((x,i)=>{
       const jk=mutationGender(x)==='l'?'Laki-laki':mutationGender(x)==='p'?'Perempuan':'-';
+      const latestNik=latestMutationNik(x);
       const cls=String(x.jenis||'').toLowerCase().replace(/[^a-z]+/g,'');
       const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
-      return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td><span class="mutation-type ${cls}">${esc(x.jenis||'-')}</span></td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
+      return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td><span class="mutation-type ${cls}">${esc(x.jenis||'-')}</span></td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
     }).join(''):'<tr><td colspan="8" class="empty">Tidak ada data mutasi yang sesuai.</td></tr>';
   }
   const info=$('mutationInfo');
@@ -3367,14 +3412,18 @@ function renderMutationRegister(){
 }
 function mutationPrintIdentityHtml(){
   const village=String(desaSettings?.village||'').trim()||'-';
-  const head=String(desaSettings?.head||'').trim()||'................................................';
-  const operator=String(typeof profileDisplayName==='function'?profileDisplayName():'').trim()||'................................................';
   const today=letterIndoDate(new Date().toISOString().slice(0,10));
   return `<div class="mutation-print-identity">
     <div class="mutation-print-village">DESA ${esc(village).toUpperCase()}</div>
     <div class="mutation-print-date">Tanggal Cetak: ${esc(today)}</div>
-  </div>
-  <div class="mutation-print-signatures">
+  </div>`;
+}
+function mutationPrintSignaturesHtml(){
+  const village=String(desaSettings?.village||'').trim()||'-';
+  const head=String(desaSettings?.head||'').trim()||'................................................';
+  const operator=String(typeof profileDisplayName==='function'?profileDisplayName():'').trim()||'................................................';
+  const today=letterIndoDate(new Date().toISOString().slice(0,10));
+  return `<div class="mutation-print-signatures">
     <div class="mutation-signature">
       <div>Petugas Registrasi</div>
       <div class="mutation-signature-space"></div>
@@ -3437,17 +3486,14 @@ function printMutationRegister(){
     <h2>${esc(monthLabel(month))}</h2>
     ${mutationPrintIdentityHtml()}
     <div class="print-meta">Jumlah data: <b>${rows.length}</b></div>
-    <table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table>
-    ${mutationPrintSignaturesPlaceholder()}
+    <table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const latestNik=latestMutationNik(x);const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table>
   </div></div>`;
   openMutationPrint(title,html);
 }
-function mutationPrintSignaturesPlaceholder(){ return mutationPrintIdentityHtml().includes('mutation-print-signatures') ? '' : ''; }
 function openMutationPrint(title,bodyHtml){
   const w=window.open('','_blank','width=1200,height=800');
   if(!w){toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.');return}
-  const signatures=mutationPrintIdentityHtml().match(/<div class="mutation-print-signatures">[\s\S]*?<\/div>\s*<\/div>\s*$/)?.[0]||'';
-  const bodyWithSignatures=bodyHtml+signatures;
+  const bodyWithSignatures=bodyHtml+mutationPrintSignaturesHtml();
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${mutationPrintStyles()}</head><body>${bodyWithSignatures}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}<\/script></body></html>`);
   w.document.close();
 }
