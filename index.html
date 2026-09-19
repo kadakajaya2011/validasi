@@ -190,7 +190,7 @@
 
 
 /* ===== F-1.02 — Formulir Pendaftaran Peristiwa Kependudukan ===== */
-.f102-modal{width:min(1250px,98vw)}
+.birth-kk-preview{grid-column:1/-1;margin-top:-3px;border:1px solid #cbd9e8;border-radius:8px;padding:9px 11px;background:#f5f9fd;color:#22334a;font-size:12px;line-height:1.45}.birth-kk-preview.ok{border-color:#b8dcc8;background:#f2fbf6}.birth-kk-preview.error{border-color:#e7b9b9;background:#fff6f6;color:#9f2222}.birth-kk-preview .kk-head{font-weight:800;color:#0b1f3a}.birth-kk-preview .kk-detail{margin-top:3px}.birth-kk-preview .auto-note{margin-top:5px;color:#526579;font-size:11px}.birth-kk-preview input{margin-top:4px}.f102-modal{width:min(1250px,98vw)}
 .f102-layout{display:grid;grid-template-columns:370px minmax(0,1fr);gap:14px;align-items:start}
 .f102-panel{border:1px solid var(--line);border-radius:10px;padding:13px;background:#fbfcfe}
 .f102-panel h3{margin:0 0 10px;font-size:16px;color:var(--navy);padding-bottom:8px;border-bottom:1px solid #e3e9f0}
@@ -2000,13 +2000,51 @@ function syncBirthNik(){
   }
 }
 
-function buildForm(){const text=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id='in_'+f.replace(/[^A-Z0-9]/gi,'_');if(select.includes(f)){h+=`<label><b>${f}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${f}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});h+='</div>';$('formBody').innerHTML=h;syncBirthNik()}
+function syncBirthFamilyFromKK(){
+  const reason=$('addReason')?.value;
+  const kkEl=$('in_NO_KK');
+  const preview=$('birthKKPreview');
+  if(!kkEl||!preview)return;
+  if(reason!=='Kelahiran'){
+    preview.style.display='none';
+    return;
+  }
+  const kk=String(kkEl.value||'').trim();
+  const clearAuto=()=>{['NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'].forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));if(el)el.value='';});};
+  if(!kk){clearAuto();preview.className='birth-kk-preview';preview.style.display='none';return;}
+  if(!/^\d{16}$/.test(kk)){
+    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>Nomor KK harus terdiri dari 16 digit angka.</b>';
+    return;
+  }
+  const members=familyMembersByKK(kk);
+  const head=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA');
+  if(!head){
+    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>Kepala Keluarga tidak ditemukan.</b><div class="kk-detail">Penambahan data karena kelahiran dengan Nomor KK ini tidak dapat dilanjutkan.</div>';
+    return;
+  }
+  const wife=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='ISTRI');
+  const setVal=(f,v)=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));if(el)el.value=v||'';};
+  setVal('NAMA_LGKP_AYAH',head['NAMA LENGKAP']);
+  setVal('NAMA_LGKP_IBU',wife?.['NAMA LENGKAP']||'');
+  setVal('ALAMAT',head.ALAMAT);
+  setVal('RT',head.RT);
+  setVal('RW',head.RW);
+  preview.className='birth-kk-preview ok';preview.style.display='block';
+  preview.innerHTML='<div class="kk-head">Nama Kepala Keluarga : '+esc(head['NAMA LENGKAP']||'-')+'</div>'+
+    '<div class="kk-detail">'+(wife?('Nama Istri : '+esc(wife['NAMA LENGKAP']||'-')):'Istri tidak ditemukan pada KK ini.')+'</div>'+
+    '<div class="auto-note">NAMA_LGKP_AYAH, NAMA_LGKP_IBU, ALAMAT, RT dan RW telah diisi otomatis dari data keluarga dan tetap dapat diedit manual.</div>';
+}
+
+function buildForm(){const text=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id='in_'+f.replace(/[^A-Z0-9]/gi,'_');if(select.includes(f)){h+=`<label><b>${f}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}else if(f==='NO KK'){h+=`<label><b>${f}</b><input class="input" id="${id}" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit Nomor KK"><div id="birthKKPreview" class="birth-kk-preview" style="display:none"></div></label>`}else h+=`<label><b>${f}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});h+='</div>';$('formBody').innerHTML=h;syncBirthNik();syncBirthFamilyFromKK()}
 $('addReason').addEventListener('change',()=>{
   const wrap=$('addOriginWrap');
   if(wrap)wrap.style.display=$('addReason').value==='Kedatangan'?'block':'none';
   syncBirthNik();
+  syncBirthFamilyFromKK();
 });
-$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}if(reason==='Kelahiran'){nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka (kosongkan bila belum ada)');return}if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}data.push(r);addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,asal:origin,keterangan:note});persist();fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')')});
+$('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
+$('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
+$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA');if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI');r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka (kosongkan bila belum ada)');return}if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}data.push(r);addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,asal:origin,keterangan:note});persist();fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')')});
 function toCsv(rows){const headers=fields;return '\ufeff'+headers.join(',')+'\n'+rows.map(r=>headers.map(h=>csvCell(r[h])).join(',')).join('\n')}
 function csvCell(v){v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function parseCsv(s){s=s.replace(/^\ufeff/,'');let out=[],row=[],cell='',q=false;for(let i=0;i<s.length;i++){let c=s[i];if(q){if(c==='"'&&s[i+1]==='"'){cell+='"';i++}else if(c==='"')q=false;else cell+=c}else{if(c==='"')q=true;else if(c===','){row.push(cell);cell=''}else if(c==='\n'){row.push(cell);out.push(row);row=[];cell=''}else if(c!=='\r')cell+=c}}row.push(cell);if(row.some(x=>x!==''))out.push(row);if(!out.length)return [];let headers=out[0].map(x=>x.trim());return out.slice(1).map(a=>{let r={};headers.forEach((h,i)=>{if(fields.includes(h))r[h]=a[i]??''});return normalize(r)}).filter(r=>r.NIK||r['NAMA LENGKAP'])}
