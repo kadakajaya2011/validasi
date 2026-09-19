@@ -3393,7 +3393,29 @@ function mutationGender(x){
 }
 function mutationGenderCounts(rows,types=['Lahir','Mati','Pindah','Datang','Penghapusan']){const out=Object.fromEntries(types.map(t=>[t,{l:0,p:0,j:0}]));rows.forEach(x=>{if(!out[x.jenis])return;const g=mutationGender(x);if(g==='l')out[x.jenis].l++;else if(g==='p')out[x.jenis].p++;out[x.jenis].j++;});return out}
 function monthMutationCounts(key){const types=['Lahir','Mati','Pindah','Datang','Penghapusan'],rows=syncMutationRegister().filter(x=>mutationDateValue(x).slice(0,7)===key),counts=mutationGenderCounts(rows,types);return {types,rows,counts,total:rows.length}}
-function populationSnapshotCounts(cutoff){const state=new Map(data.filter(r=>r&&r.NIK).map(r=>[String(r.NIK),r]));const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));for(const h of hist){const nik=String(h.NIK||'');if(!nik)continue;const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';const remove=(h.type==='Penduduk Meninggal'&&h.meta?.kategori==='KEMATIAN')||(h.type==='Penduduk Pindah'&&h.meta?.kategori==='PERPINDAHAN')||(h.type==='Data Dihapus'&&h.meta?.kategori==='PENGHAPUSAN');if(add){state.delete(nik);continue}if(remove&&!state.has(nik)){state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''})}}const rows=[...state.values()],l=rows.filter(r=>mutationGender(r)==='l').length,p=rows.filter(r=>mutationGender(r)==='p').length;return {l,p,j:rows.length}}
+function populationGenderValue(r){
+  const raw=String(r?.JK??r?.jk??'').trim().toLowerCase();
+  if(raw==='l'||raw==='1'||raw==='lk'||raw==='laki'||raw==='laki-laki'||raw==='laki laki'||raw==='pria'||raw==='male')return 'l';
+  if(raw==='p'||raw==='2'||raw==='pr'||raw==='perempuan'||raw==='wanita'||raw==='female')return 'p';
+  return genderFromNik(r?.NIK||r?.nik||'');
+}
+function populationSnapshotCounts(cutoff){
+  const state=new Map(data.filter(r=>r&&r.NIK).map(r=>[String(r.NIK),r]));
+  const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  for(const h of hist){
+    const nik=String(h.NIK||'').trim(); if(!nik)continue;
+    const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';
+    const remove=(h.type==='Penduduk Meninggal'&&h.meta?.kategori==='KEMATIAN')||(h.type==='Penduduk Pindah'&&h.meta?.kategori==='PERPINDAHAN')||(h.type==='Data Dihapus'&&h.meta?.kategori==='PENGHAPUSAN');
+    if(add){state.delete(nik);continue}
+    if(remove&&!state.has(nik)){
+      state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''});
+    }
+  }
+  const rows=[...state.values()];
+  const l=rows.filter(r=>populationGenderValue(r)==='l').length;
+  const p=rows.filter(r=>populationGenderValue(r)==='p').length;
+  return {l,p,j:rows.length};
+}
 function renderMutationRecapPanel(){
   const el=$('mutationRecapPanel');
   if(!el)return;
