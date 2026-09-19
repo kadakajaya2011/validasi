@@ -704,7 +704,7 @@
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📊 <span style="flex:1">Laporan &amp; Rekap</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnDashboard">📈 Dashboard Kependudukan</button><button class="menu-item" id="btnReport">📊 Laporan Kependudukan</button><button class="menu-item" id="btnAgeReport">👥 Rekap Rentang Umur</button><button class="menu-item" id="btnDp4">🗳️ Rekap DP4</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga / KK</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🏛️ <span style="flex:1">Administrasi Desa</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnLetters">📝 Register Surat Desa</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button><button class="menu-item" id="btnMutationRegister">📋 Register Mutasi Penduduk</button><button class="menu-item" id="btnHistory">📜 Riwayat Perubahan</button><button class="menu-item" id="btnSettings">⚙️ Pengaturan Desa</button></div></div>
 </div></div><button class="btn btn-primary" id="btnAdd">＋ Tambah Data</button></div></div></header>
-<main class="page"><section class="toolbar"><div class="filters"><input class="input" id="search" placeholder="Cari NIK, nama, KK, alamat..."><select class="select" id="fRT"><option value="">RT: Semua</option></select><select class="select" id="fRW"><option value="">RW: Semua</option></select><select class="select" id="fJK"><option value="">JK: Semua</option></select><select class="select" id="fSH"><option value="">Hubungan: Semua</option></select><select class="select" id="fStatus"><option value="">Status: Semua</option></select><select class="select" id="fAgama"><option value="">Agama: Semua</option></select><select class="select" id="fPendidikan"><option value="">Pendidikan: Semua</option></select><select class="select" id="fPekerjaan"><option value="">Pekerjaan: Semua</option></select></div></section><section class="table-card"><div class="table-scroll"><table><thead><tr>
+<main class="page" id="mainPopulationPage"><section class="toolbar"><div class="filters"><input class="input" id="search" placeholder="Cari NIK, nama, KK, alamat..."><select class="select" id="fRT"><option value="">RT: Semua</option></select><select class="select" id="fRW"><option value="">RW: Semua</option></select><select class="select" id="fJK"><option value="">JK: Semua</option></select><select class="select" id="fSH"><option value="">Hubungan: Semua</option></select><select class="select" id="fStatus"><option value="">Status: Semua</option></select><select class="select" id="fAgama"><option value="">Agama: Semua</option></select><select class="select" id="fPendidikan"><option value="">Pendidikan: Semua</option></select><select class="select" id="fPekerjaan"><option value="">Pekerjaan: Semua</option></select></div></section><section class="table-card"><div class="table-scroll"><table><thead><tr>
 <th data-sort="__NO">NO</th><th data-sort="NIK">NIK</th><th data-sort="NAMA LENGKAP">NAMA LENGKAP</th><th data-sort="NO KK">NO KK</th><th data-sort="TMPT_LHR">TMPT_LHR</th><th data-sort="TGL_LHR">TGL_LHR</th><th data-sort="__UMUR">UMUR</th><th data-sort="JK">JK</th><th data-sort="SHDRT">SHDRT</th><th data-sort="STATUS">STATUS</th><th data-sort="GD">GD</th><th data-sort="AGAMA">AGAMA</th><th data-sort="PENDIDIKAN">PENDIDIKAN</th><th data-sort="PEKERJAAN">PEKERJAAN</th><th data-sort="NAMA_LGKP_IBU">NAMA_LGKP_IBU</th><th data-sort="NAMA_LGKP_AYAH">NAMA_LGKP_AYAH</th><th data-sort="ALAMAT">ALAMAT</th><th data-sort="RT">RT</th><th data-sort="RW">RW</th><th>AKSI</th>
 </tr></thead><tbody id="tbody"></tbody></table></div><div class="footer-bar"><span id="info">0 data</span><div class="pager"><button id="prev">‹</button><span id="pageInfo" style="padding:6px 4px"></span><button id="next">›</button></div></div></section></main>
 
@@ -1213,14 +1213,14 @@ function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAt
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
 document.querySelectorAll('.menu-group-title').forEach(title=>{title.addEventListener('click',e=>{e.stopPropagation();const group=title.closest('.menu-group');const willOpen=!group.classList.contains('open');document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')});if(willOpen){group.classList.add('open');title.setAttribute('aria-expanded','true')}})});
 btnMenu.addEventListener('click',e=>{e.stopPropagation();menuPanel.classList.contains('open')?closeMenu():openMenu()});document.addEventListener('click',e=>{if(!menuWrap.contains(e.target))closeMenu()});window.addEventListener('resize',()=>{if(menuPanel.classList.contains('open'))positionMenu()});window.addEventListener('scroll',()=>{if(menuPanel.classList.contains('open'))closeMenu()},true);
-$('btnImport').addEventListener('click',()=>{closeMenu();pendingImport=null;$('importFile').value='';$('importPreview').textContent='';$('importOverlay').classList.add('open')});
-$('btnExport').addEventListener('click',()=>{closeMenu();if(typeof XLSX==='undefined'){toast('Library Excel belum tersedia. Periksa koneksi internet.');return}const exportHeaders=['NO',...fields,'UMUR'];const rows=data.map((r,i)=>{const o={};exportHeaders.forEach(h=>o[h]=h==='NO'?i+1:h==='UMUR'?age(r.TGL_LHR):DATE_FIELDS.includes(h)?fmtDate(r[h]):(r[h]||''));return o});const ws=XLSX.utils.json_to_sheet(rows,{header:exportHeaders});ws['!cols']=exportHeaders.map(h=>({wch:h==='NAMA LENGKAP'||h==='ALAMAT'?24:h==='PEKERJAAN'||h==='PENDIDIKAN'?28:15}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
+$('btnImport').addEventListener('click',()=>{if(!hasPerm('import_data'))return toast('Anda tidak memiliki hak akses Impor');closeMenu();pendingImport=null;$('importFile').value='';$('importPreview').textContent='';$('importOverlay').classList.add('open')});
+$('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return toast('Anda tidak memiliki hak akses Ekspor');closeMenu();if(typeof XLSX==='undefined'){toast('Library Excel belum tersedia. Periksa koneksi internet.');return}const exportHeaders=['NO',...fields,'UMUR'];const rows=data.map((r,i)=>{const o={};exportHeaders.forEach(h=>o[h]=h==='NO'?i+1:h==='UMUR'?age(r.TGL_LHR):DATE_FIELDS.includes(h)?fmtDate(r[h]):(r[h]||''));return o});const ws=XLSX.utils.json_to_sheet(rows,{header:exportHeaders});ws['!cols']=exportHeaders.map(h=>({wch:h==='NAMA LENGKAP'||h==='ALAMAT'?24:h==='PEKERJAAN'||h==='PENDIDIKAN'?28:15}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
   const dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yyyy=now.getFullYear();
   const hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0');
   const namaDesa=String(desaSettings?.village||'Desa').trim().replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')||'Desa';
   const fileName=`Data_Kependudukan_Desa_${namaDesa}_${dd}-${mm}-${yyyy}_${hh}.${mi}.xlsx`;
   XLSX.writeFile(wb,fileName);toast(`Database berhasil diekspor: ${fileName}`)});
-$('btnReport').addEventListener('click',()=>{closeMenu();renderReport();$('reportOverlay').classList.add('open')});
+$('btnReport').addEventListener('click',()=>{if(!hasPerm('report'))return toast('Anda tidak memiliki hak akses Laporan Kependudukan');closeMenu();renderReport();$('reportOverlay').classList.add('open')});
 $('btnAdd').addEventListener('click',()=>{closeMenu();buildForm();$('addReason').value='';$('addDate').value=new Date().toISOString().slice(0,10);$('addOrigin').value='';$('addNote').value='';$('addOriginWrap').style.display='none';$('addOverlay').classList.add('open')});
 $('addReason').addEventListener('change',()=>{$('addOriginWrap').style.display=$('addReason').value==='Kedatangan'?'block':'none'});
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.remove('open')));document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
@@ -1925,7 +1925,7 @@ function printDeathApplication(){
   const printFrame=document.createElement('iframe');printFrame.setAttribute('aria-hidden','true');Object.assign(printFrame.style,{position:'fixed',left:'-10000px',top:'0',width:'1px',height:'1px',border:'0',visibility:'hidden'});document.body.appendChild(printFrame);
   const doc=printFrame.contentDocument,title=safePrintName('F-2.01 - Akta Kematian - '+$('deathAppName').value.trim()),styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>@page{size:215.9mm 330.2mm;margin:0!important}html,body{margin:0!important;padding:0!important;width:215.9mm!important;background:#fff!important;overflow:visible!important}.print-sheet{width:215.9mm!important;margin:0!important;padding:0!important}.print-sheet .death-app-paper{width:196mm!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0 auto!important;padding:5mm 6mm 4mm!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important;box-shadow:none!important}.print-sheet .death-app-paper .signature{display:table!important;width:100%!important;margin-top:5mm!important;page-break-inside:avoid!important;break-inside:avoid!important}.print-sheet .death-app-paper .signature td{display:table-cell!important}.print-sheet .death-app-paper .sigspace{height:14mm!important}.print-sheet .death-app-paper .section,.print-sheet .death-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);doc.close();const cleanup=()=>setTimeout(()=>printFrame.remove(),700);const doPrint=()=>{try{printFrame.contentWindow.focus();printFrame.contentWindow.print()}finally{cleanup()}};if(printFrame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else printFrame.onload=()=>setTimeout(doPrint,250);
 }
-$('btnDeathApplication').addEventListener('click',openDeathApplication);
+$('btnDeathApplication').addEventListener('click',()=>{if(!hasPerm('death_application'))return toast('Anda tidak memiliki hak akses Permohonan Akta Kematian');openDeathApplication()});
 $('deathApplicationSelect').addEventListener('change',fillDeathApplication);
 $('btnFindDeathReporter').addEventListener('click',findDeathReporter);
 $('btnFindDeathWitness1').addEventListener('click',()=>findDeathWitness(1));
@@ -2165,7 +2165,7 @@ function printAgeReport(){
   applyPrintOrientation();
   printWithFilename('Rekap Data Kependudukan Berdasarkan Kelompok Umur',()=>window.print(),()=>{document.body.classList.remove('print-age-report');clearPrintOrientation()});
 }
-$('btnAgeReport').addEventListener('click',()=>{closeMenu();renderAgeReport();$('ageReportOverlay').classList.add('open')});
+$('btnAgeReport').addEventListener('click',()=>{if(!hasPerm('age_report'))return toast('Anda tidak memiliki hak akses Rekap Rentang Umur');closeMenu();renderAgeReport();$('ageReportOverlay').classList.add('open')});
 $('btnPrintAgeReport').addEventListener('click',printAgeReport);
 
 function dp4IsEverMarried(status){
@@ -2413,7 +2413,7 @@ function printDp4Rekap(){
   </body></html>`);
   win.document.close();win.title='Rekap Pemilih DP4';win.focus();setTimeout(()=>win.print(),250);
 }
-$('btnDp4').addEventListener('click',()=>{closeMenu();if(!$('dp4ElectionDate').value){$('dp4ElectionDate').value=new Date().toISOString().slice(0,10)}renderDp4();$('dp4Overlay').classList.add('open')});
+$('btnDp4').addEventListener('click',()=>{if(!hasPerm('dp4'))return toast('Anda tidak memiliki hak akses Rekap DP4');closeMenu();if(!$('dp4ElectionDate').value){$('dp4ElectionDate').value=new Date().toISOString().slice(0,10)}renderDp4();$('dp4Overlay').classList.add('open')});
 $('dp4ElectionDate').addEventListener('change',renderDp4);
 $('btnPrintDp4').addEventListener('click',printDp4);$('btnPrintDp4Rekap').addEventListener('click',printDp4Rekap);$('btnExportDp4').addEventListener('click',exportDp4Xlsx);
 
@@ -2461,7 +2461,7 @@ function renderFamily(){
   }).join(''):'<div class="empty">Data keluarga tidak ditemukan sesuai filter.</div>';
 }
 function openFamily(){closeMenu();$('familySearch').value='';fillFamilyFilters();$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily();$('familyOverlay').classList.add('open')}
-$('btnFamily').addEventListener('click',openFamily);
+$('btnFamily').addEventListener('click',()=>{if(!hasPerm('family'))return toast('Anda tidak memiliki hak akses Data Keluarga/KK');openFamily()});
 $('btnFamilySearch').addEventListener('click',renderFamily);
 $('btnFamilyAll').addEventListener('click',()=>{$('familySearch').value='';$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily()});
 $('familyView').addEventListener('change',renderFamily);
@@ -2770,8 +2770,8 @@ $('tbody').addEventListener('click',e=>{
   const delBtn=e.target.closest('[data-delete]');
   if(delBtn){if(!hasPerm('delete_data'))return;openDelete(Number(delBtn.dataset.delete));return}
 });
-$('btnLetters').addEventListener('click',openLetters);
-$('btnSettings').addEventListener('click',openSettings);
+$('btnLetters').addEventListener('click',()=>{if(!hasPerm('letters'))return toast('Anda tidak memiliki hak akses Register Surat Desa');openLetters()});
+$('btnSettings').addEventListener('click',()=>{if(!hasPerm('settings'))return toast('Anda tidak memiliki hak akses Pengaturan Desa');openSettings()});
 $('btnSaveSettings').addEventListener('click',saveSettingsForm);
 $('btnRemoveLogo').addEventListener('click',async()=>{desaSettings.logo='';try{await saveSettings()}catch(err){toast('Gagal menghapus logo: '+err.message);return}renderLogoSetting();toast('Logo dihapus')});
 $('setLogo').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(f.size>1500000){toast('Ukuran logo maksimal 1,5 MB');e.target.value='';return}if(window.sb&&window.currentUser){try{const ext=(f.name.split('.').pop()||'png').toLowerCase();const path='desa-logo-'+window.currentUser.id+'.'+ext;const up=await window.sb.storage.from('app-assets').upload(path,f,{upsert:true,contentType:f.type});if(up.error)throw up.error;const pub=window.sb.storage.from('app-assets').getPublicUrl(path);desaSettings.logo=pub.data.publicUrl;renderLogoSetting();toast('Logo berhasil diunggah. Klik Simpan Pengaturan.')}catch(err){toast('Upload logo gagal: '+err.message)}}else{const rd=new FileReader();rd.onload=()=>{desaSettings.logo=rd.result;renderLogoSetting()};rd.readAsDataURL(f)}});
@@ -2779,7 +2779,7 @@ $('setLogo').addEventListener('change',async e=>{const f=e.target.files[0];if(!f
 /* ===== Backup & Pulihkan Database (JSON penuh: data + riwayat + register surat + pengaturan) ===== */
 let pendingRestore=null;
 function openBackup(){closeMenu();$('restoreFile').value='';$('restorePreview').textContent='';$('btnRestoreBackup').disabled=true;pendingRestore=null;$('backupOverlay').classList.add('open')}
-$('btnBackup').addEventListener('click',openBackup);
+$('btnBackup').addEventListener('click',()=>{if(!hasPerm('backup_data'))return toast('Anda tidak memiliki hak akses Backup & Pulihkan Database');openBackup()});
 $('btnDownloadBackup').addEventListener('click',()=>{
   const backup={app:'Data Kependudukan Desa',version:1,exportedAt:new Date().toISOString(),residents:data,history:getHistory(),letterRegister:getLetterRegister(),mutationRegister:getMutationRegister(),settings:desaSettings};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),a=document.createElement('a');
@@ -2994,7 +2994,7 @@ function renderDashboard(){
   $('btnDashRefresh').addEventListener('click',renderDashboard);
 }
 function openDashboard(){closeMenu();renderDashboard();$('dashboardOverlay').classList.add('open')}
-$('btnDashboard').addEventListener('click',openDashboard);
+$('btnDashboard').addEventListener('click',()=>{if(!hasPerm('dashboard'))return toast('Anda tidak memiliki hak akses Dashboard Kependudukan');openDashboard()});
 function printDashboard(){renderDashboard();document.body.classList.add('print-dashboard');document.body.classList.remove('print-portrait','print-landscape');document.body.classList.add('print-portrait');setPrintPageOrientation('portrait');printWithFilename('Dashboard Kependudukan',()=>window.print(),()=>{document.body.classList.remove('print-dashboard');clearPrintOrientation()})}
 $('btnPrintDashboard').addEventListener('click',printDashboard);
 
@@ -3321,7 +3321,7 @@ function printMutationHtml(html,filename){
 $('btnMutationRefresh')?.addEventListener('click',renderMutationRegister);
 $('mutationTypeFilter')?.addEventListener('change',renderMutationRegister);$('mutationDateFrom')?.addEventListener('change',renderMutationRegister);$('mutationDateTo')?.addEventListener('change',renderMutationRegister);$('mutationSearch')?.addEventListener('input',renderMutationRegister);$('mutationMonth')?.addEventListener('change',renderMutationRecapPanel);
 $('btnPrintMutationRegister')?.addEventListener('click',printMutationRegister);$('btnPrintMutationRecap')?.addEventListener('click',printMutationRecap);
-$('btnMutationRegister')?.addEventListener('click',()=>{closeMenu();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
+$('btnMutationRegister')?.addEventListener('click',()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Register Mutasi Penduduk');closeMenu();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
 function renderHistory(){
   const h=getHistory();
   const type=($('historyTypeFilter')?.value||'').trim();
@@ -3341,7 +3341,7 @@ function renderHistory(){
   }).join(''):'<div class="hint">Tidak ada riwayat yang sesuai filter.</div>';
   document.querySelectorAll('[data-print-move-group]').forEach(btn=>btn.addEventListener('click',()=>openMoveApplication(btn.dataset.printMoveGroup)));
 }
-$('btnHistory').addEventListener('click',()=>{closeMenu();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
+$('btnHistory').addEventListener('click',()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
 $('btnClearHistory').addEventListener('click',()=>{if(confirm('Bersihkan seluruh riwayat perubahan?')){localStorage.removeItem(HISTORY_KEY);renderHistory();toast('Riwayat dibersihkan')}});
 
 function renderReport(){
@@ -3463,16 +3463,49 @@ $('btnPrintBiodata').addEventListener('click',()=>{
 
 /* ===== SUPABASE AUTH / ROLES / PERMISSIONS ===== */
 const PERMISSION_DEFS={
-  view_data:'Lihat Data Penduduk',add_data:'Tambah Data',edit_data:'Edit Data',delete_data:'Hapus Data',import_data:'Impor Data',export_data:'Ekspor Data',reports:'Laporan & Rekap',letters:'Administrasi Surat',mutation:'Register Mutasi/Riwayat',settings:'Pengaturan Desa',account:'Kelola Akun Operator'
+  view_data:'Lihat Data Penduduk',
+  add_data:'Tambah Data',
+  edit_data:'Edit Data',
+  delete_data:'Hapus Data',
+  import_data:'Impor',
+  export_data:'Ekspor',
+  backup_data:'Backup & Pulihkan Database',
+  dashboard:'Dashboard Kependudukan',
+  report:'Laporan Kependudukan',
+  age_report:'Rekap Rentang Umur',
+  dp4:'Rekap DP4',
+  family:'Data Keluarga/KK',
+  letters:'Register Surat Desa',
+  death_application:'Permohonan Akta Kematian',
+  mutation_register:'Register Mutasi Penduduk',
+  history:'Riwayat Perubahan',
+  settings:'Pengaturan Desa',
+  account:'Kelola Akun Operator'
 };
-const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','reports','letters','mutation'];
+const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','letters','death_application','mutation_register','history'];
 window.currentUser=null;window.currentProfile=null;
 function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
 function hasPerm(p){const v=window.currentProfile?.permissions?.[p];return isAdmin()||v===true||v===1||String(v).toLowerCase()==='true'}
 function showLoginError(msg){const e=$('loginError');e.textContent=msg||'';e.classList.toggle('show',!!msg)}
 function authTitleFromSettings(){const desa=String(desaSettings?.village||'').trim().replace(/^desa\s+/i,'');const title='Aplikasi Kependudukan Desa'+(desa?' '+desa:'');$('authTitle').textContent=title;$('appTitle').textContent=title;document.title=title;$('authLogo').src=desaSettings?.logo||'';$('authLogo').style.display=desaSettings?.logo?'block':'none'}
 function applyPermissions(){
-  const map={btnAdd:'add_data',btnImport:'import_data',btnExport:'export_data',btnBackup:'export_data',btnReport:'reports',btnDashboard:'reports',btnAgeReport:'reports',btnDp4:'reports',btnFamily:'reports',btnLetters:'letters',btnDeathApplication:'letters',btnMutationRegister:'mutation',btnHistory:'mutation',btnSettings:'settings'};
+  const map={
+    mainPopulationPage:'view_data',
+    btnAdd:'add_data',
+    btnImport:'import_data',
+    btnExport:'export_data',
+    btnBackup:'backup_data',
+    btnReport:'report',
+    btnDashboard:'dashboard',
+    btnAgeReport:'age_report',
+    btnDp4:'dp4',
+    btnFamily:'family',
+    btnLetters:'letters',
+    btnDeathApplication:'death_application',
+    btnMutationRegister:'mutation_register',
+    btnHistory:'history',
+    btnSettings:'settings'
+  };
   Object.entries(map).forEach(([id,p])=>{const el=$(id);if(el)el.classList.toggle('auth-hidden',!hasPerm(p))});
   document.querySelectorAll('[data-edit]').forEach(el=>el.classList.toggle('auth-hidden',!hasPerm('edit_data')));
   document.querySelectorAll('[data-delete]').forEach(el=>el.classList.toggle('auth-hidden',!hasPerm('delete_data')));
@@ -3502,7 +3535,7 @@ function setOperatorManageVisibility(){
   if(section)section.classList.toggle('auth-hidden',!admin);
 }
 function permissionInputsHtml(prefix, permissions={}){
-  return Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account'&&k!=='settings').map(([k,label])=>{
+  return Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account').map(([k,label])=>{
     const checked=permissions?.[k]===true;
     return `<label class="permission-item"><input type="checkbox" data-perm="${k}" ${checked?'checked':''}> ${label}</label>`;
   }).join('');
