@@ -636,7 +636,7 @@
 .auth-card{width:min(430px,94vw);background:rgba(255,255,255,.98);border-radius:22px;padding:30px;box-shadow:0 28px 90px #0006;text-align:center}
 .auth-logo{width:92px;height:92px;object-fit:contain;border-radius:18px;background:#f4f7fb;padding:8px;margin:0 auto 15px;display:block}
 .auth-title{font-size:25px;font-weight:900;color:#0b1f3a;line-height:1.15}.auth-subtitle{font-size:13px;color:#66758a;margin:8px 0 22px}.auth-form{text-align:left}.auth-form label{display:block;font-weight:800;font-size:13px;margin:11px 0 6px}.auth-input{width:100%;border:1px solid #cfd8e3;border-radius:10px;padding:12px 13px;font-size:14px;outline:none}.auth-input:focus{border-color:#315f91;box-shadow:0 0 0 4px #315f911a}.auth-submit{width:100%;border:0;border-radius:10px;padding:12px 14px;background:#0b1f3a;color:#fff;font-weight:800;font-size:14px;cursor:pointer;margin-top:16px}.auth-submit:disabled{opacity:.6;cursor:not-allowed}.auth-error{display:none;background:#fff1f1;border:1px solid #f0c4c4;color:#a42323;border-radius:9px;padding:9px 11px;margin-top:12px;font-size:12px;text-align:left}.auth-error.show{display:block}.auth-footer{font-size:11px;color:#8794a5;margin-top:16px}
-.account-chip{font-size:11px;padding:8px 10px;border-radius:999px;background:#ffffff14;border:1px solid #ffffff33;color:#fff;white-space:nowrap}.account-menu{position:relative}.account-panel{position:fixed;display:none;min-width:250px;background:#fff;border:1px solid #d7dee8;border-radius:11px;box-shadow:var(--shadow);padding:8px;z-index:1100}.account-panel.open{display:block}.account-panel .menu-item{font-size:12px}.account-meta{padding:8px 10px;border-bottom:1px solid #edf0f4;margin-bottom:5px}.account-meta b{display:block}.account-meta span{font-size:11px;color:#66758a}.permissions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.permission-item{border:1px solid #dbe3ec;border-radius:8px;padding:8px;background:#f8fafc;font-size:12px}.operator-list{border:1px solid #dbe3ec;border-radius:9px;overflow:auto;max-height:260px}.operator-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 10px;border-bottom:1px solid #edf0f4}.operator-row:last-child{border-bottom:0}.operator-row small{display:block;color:#66758a}.role-badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#edf3f8;color:#315f91;font-size:10px;font-weight:800}.auth-hidden{display:none!important}
+.account-chip{font-size:11px;padding:8px 10px;border-radius:999px;background:#ffffff14;border:1px solid #ffffff33;color:#fff;white-space:nowrap}.account-menu{position:relative}.account-panel{position:fixed;display:none;min-width:250px;background:#fff;border:1px solid #d7dee8;border-radius:11px;box-shadow:var(--shadow);padding:8px;z-index:1100}.account-panel.open{display:block}.account-panel .menu-item{font-size:12px}.account-meta{padding:8px 10px;border-bottom:1px solid #edf0f4;margin-bottom:5px}.account-meta b{display:block}.account-meta span{font-size:11px;color:#66758a}.permissions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.permission-item{border:1px solid #dbe3ec;border-radius:8px;padding:8px;background:#f8fafc;font-size:12px}.operator-list{border:1px solid #dbe3ec;border-radius:9px;overflow:auto;max-height:260px}.operator-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 10px;border-bottom:1px solid #edf0f4}.operator-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}.operator-actions .btn-mini{display:inline-block!important;visibility:visible!important}.operator-row:last-child{border-bottom:0}.operator-row small{display:block;color:#66758a}.role-badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#edf3f8;color:#315f91;font-size:10px;font-weight:800}.auth-hidden{display:none!important}
 @media(max-width:700px){.permissions-grid{grid-template-columns:1fr}.account-chip{display:none}}
 </style>
 <div class="auth-screen" id="authScreen">
@@ -678,8 +678,22 @@
         </div>
       </div>
       <div id="operatorManageSection" style="margin-top:12px">
-        <h3 style="font-size:15px;color:var(--navy)">Daftar Akun</h3>
+        <h3 style="font-size:15px;color:var(--navy)">Daftar Akun Operator</h3>
+        <div class="hint" style="margin-bottom:8px">Hanya Administrator yang dapat melihat dan mengelola daftar akun operator.</div>
         <div class="operator-list" id="operatorList"></div>
+      </div>
+      <div class="overlay" id="operatorEditOverlay" style="z-index:2100">
+        <div class="modal" style="width:min(620px,94vw)">
+          <div class="modal-head"><div class="modal-title">✏️ Edit Akun Operator</div><button class="close" id="btnCloseOperatorEdit" type="button">✕</button></div>
+          <div class="modal-body">
+            <input type="hidden" id="editOperatorId">
+            <label><b>Email Operator</b><input class="input" id="editOperatorEmail" type="email" placeholder="operator@desa.go.id"></label>
+            <label style="display:block;margin-top:9px"><b>Password Baru</b><input class="input" id="editOperatorPassword" type="password" minlength="8" placeholder="Kosongkan jika password tidak diubah"></label>
+            <div style="margin-top:10px"><b>Hak Akses Operator</b><div class="permissions-grid" id="editOperatorPermissions"></div></div>
+            <div class="hint" style="margin-top:9px">Password baru minimal 8 karakter. Jika dikosongkan, password lama tetap digunakan.</div>
+          </div>
+          <div class="modal-foot"><button class="btn" id="btnCancelOperatorEdit" type="button">Batal</button><button class="btn btn-dark" id="btnSaveOperatorEdit" type="button">💾 Simpan Perubahan</button></div>
+        </div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn" data-close="accountOverlay">Tutup</button></div>
@@ -3451,7 +3465,8 @@ const PERMISSION_DEFS={
 };
 const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','reports','letters','mutation'];
 window.currentUser=null;window.currentProfile=null;
-function hasPerm(p){return window.currentProfile?.role==='admin'||!!window.currentProfile?.permissions?.[p]}
+function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
+function hasPerm(p){return isAdmin()||!!window.currentProfile?.permissions?.[p]}
 function showLoginError(msg){const e=$('loginError');e.textContent=msg||'';e.classList.toggle('show',!!msg)}
 function authTitleFromSettings(){const desa=String(desaSettings?.village||'').trim().replace(/^desa\s+/i,'');const title='Aplikasi Kependudukan Desa'+(desa?' '+desa:'');$('authTitle').textContent=title;$('appTitle').textContent=title;document.title=title;$('authLogo').src=desaSettings?.logo||'';$('authLogo').style.display=desaSettings?.logo?'block':'none'}
 function applyPermissions(){
@@ -3459,7 +3474,7 @@ function applyPermissions(){
   Object.entries(map).forEach(([id,p])=>{const el=$(id);if(el)el.classList.toggle('auth-hidden',!hasPerm(p))});
   document.querySelectorAll('[data-edit]').forEach(el=>el.classList.toggle('auth-hidden',!hasPerm('edit_data')));
   document.querySelectorAll('[data-delete]').forEach(el=>el.classList.toggle('auth-hidden',!hasPerm('delete_data')));
-  const panel=$('operatorAdminPanel');if(panel)panel.classList.toggle('auth-hidden',!hasPerm('account'));
+  setOperatorManageVisibility();
 }
 async function loadProfile(){
   const {data,error}=await window.sb.from('profiles').select('*').eq('id',window.currentUser.id).maybeSingle();
@@ -3478,19 +3493,60 @@ function renderAccountUi(){
   const box=$('operatorPermissions');if(box&&!box.children.length){Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account').forEach(([k,label])=>{const checked=DEFAULT_OPERATOR_PERMS.includes(k);box.insertAdjacentHTML('beforeend',`<label class="permission-item"><input type="checkbox" data-perm="${k}" ${checked?'checked':''}> ${label}</label>`)})}
   applyPermissions();
 }
+function setOperatorManageVisibility(){
+  const admin=isAdmin();
+  const panel=$('operatorAdminPanel'),section=$('operatorManageSection');
+  if(panel)panel.classList.toggle('auth-hidden',!admin);
+  if(section)section.classList.toggle('auth-hidden',!admin);
+}
+function permissionInputsHtml(prefix, permissions={}){
+  return Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account'&&k!=='settings').map(([k,label])=>{
+    const checked=permissions?.[k]===true;
+    return `<label class="permission-item"><input type="checkbox" data-perm="${k}" ${checked?'checked':''}> ${label}</label>`;
+  }).join('');
+}
+function getPermissionObject(containerId){
+  const permissions={};document.querySelectorAll('#'+containerId+' [data-perm]').forEach(x=>permissions[x.dataset.perm]=x.checked);return permissions;
+}
 async function openAccount(){
-  renderAccountUi();$('accountOverlay').classList.add('open');
+  renderAccountUi();setOperatorManageVisibility();$('accountOverlay').classList.add('open');
   if(hasPerm('account'))await loadOperatorList();
 }
 async function loadOperatorList(){
-  const {data,error}=await window.sb.from('profiles').select('id,email,role,permissions,created_at').order('created_at',{ascending:false});
+  if(!isAdmin())return;
+  const {data,error}=await window.sb.from('profiles').select('id,email,role,permissions,created_at').eq('role','operator').order('created_at',{ascending:false});
   if(error){$('operatorList').innerHTML='<div class="hint" style="padding:10px">Gagal memuat daftar akun: '+esc(error.message)+'</div>';return}
-  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div><b>${esc(x.email||'-')}</b><small>${x.role==='admin'?'Administrator':'Operator'} • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID'):''}</small></div><div><span class="role-badge">${x.role}</span></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun.</div>';
+  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div><b>${esc(x.email||'-')}</b><small>Operator • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID'):''}</small></div><div class="operator-actions"><span class="role-badge">operator</span><button type="button" class="btn-mini edit" data-edit-operator="${esc(x.id)}">✏️ Edit</button><button type="button" class="btn-mini delete" data-delete-operator="${esc(x.id)}" data-email="${esc(x.email||'')}">🗑 Hapus</button></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun operator.</div>';
+}
+function openOperatorEdit(profile){
+  if(!hasPerm('account'))return;
+  $('editOperatorId').value=profile.id;$('editOperatorEmail').value=profile.email||'';$('editOperatorPassword').value='';
+  $('editOperatorPermissions').innerHTML=permissionInputsHtml('editOperatorPermissions',profile.permissions||{});
+  $('operatorEditOverlay').classList.add('open');
+}
+function closeOperatorEdit(){$('operatorEditOverlay').classList.remove('open');}
+async function saveOperatorEdit(){
+  if(!hasPerm('account'))return toast('Anda tidak memiliki hak mengelola akun');
+  const id=$('editOperatorId').value,email=$('editOperatorEmail').value.trim().toLowerCase(),password=$('editOperatorPassword').value;
+  if(!id||!email||!email.includes('@'))return toast('Email operator tidak valid');
+  if(password && password.length<8)return toast('Password baru minimal 8 karakter');
+  const permissions=getPermissionObject('editOperatorPermissions');
+  if(!isAdmin())return toast('Hanya Administrator yang dapat mengelola akun operator');
+  const {data,error}=await window.sb.functions.invoke('manage-operator',{body:{action:'update',user_id:id,email,password:password||undefined,permissions}});
+  if(error)throw error;if(data?.error)throw new Error(data.error);
+  closeOperatorEdit();toast('Akun operator berhasil diperbarui');await loadOperatorList();
+}
+async function deleteOperator(id,email){
+  if(!isAdmin())return toast('Hanya Administrator yang dapat mengelola akun operator');
+  if(!confirm('Hapus akun operator '+(email||'ini')+'? Akun tidak dapat digunakan lagi untuk login.'))return;
+  const {data,error}=await window.sb.functions.invoke('manage-operator',{body:{action:'delete',user_id:id}});
+  if(error)throw error;if(data?.error)throw new Error(data.error);
+  toast('Akun operator berhasil dihapus');await loadOperatorList();
 }
 async function createOperator(){
   if(!hasPerm('account'))return toast('Anda tidak memiliki hak mengelola akun');
   const email=$('operatorEmail').value.trim(),password=$('operatorPassword').value;
-  const permissions={};document.querySelectorAll('#operatorPermissions [data-perm]').forEach(x=>permissions[x.dataset.perm]=x.checked);
+  const permissions=getPermissionObject('operatorPermissions');
   if(!email||password.length<8)return toast('Email dan password minimal 8 karakter wajib diisi');
   const {data,error}=await window.sb.functions.invoke('create-operator',{body:{email,password,permissions}});
   if(error)throw error;if(data?.error)throw new Error(data.error);
@@ -3511,6 +3567,24 @@ $('btnAccount').addEventListener('click',e=>{e.stopPropagation();const p=$('acco
 $('btnAccountSettings').addEventListener('click',()=>{closeAccountPanel();openAccount()});
 $('btnSelfChangePassword').addEventListener('click',async()=>{const p=$('selfNewPassword').value,p2=$('selfNewPassword2').value;if(p.length<8||p!==p2)return toast('Password minimal 8 karakter dan harus sama');try{const {error}=await window.sb.auth.updateUser({password:p});if(error)throw error;$('selfNewPassword').value='';$('selfNewPassword2').value='';toast('Password berhasil diubah')}catch(e){toast('Gagal mengubah password: '+e.message)}});
 $('btnCreateOperator').addEventListener('click',async()=>{try{await createOperator()}catch(e){toast('Gagal membuat operator: '+e.message)}});
+document.addEventListener('click',async e=>{
+  const edit=e.target.closest('[data-edit-operator]');
+  if(edit){
+    const id=edit.dataset.editOperator;
+    const {data,error}=await window.sb.from('profiles').select('id,email,role,permissions').eq('id',id).eq('role','operator').maybeSingle();
+    if(error)return toast('Gagal mengambil data operator: '+error.message);
+    if(!data)return toast('Akun operator tidak ditemukan');
+    openOperatorEdit(data);return;
+  }
+  const del=e.target.closest('[data-delete-operator]');
+  if(del){
+    const email=del.dataset.email||del.closest('.operator-row')?.querySelector('b')?.textContent||'';
+    try{await deleteOperator(del.dataset.deleteOperator,email)}catch(err){toast('Gagal menghapus operator: '+(err.message||err))}
+  }
+});
+$('btnSaveOperatorEdit').addEventListener('click',async()=>{try{await saveOperatorEdit()}catch(e){toast('Gagal memperbarui operator: '+(e.message||e))}});
+$('btnCancelOperatorEdit').addEventListener('click',closeOperatorEdit);$('btnCloseOperatorEdit').addEventListener('click',closeOperatorEdit);
+
 bootAuth();
 })();
 
