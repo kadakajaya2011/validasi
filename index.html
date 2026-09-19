@@ -3365,20 +3365,90 @@ function renderMutationRegister(){
   if(summary) summary.innerHTML=mutationSummaryHtml(rows);
   renderMutationRecapPanel();
 }
+function mutationPrintIdentityHtml(){
+  const village=String(desaSettings?.village||'').trim()||'-';
+  const head=String(desaSettings?.head||'').trim()||'................................................';
+  const operator=String(typeof profileDisplayName==='function'?profileDisplayName():'').trim()||'................................................';
+  const today=letterIndoDate(new Date().toISOString().slice(0,10));
+  return `<div class="mutation-print-identity">
+    <div class="mutation-print-village">DESA ${esc(village).toUpperCase()}</div>
+    <div class="mutation-print-date">Tanggal Cetak: ${esc(today)}</div>
+  </div>
+  <div class="mutation-print-signatures">
+    <div class="mutation-signature">
+      <div>Petugas Registrasi</div>
+      <div class="mutation-signature-space"></div>
+      <div class="mutation-signature-line">( ${esc(operator)} )</div>
+    </div>
+    <div class="mutation-signature">
+      <div>${esc(village)}, ${esc(today)}</div>
+      <div>Kepala Desa</div>
+      <div class="mutation-signature-space"></div>
+      <div class="mutation-signature-line">( ${esc(head)} )</div>
+    </div>
+  </div>`;
+}
+function mutationPrintStyles(){
+  return `<style>
+    @page{size:A4 landscape;margin:8mm 9mm 9mm}
+    *{box-sizing:border-box}
+    html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111;font-family:Arial,Helvetica,sans-serif}
+    body{font-size:9pt;line-height:1.3}
+    .mutation-print-wrap{width:100%;max-width:100%;margin:0 auto}
+    .mutation-print-paper{width:100%;max-width:100%;margin:0 auto}
+    .mutation-print-paper h1{margin:0;text-align:center;font-size:15pt;line-height:1.2;font-weight:800}
+    .mutation-print-paper h2{margin:2px 0 7px;text-align:center;font-size:11pt;font-weight:700}
+    .mutation-print-identity{text-align:center;margin:0 0 9px}
+    .mutation-print-village{font-size:11pt;font-weight:800;text-transform:uppercase}
+    .mutation-print-date{font-size:9pt;margin-top:2px}
+    .print-meta{margin:0 0 7px;text-align:left}
+    .mutation-recap-section{width:100%;margin:0!important;padding:0!important}
+    .mutation-recap-heading{display:none!important}
+    .mutation-12-title{font-size:11pt;font-weight:800;margin:7px 0 5px}
+    .hint{font-size:8pt;color:#333;margin:0 0 5px}
+    .mutation-recap-screen{width:100%;margin:0!important;padding:0!important}
+    .mutation-recap-screen> .mutation-recap-section+ .mutation-recap-section{margin-top:9mm!important}
+    .mutation-recap-screen table,.mutation-print-paper table{width:100%!important;max-width:100%!important;border-collapse:collapse;border-spacing:0;table-layout:auto;font-size:8.5pt}
+    .mutation-recap-screen th,.mutation-recap-screen td,.mutation-print-paper th,.mutation-print-paper td{border:1px solid #555!important;padding:4px 5px!important;vertical-align:middle;white-space:normal;word-break:break-word}
+    .mutation-recap-screen th,.mutation-print-paper th{background:#e7edf3!important;font-weight:800;text-align:center}
+    .mutation-recap-screen td,.mutation-print-paper td{text-align:left}
+    .mutation-recap-screen td:not(:first-child){text-align:center}
+    .mutation-recap-screen .total td{font-weight:800;background:#f2f4f7!important}
+    .mutation-population-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:7mm;margin-top:6mm!important}
+    .mutation-population-grid>div{min-width:0}
+    .mutation-population-grid table{font-size:8.5pt}
+    .mutation-print-paper>table{margin-top:4px}
+    .mutation-print-paper>table th,.mutation-print-paper>table td{text-align:center}
+    .mutation-print-paper>table td:nth-child(5),.mutation-print-paper>table td:nth-child(8),.mutation-print-paper>table td:nth-child(9){text-align:left}
+    .mutation-print-signatures{display:grid;grid-template-columns:1fr 1fr;gap:35mm;margin-top:12mm;page-break-inside:avoid;break-inside:avoid}
+    .mutation-signature{text-align:center;min-height:31mm}
+    .mutation-signature-space{height:18mm}
+    .mutation-signature-line{font-weight:700;text-decoration:underline;white-space:normal;word-break:break-word}
+    .btn{display:none!important}
+    @media print{html,body{width:100%!important;overflow:visible!important}.mutation-print-wrap,.mutation-print-paper{width:100%!important;max-width:100%!important}.mutation-recap-screen table,.mutation-print-paper table{page-break-inside:auto}.mutation-recap-screen tr,.mutation-print-paper tr{break-inside:avoid;page-break-inside:avoid}}
+  </style>`;
+}
 function printMutationRegister(){
   const rows=filteredMutations();
   const month=$('mutationMonth')?.value||monthKeyNow();
   const title=`Register Mutasi Penduduk - ${monthLabel(month)}`;
-  const html=`<div class="mutation-print-wrap"><div class="mutation-print-paper"><h1>REGISTER MUTASI PENDUDUK</h1><h2>${esc(monthLabel(month))}</h2><div class="print-meta">Jumlah data: <b>${rows.length}</b></div><table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table></div></div>`;
-  const w=window.open('','_blank','width=1200,height=800');
-  if(!w){toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.');return}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>@page{size:landscape;margin:10mm}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111}.mutation-print-paper{font-size:10pt}.mutation-print-paper h1{text-align:center;font-size:15pt;margin:0 0 3px}.mutation-print-paper h2{text-align:center;font-size:11pt;margin:0 0 12px}.mutation-print-paper table{width:100%;border-collapse:collapse;font-size:8.5pt}.mutation-print-paper th,.mutation-print-paper td{border:1px solid #222;padding:4px 5px;vertical-align:top}.mutation-print-paper th{background:#e6e6e6}</style></head><body>${html}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}<\/script></body></html>`);
-  w.document.close();
+  const html=`<div class="mutation-print-wrap"><div class="mutation-print-paper">
+    <h1>REGISTER MUTASI PENDUDUK</h1>
+    <h2>${esc(monthLabel(month))}</h2>
+    ${mutationPrintIdentityHtml()}
+    <div class="print-meta">Jumlah data: <b>${rows.length}</b></div>
+    <table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table>
+    ${mutationPrintSignaturesPlaceholder()}
+  </div></div>`;
+  openMutationPrint(title,html);
 }
+function mutationPrintSignaturesPlaceholder(){ return mutationPrintIdentityHtml().includes('mutation-print-signatures') ? '' : ''; }
 function openMutationPrint(title,bodyHtml){
   const w=window.open('','_blank','width=1200,height=800');
   if(!w){toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.');return}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,Helvetica,sans-serif;color:#111}.mutation-recap-screen{font-size:10pt}.mutation-recap-screen table{width:100%;border-collapse:collapse}.mutation-recap-screen th,.mutation-recap-screen td{border:1px solid #222;padding:5px}.mutation-recap-screen th{background:#e6e6e6}.mutation-recap-screen .total{font-weight:800}.mutation-population-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.mutation-12-title{font-size:12pt;font-weight:800;margin:14px 0 7px}.mutation-recap-heading{display:flex;justify-content:space-between;align-items:end;gap:10px}.btn{display:none}</style></head><body>${bodyHtml}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}<\/script></body></html>`);
+  const signatures=mutationPrintIdentityHtml().match(/<div class="mutation-print-signatures">[\s\S]*?<\/div>\s*<\/div>\s*$/)?.[0]||'';
+  const bodyWithSignatures=bodyHtml+signatures;
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${mutationPrintStyles()}</head><body>${bodyWithSignatures}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}<\/script></body></html>`);
   w.document.close();
 }
 function printMutationMonthlyRecap(){
@@ -3386,7 +3456,14 @@ function printMutationMonthlyRecap(){
   const panel=$('mutationRecapPanel');
   const first=panel?.querySelector('.mutation-recap-section');
   const month=$('mutationMonth')?.value||monthKeyNow();
-  openMutationPrint(`Rekap Mutasi Bulanan - ${monthLabel(month)}`,`<h1 style="text-align:center;font-size:15pt">REKAP MUTASI PENDUDUK BULANAN</h1>${first?.outerHTML||''}`);
+  if(!first){toast('Rekap bulanan belum tersedia.');return}
+  const content=`<div class="mutation-print-wrap"><div class="mutation-print-paper">
+    <h1>REKAP MUTASI PENDUDUK BULANAN</h1>
+    <h2>${esc(monthLabel(month))}</h2>
+    ${mutationPrintIdentityHtml()}
+    ${first.outerHTML}
+  </div></div>`;
+  openMutationPrint(`Rekap Mutasi Bulanan - ${monthLabel(month)}`,content);
 }
 function printMutationAnnualRecap(){
   renderMutationRecapPanel();
@@ -3395,7 +3472,14 @@ function printMutationAnnualRecap(){
   const panel=$('mutationRecapPanel');
   const sections=panel?.querySelectorAll('.mutation-recap-section');
   const annual=sections?.[1];
-  openMutationPrint(`Rekap Mutasi Tahunan - ${year}`,`<h1 style="text-align:center;font-size:15pt">REKAP MUTASI PENDUDUK TAHUN ${esc(year)}</h1>${annual?.outerHTML||''}`);
+  if(!annual){toast('Rekap tahunan belum tersedia.');return}
+  const content=`<div class="mutation-print-wrap"><div class="mutation-print-paper">
+    <h1>REKAP MUTASI PENDUDUK TAHUNAN</h1>
+    <h2>TAHUN ${esc(year)}</h2>
+    ${mutationPrintIdentityHtml()}
+    ${annual.outerHTML}
+  </div></div>`;
+  openMutationPrint(`Rekap Mutasi Tahunan - ${year}`,content);
 }
 $('btnMutationRefresh')?.addEventListener('click',renderMutationRegister);
 $('mutationTypeFilter')?.addEventListener('change',renderMutationRegister);
