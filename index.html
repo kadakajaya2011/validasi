@@ -3290,6 +3290,50 @@ function monthMutationCounts(key){const types=['Lahir','Mati','Pindah','Datang',
 function populationSnapshotCounts(cutoff){const state=new Map(data.filter(r=>r&&r.NIK).map(r=>[String(r.NIK),r]));const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));for(const h of hist){const nik=String(h.NIK||'');if(!nik)continue;const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';const remove=(h.type==='Penduduk Meninggal'&&h.meta?.kategori==='KEMATIAN')||(h.type==='Penduduk Pindah'&&h.meta?.kategori==='PERPINDAHAN')||(h.type==='Data Dihapus'&&h.meta?.kategori==='PENGHAPUSAN');if(add){state.delete(nik);continue}if(remove&&!state.has(nik)){state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''})}}const rows=[...state.values()],l=rows.filter(r=>mutationGender(r)==='l').length,p=rows.filter(r=>mutationGender(r)==='p').length;return {l,p,j:rows.length}}
 function renderMutationRecapPanel(){const el=$('mutationRecapPanel');if(!el)return;const month=$('mutationMonth').value||monthKeyNow();$('mutationMonth').value=month;const one=monthMutationCounts(month);const base=new Date(month+'-01T00:00:00');const prevEnd=new Date(base.getFullYear(),base.getMonth(),0),prevKey=prevEnd.getFullYear()+'-'+String(prevEnd.getMonth()+1).padStart(2,'0')+'-'+String(prevEnd.getDate()).padStart(2,'0'),currentKey=month+'-01';const popPrev=populationSnapshotCounts(prevKey),popCurrent=populationSnapshotCounts(currentKey);const months=[];for(let i=0;i<12;i++){const d=new Date(base.getFullYear(),base.getMonth()-i,1);months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}const all=syncMutationRegister();const data12=months.map(k=>{const rows=all.filter(x=>mutationDateValue(x).slice(0,7)===k),g=mutationGenderCounts(rows,one.types);return {k,g,total:rows.length}});const recapRows=one.types.map(t=>`<tr><td>${t}</td><td>${one.counts[t].l}</td><td>${one.counts[t].p}</td><td>${one.counts[t].j}</td></tr>`).join('');const twelveRows=data12.map(r=>`<tr><td>${esc(monthLabel(r.k))}</td>${one.types.map(t=>`<td>${r.g[t].l}</td><td>${r.g[t].p}</td><td>${r.g[t].j}</td>`).join('')}<td>${r.total}</td></tr>`).join('');const popRow=p=>`<tr><td>Laki-laki</td><td>${p.l}</td></tr><tr><td>Perempuan</td><td>${p.p}</td></tr><tr class="total"><td>Jumlah Penduduk</td><td>${p.j}</td></tr>`;el.innerHTML=`<div class="mutation-recap-screen"><div style="font-weight:800;margin-bottom:6px">${esc(monthLabel(month))}</div><div style="overflow:auto"><table><thead><tr><th colspan="4">Rekap Mutasi ${esc(monthLabel(month))}</th></tr><tr><th>Jenis Mutasi</th><th>L</th><th>P</th><th>Jml</th></tr></thead><tbody>${recapRows}<tr class="total"><td>Total</td><td>${one.types.reduce((n,t)=>n+one.counts[t].l,0)}</td><td>${one.types.reduce((n,t)=>n+one.counts[t].p,0)}</td><td>${one.total}</td></tr></tbody></table></div><div class="mutation-population-grid"><div><div class="mutation-12-title">Jumlah Penduduk Bulan Lalu</div><div class="hint" style="margin-bottom:6px">Diambil per tanggal ${esc(fmtDate(prevKey))} (akhir bulan sebelumnya).</div><table><thead><tr><th>Jenis Kelamin</th><th>Jumlah</th></tr></thead><tbody>${popRow(popPrev)}</tbody></table></div><div><div class="mutation-12-title">Jumlah Penduduk Bulan Berjalan</div><div class="hint" style="margin-bottom:6px">Diambil per tanggal ${esc(fmtDate(currentKey))}.</div><table><thead><tr><th>Jenis Kelamin</th><th>Jumlah</th></tr></thead><tbody>${popRow(popCurrent)}</tbody></table></div></div><div class="mutation-12-title">Rekap 12 Bulan sampai ${esc(monthLabel(month))}</div><div style="overflow:auto"><table><thead><tr><th rowspan="2">Bulan</th>${one.types.map(t=>`<th colspan="3">${t}</th>`).join('')}<th rowspan="2">Total</th></tr><tr>${one.types.map(()=>'<th>L</th><th>P</th><th>Jml</th>').join('')}</tr></thead><tbody>${twelveRows||'<tr><td colspan="17">Tidak ada data pada periode.</td></tr>'}</tbody></table></div></div>`}
 function mutationSummaryHtml(rows){const types=['Lahir','Mati','Pindah','Datang','Penghapusan'],g=mutationGenderCounts(rows,types);return '<div class="mutation-summary">'+types.map(t=>`<div class="mutation-stat"><span>${t}</span><b>L ${g[t].l} &nbsp; P ${g[t].p} &nbsp; Jml ${g[t].j}</b></div>`).join('')+`<div class="mutation-stat"><span>Total</span><b>L ${types.reduce((n,t)=>n+g[t].l,0)} &nbsp; P ${types.reduce((n,t)=>n+g[t].p,0)} &nbsp; Jml ${rows.length}</b></div></div>`}
+function renderMutationRegister(){
+  const rows=filteredMutations();
+  const body=$('mutationBody');
+  if(body){
+    body.innerHTML=rows.length?rows.map((x,i)=>{
+      const jk=mutationGender(x)==='l'?'Laki-laki':mutationGender(x)==='p'?'Perempuan':'-';
+      const cls=String(x.jenis||'').toLowerCase().replace(/[^a-z]+/g,'');
+      const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
+      return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td><span class="mutation-type ${cls}">${esc(x.jenis||'-')}</span></td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
+    }).join(''):'<tr><td colspan="8" class="empty">Tidak ada data mutasi yang sesuai.</td></tr>';
+  }
+  const info=$('mutationInfo');
+  if(info) info.textContent=`Menampilkan ${rows.length} data mutasi.`;
+  const summary=$('mutationSummary');
+  if(summary) summary.innerHTML=mutationSummaryHtml(rows);
+  renderMutationRecapPanel();
+}
+function printMutationRegister(){
+  const rows=filteredMutations();
+  const month=$('mutationMonth')?.value||monthKeyNow();
+  const title=`Register Mutasi Penduduk - ${monthLabel(month)}`;
+  const html=`<div class="mutation-print-wrap"><div class="mutation-print-paper"><h1>REGISTER MUTASI PENDUDUK</h1><h2>${esc(monthLabel(month))}</h2><div class="print-meta">Jumlah data: <b>${rows.length}</b></div><table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>Jenis Kelamin</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(x.NIK||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table></div></div>`;
+  const w=window.open('','_blank','width=1200,height=800');
+  if(!w){toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.');return}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>@page{size:landscape;margin:10mm}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111}.mutation-print-paper{font-size:10pt}.mutation-print-paper h1{text-align:center;font-size:15pt;margin:0 0 3px}.mutation-print-paper h2{text-align:center;font-size:11pt;margin:0 0 12px}.mutation-print-paper table{width:100%;border-collapse:collapse;font-size:8.5pt}.mutation-print-paper th,.mutation-print-paper td{border:1px solid #222;padding:4px 5px;vertical-align:top}.mutation-print-paper th{background:#e6e6e6}</style></head><body>${html}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}</script></body></html>`);
+  w.document.close();
+}
+function printMutationRecap(){
+  renderMutationRecapPanel();
+  const el=$('mutationRecapPanel');
+  const month=$('mutationMonth')?.value||monthKeyNow();
+  const w=window.open('','_blank','width=1200,height=800');
+  if(!w){toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.');return}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Rekap Mutasi Penduduk - ${esc(monthLabel(month))}</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,Helvetica,sans-serif;color:#111}.mutation-recap-screen{font-size:10pt}.mutation-recap-screen table{width:100%;border-collapse:collapse}.mutation-recap-screen th,.mutation-recap-screen td{border:1px solid #222;padding:5px}.mutation-recap-screen th{background:#e6e6e6}.mutation-recap-screen .total{font-weight:800}.mutation-population-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.mutation-12-title{font-size:12pt;font-weight:800;margin:14px 0 7px}</style></head><body><h1 style="text-align:center;font-size:15pt">REKAP MUTASI PENDUDUK</h1><div>${el?.innerHTML||''}</div><script>window.onload=function(){window.print();setTimeout(function(){window.close()},300)}</script></body></html>`);
+  w.document.close();
+}
+$('btnMutationRefresh')?.addEventListener('click',renderMutationRegister);
+$('mutationTypeFilter')?.addEventListener('change',renderMutationRegister);
+$('mutationDateFrom')?.addEventListener('change',renderMutationRegister);
+$('mutationDateTo')?.addEventListener('change',renderMutationRegister);
+$('mutationSearch')?.addEventListener('input',renderMutationRegister);
+$('mutationMonth')?.addEventListener('change',renderMutationRegister);
+$('btnPrintMutationRegister')?.addEventListener('click',printMutationRegister);
+$('btnPrintMutationRecap')?.addEventListener('click',printMutationRecap);
 $('btnMutationRegister')?.addEventListener('click',()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Register Mutasi Penduduk');closeMenu();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
 function renderHistory(){
   const h=getHistory();
