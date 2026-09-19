@@ -612,6 +612,9 @@
 .mutation-filters{display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr;gap:9px;align-items:end}.mutation-filters label{min-width:0}.mutation-filters b{display:block;margin-bottom:5px}.mutation-search{grid-column:span 1}.mutation-buttons{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.mutation-summary{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}.mutation-stat{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#f8fafc}.mutation-stat span{display:block;color:var(--muted);font-size:11px}.mutation-stat b{display:block;font-size:20px;margin-top:2px}.mutation-type{font-weight:800}.mutation-type.lahir{color:#16784a}.mutation-type.mati{color:#a32b2b}.mutation-type.pindah{color:#8a5a00}.mutation-type.datang{color:#1b5c9b}.mutation-type.penghapusan{color:#6b4b8c}.mutation-note{white-space:normal;min-width:260px;max-width:420px;line-height:1.35}.mutation-print-wrap{font-family:Arial,Helvetica,sans-serif;color:#111}.mutation-print-paper{width:310mm;margin:0 auto;background:#fff;font-size:10pt;line-height:1.25}.mutation-print-paper h1{text-align:center;font-size:15pt;margin:0 0 3px}.mutation-print-paper h2{text-align:center;font-size:11pt;margin:0 0 12px}.mutation-print-paper .print-meta{margin-bottom:9px}.mutation-print-paper table{width:100%;border-collapse:collapse;font-size:8.5pt}.mutation-print-paper th,.mutation-print-paper td{border:1px solid #222;padding:4px 5px;vertical-align:top;white-space:normal}.mutation-print-paper th{background:#e6e6e6;position:static}.mutation-recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mutation-recap-box{border:1px solid #222}.mutation-recap-box h3{margin:0;padding:6px 8px;background:#e6e6e6;font-size:10pt}.mutation-recap-box table{font-size:9pt}.mutation-recap-total{font-weight:800}.mutation-period-title{text-align:center;font-size:13pt;font-weight:800;margin-bottom:10px}@media(max-width:900px){.mutation-filters{grid-template-columns:1fr 1fr}.mutation-summary{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.mutation-filters{grid-template-columns:1fr}.mutation-buttons{justify-content:stretch}.mutation-buttons .btn{flex:1}.mutation-summary{grid-template-columns:repeat(2,1fr)}}
 @media print{.mutation-print-paper{width:310mm!important;margin:0 auto!important}.mutation-print-paper table{page-break-inside:auto}.mutation-print-paper tr{page-break-inside:avoid;break-inside:avoid}}
 .mutation-recap-panel{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}.mutation-recap-screen table{width:100%;min-width:0;border-collapse:collapse}.mutation-recap-screen th,.mutation-recap-screen td{border:1px solid #d8e0e8;padding:7px}.mutation-recap-screen th{position:static;background:#edf3f8}.mutation-recap-screen .total{font-weight:800;background:#f6f8fa}.mutation-12-title{font-size:14px;font-weight:800;margin:14px 0 7px}
+
+/* ===== Profil operator/admin ===== */
+.profile-head{display:flex;align-items:center;gap:12px}.profile-head-text{min-width:0}.profile-avatar-large,.profile-avatar-preview,.account-avatar{object-fit:cover;border-radius:50%;background:#e2e8f0;display:block}.profile-avatar-large{width:58px;height:58px;border:1px solid var(--line)}.profile-avatar-preview{width:72px;height:72px;border:1px solid var(--line)}.account-profile-line{display:flex;align-items:center;gap:9px}.account-avatar{width:34px;height:34px;flex:0 0 34px}.account-meta b,.account-meta span{display:block}.account-meta b{font-size:13px}.account-meta span{font-size:11px;color:#64748b}.account-chip{display:flex;align-items:center;gap:7px;max-width:210px;overflow:hidden}.account-chip .chip-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e2e8f0;flex:0 0 28px}.account-chip .chip-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:700px){.profile-head+*{grid-template-columns:1fr!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <div class="overlay" id="biodataOverlay">
@@ -659,8 +662,35 @@
   <div class="modal" style="width:min(850px,96vw)">
     <div class="modal-head"><div class="modal-title">👤 Akun & Hak Akses</div><button class="close" data-close="accountOverlay">✕</button></div>
     <div class="modal-body">
-      <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:#f8fafc;margin-bottom:12px">
-        <b id="accountCurrentEmail">-</b><div class="hint" id="accountCurrentRole">-</div>
+      <div class="profile-card" style="border:1px solid var(--line);border-radius:10px;padding:12px;background:#f8fafc;margin-bottom:12px">
+        <div class="profile-head">
+          <img id="accountCurrentAvatar" class="profile-avatar-large" alt="Foto profil" src="">
+          <div class="profile-head-text">
+            <b id="accountCurrentName">-</b>
+            <div class="hint" id="accountCurrentEmail">-</div>
+            <div class="hint" id="accountCurrentRole">-</div>
+          </div>
+        </div>
+      </div>
+      <div class="letter-panel" style="margin-bottom:12px">
+        <h3 style="margin-top:0">👤 Profil Saya</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+          <label><b>Nama Lengkap</b><input class="input" id="selfFullName" maxlength="120" placeholder="Nama lengkap operator/admin"></label>
+          <div>
+            <b>Foto Profil</b>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
+              <img id="selfAvatarPreview" class="profile-avatar-preview" alt="Pratinjau foto" src="">
+              <div>
+                <input class="input" id="selfAvatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+                <div class="hint" style="margin-top:4px">JPG, PNG, atau WebP • maksimal 2 MB</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-dark" id="btnSaveProfile" type="button">💾 Simpan Profil</button>
+          <button class="btn" id="btnRemoveProfilePhoto" type="button">🗑️ Hapus Foto</button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="letter-panel">
@@ -699,7 +729,7 @@
     <div class="modal-foot"><button class="btn" data-close="accountOverlay">Tutup</button></div>
   </div>
 </div>
-<header class="app-header"><div class="head-row"><div><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div><div class="actions"><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><b id="accountPanelEmail">-</b><span id="accountPanelRole">-</span></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
+<header class="app-header"><div class="head-row"><div><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div><div class="actions"><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🗂️ <span style="flex:1">Data &amp; Database</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnImport">📥 Impor Data</button><button class="menu-item" id="btnExport">📤 Ekspor Excel</button><button class="menu-item" id="btnBackup">🗄️ Backup &amp; Pulihkan Database</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📊 <span style="flex:1">Laporan &amp; Rekap</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnDashboard">📈 Dashboard Kependudukan</button><button class="menu-item" id="btnReport">📊 Laporan Kependudukan</button><button class="menu-item" id="btnAgeReport">👥 Rekap Rentang Umur</button><button class="menu-item" id="btnDp4">🗳️ Rekap DP4</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga / KK</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🏛️ <span style="flex:1">Administrasi Desa</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnLetters">📝 Register Surat Desa</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button><button class="menu-item" id="btnMutationRegister">📋 Register Mutasi Penduduk</button><button class="menu-item" id="btnHistory">📜 Riwayat Perubahan</button><button class="menu-item" id="btnSettings">⚙️ Pengaturan Desa</button></div></div>
@@ -3522,12 +3552,50 @@ async function syncCloudHistory(){
   if(error){console.warn(error);return}
   if(Array.isArray(data))localStorage.setItem(HISTORY_KEY,JSON.stringify(data.map(x=>({at:x.at,type:x.type,NIK:x.nik,name:x.name,kk:x.kk,address:x.address,rt:x.rt,rw:x.rw,detail:x.detail,meta:x.meta||{}}))));
 }
+function profileDisplayName(){
+  const full=String(window.currentProfile?.full_name||'').trim();
+  return full||String(window.currentUser?.email||'-').split('@')[0]||'-';
+}
+function profileRoleLabel(){return String(window.currentProfile?.role||'').toLowerCase()==='admin'?'Administrator':'Operator'}
+function profileAvatarUrl(){return String(window.currentProfile?.avatar_url||'').trim()}
+function setAvatar(el,url){if(!el)return;el.src=url||'';el.style.display=url?'block':'none'}
 function renderAccountUi(){
-  const email=window.currentUser?.email||'-',role=window.currentProfile?.role||'-';
-  $('accountChip').textContent=email.split('@')[0];$('accountPanelEmail').textContent=email;$('accountPanelRole').textContent=role==='admin'?'Administrator':'Operator';$('accountCurrentEmail').textContent=email;$('accountCurrentRole').textContent=role==='admin'?'Administrator — seluruh hak akses':'Operator — hak akses sesuai pilihan administrator';
+  const email=window.currentUser?.email||'-',role=window.currentProfile?.role||'-',name=profileDisplayName(),avatar=profileAvatarUrl(),roleLabel=role==='admin'?'Administrator':'Operator';
+  $('accountPanelName').textContent=name;$('accountPanelEmail').textContent=email;$('accountPanelRole').textContent=roleLabel;$('accountCurrentName').textContent=name;$('accountCurrentEmail').textContent=email;$('accountCurrentRole').textContent=roleLabel+(role==='admin'?' — seluruh hak akses':' — hak akses sesuai pilihan administrator');
+  setAvatar($('accountPanelAvatar'),avatar);setAvatar($('accountCurrentAvatar'),avatar);setAvatar($('selfAvatarPreview'),avatar);
+  $('selfFullName').value=String(window.currentProfile?.full_name||'');
+  const chip=$('accountChip');chip.innerHTML=`<img class="chip-avatar" alt="" src="${esc(avatar)}" style="${avatar?'':'display:none'}"><span class="chip-name">${esc(name)}</span>`;
   const box=$('operatorPermissions');if(box&&!box.children.length){Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account').forEach(([k,label])=>{const checked=DEFAULT_OPERATOR_PERMS.includes(k);box.insertAdjacentHTML('beforeend',`<label class="permission-item"><input type="checkbox" data-perm="${k}" ${checked?'checked':''}> ${label}</label>`)})}
   applyPermissions();
 }
+async function saveOwnProfile(removePhoto=false){
+  const fullName=String($('selfFullName').value||'').trim();
+  if(!fullName)return toast('Nama lengkap wajib diisi');
+  const file=$('selfAvatarFile').files?.[0];
+  if(file&&(file.size>2*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type)))return toast('Foto harus JPG, PNG, atau WebP dan maksimal 2 MB');
+  try{
+    let avatarUrl=profileAvatarUrl();
+    const oldPath=String(window.currentProfile?.avatar_path||'').trim();
+    if(removePhoto){
+      if(oldPath)await window.sb.storage.from('avatars').remove([oldPath]);
+      avatarUrl='';
+    }else if(file){
+      if(oldPath)await window.sb.storage.from('avatars').remove([oldPath]);
+      const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+      const path=`${window.currentUser.id}/profile.${ext}`;
+      const {error:upErr}=await window.sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type,cacheControl:'3600'});
+      if(upErr)throw upErr;
+      avatarUrl=window.sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+      const {data,error}=await window.sb.functions.invoke('manage-profile',{body:{full_name:fullName,avatar_url:avatarUrl,avatar_path:path}});
+      if(error)throw error;if(data?.error)throw new Error(data.error);
+      window.currentProfile={...window.currentProfile,full_name:fullName,avatar_url:avatarUrl,avatar_path:path};renderAccountUi();$('selfAvatarFile').value='';toast('Profil berhasil disimpan');return;
+    }
+    const {data,error}=await window.sb.functions.invoke('manage-profile',{body:{full_name:fullName,avatar_url:avatarUrl,avatar_path:removePhoto?'':oldPath}});
+    if(error)throw error;if(data?.error)throw new Error(data.error);
+    window.currentProfile={...window.currentProfile,full_name:fullName,avatar_url:avatarUrl,avatar_path:removePhoto?'':oldPath};renderAccountUi();$('selfAvatarFile').value='';toast(removePhoto?'Profil disimpan dan foto dihapus':'Profil berhasil disimpan');
+  }catch(e){toast('Gagal menyimpan profil: '+(e.message||e))}
+}
+
 function setOperatorManageVisibility(){
   const admin=isAdmin();
   const panel=$('operatorAdminPanel'),section=$('operatorManageSection');
@@ -3549,9 +3617,9 @@ async function openAccount(){
 }
 async function loadOperatorList(){
   if(!isAdmin())return;
-  const {data,error}=await window.sb.from('profiles').select('id,email,role,permissions,created_at').eq('role','operator').order('created_at',{ascending:false});
+  const {data,error}=await window.sb.from('profiles').select('id,email,role,permissions,full_name,avatar_url,created_at').eq('role','operator').order('created_at',{ascending:false});
   if(error){$('operatorList').innerHTML='<div class="hint" style="padding:10px">Gagal memuat daftar akun: '+esc(error.message)+'</div>';return}
-  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div><b>${esc(x.email||'-')}</b><small>Operator • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID'):''}</small></div><div class="operator-actions"><span class="role-badge">operator</span><button type="button" class="btn-mini edit" data-edit-operator="${esc(x.id)}">✏️ Edit</button><button type="button" class="btn-mini delete" data-delete-operator="${esc(x.id)}" data-email="${esc(x.email||'')}">🗑 Hapus</button></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun operator.</div>';
+  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div style="display:flex;align-items:center;gap:9px">${x.avatar_url?`<img src="${esc(x.avatar_url)}" class="account-avatar" alt="">`:''}<div><b>${esc(x.full_name||x.email||'-')}</b><small>${esc(x.email||'')} • Operator • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID'):''}</small></div></div><div class="operator-actions"><span class="role-badge">operator</span><button type="button" class="btn-mini edit" data-edit-operator="${esc(x.id)}">✏️ Edit</button><button type="button" class="btn-mini delete" data-delete-operator="${esc(x.id)}" data-email="${esc(x.email||'')}">🗑 Hapus</button></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun operator.</div>';
 }
 function openOperatorEdit(profile){
   if(!hasPerm('account'))return;
@@ -3600,6 +3668,8 @@ $('btnLogout').addEventListener('click',async()=>{closeAccountPanel();await wind
 function closeAccountPanel(){document.getElementById('accountPanel')?.classList.remove('open')}
 $('btnAccount').addEventListener('click',e=>{e.stopPropagation();const p=$('accountPanel');p.classList.toggle('open');if(p.classList.contains('open')){const r=$('btnAccount').getBoundingClientRect();p.style.top=(r.bottom+6)+'px';p.style.right=(window.innerWidth-r.right)+'px'}});document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))closeAccountPanel()});
 $('btnAccountSettings').addEventListener('click',()=>{closeAccountPanel();openAccount()});
+$('selfAvatarFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(f){const u=URL.createObjectURL(f);setAvatar($('selfAvatarPreview'),u)}});
+$('btnSaveProfile').addEventListener('click',()=>saveOwnProfile(false));$('btnRemoveProfilePhoto').addEventListener('click',()=>saveOwnProfile(true));
 $('btnSelfChangePassword').addEventListener('click',async()=>{const p=$('selfNewPassword').value,p2=$('selfNewPassword2').value;if(p.length<8||p!==p2)return toast('Password minimal 8 karakter dan harus sama');try{const {error}=await window.sb.auth.updateUser({password:p});if(error)throw error;$('selfNewPassword').value='';$('selfNewPassword2').value='';toast('Password berhasil diubah')}catch(e){toast('Gagal mengubah password: '+e.message)}});
 $('btnCreateOperator').addEventListener('click',async()=>{try{await createOperator()}catch(e){toast('Gagal membuat operator: '+e.message)}});
 document.addEventListener('click',async e=>{
