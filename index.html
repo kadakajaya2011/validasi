@@ -1224,7 +1224,19 @@ async function persist(){
 }
 const HISTORY_KEY='residents-history-v1';
 function getHistory(){try{const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
-function addHistory(type,r,detail='',meta=null){const h=getHistory();const row={at:new Date().toISOString(),type,NIK:r?.NIK||'',name:r?.['NAMA LENGKAP']||'',kk:r?.['NO KK']||'',address:r?.ALAMAT||'',rt:r?.RT||r?.['RT']||'',rw:r?.RW||r?.['RW']||'',jk:r?.JK||'',tanggalLahir:r?.TGL_LHR||'',detail,meta:meta||undefined};if(window.sb&&window.currentUser){window.sb.from('mutation_history').insert({id:crypto.randomUUID(),at:row.at,type:row.type,nik:row.NIK,name:row.name,kk:row.kk,address:row.address,rt:row.rt,rw:row.rw,detail:row.detail,meta:row.meta||{ },created_by:window.currentUser.id}).then(({error})=>{if(error)console.warn('history sync',error)})}h.unshift(row);localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,1000)));const m=historyToMutation(row);if(m){const reg=getMutationRegister();if(!reg.some(x=>x.id===m.id)){reg.unshift(m);localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(reg.slice(0,5000)))}}}
+async function cloudInsertMutationHistory(row){
+  if(!window.sb||!window.currentUser)return;
+  const id=String(row.id||crypto.randomUUID());
+  const payload={id,at:row.at,type:row.type,nik:row.NIK,name:row.name,kk:row.kk,address:row.address,rt:row.rt,rw:row.rw,detail:row.detail,meta:row.meta||{},created_by:window.currentUser.id};
+  const {error}=await window.sb.from('mutation_history').upsert(payload,{onConflict:'id'});
+  if(error)console.warn('history sync',error);
+}
+function addHistory(type,r,detail='',meta=null){
+  const row={id:crypto.randomUUID(),at:new Date().toISOString(),type,NIK:r?.NIK||'',name:r?.['NAMA LENGKAP']||'',kk:r?.['NO KK']||'',address:r?.ALAMAT||'',rt:r?.RT||r?.['RT']||'',rw:r?.RW||r?.['RW']||'',jk:r?.JK||'',tanggalLahir:r?.TGL_LHR||'',detail,meta:meta||undefined};
+  const h=getHistory();h.unshift(row);localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,1000)));
+  cloudInsertMutationHistory(row);
+  const m=historyToMutation(row);if(m){const reg=getMutationRegister();if(!reg.some(x=>x.id===m.id)){reg.unshift(m);localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(reg.slice(0,5000)))}}
+}
 function normalize(r){let x={}; fields.forEach(f=>x[f]=String(r[f]??r[f.toLowerCase()]??'').trim()); x['NO_AKTA_KAWIN']=x['NO_AKTA_KAWIN']||String(r.NO_AKTA_NIKAH??r.NO_AKTA_LAHIR_KAWIN??'').trim(); x['NO_AKTA_CERAI']=x['NO_AKTA_CERAI']||String(r.NO_AKTA_PERCERAIAN??'').trim(); x['TGL_LHR']=x['TGL_LHR']||''; return x}
 function age(d){if(!d)return '';const t=new Date(d),n=new Date();if(isNaN(t))return '';let a=n.getFullYear()-t.getFullYear();if(n.getMonth()<t.getMonth()||(n.getMonth()==t.getMonth()&&n.getDate()<t.getDate()))a--;return a<0?'':a}
 function fmtDate(v){if(!v)return '';const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;m=s.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;const d=new Date(v);if(!isNaN(d))return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();return s}
@@ -2579,6 +2591,47 @@ let selectedLetterPerson=null;
 let letterEditingIndex=-1;
 function getLetterRegister(){try{return JSON.parse(localStorage.getItem(LETTER_KEY)||'[]')}catch(e){return[]}}
 function saveLetterRegister(v){localStorage.setItem(LETTER_KEY,JSON.stringify(v))}
+function normalizeLetterRecord(x){
+  const r=x&&typeof x==='object'?x:{};
+  return {id:String(r.id||crypto.randomUUID()),date:String(r.date||''),number:String(r.number||''),type:String(r.type||''),nik:String(r.nik||''),name:String(r.name||''),kk:String(r.kk||''),purpose:String(r.purpose||''),note:String(r.note||''),extras:r.extras&&typeof r.extras==='object'?r.extras:{},created_by:r.created_by||null,updated_by:r.updated_by||null,created_at:r.created_at||null,updated_at:r.updated_at||null};
+}
+async function syncCloudLetterRegister(){
+  if(!window.sb||!window.currentUser)return getLetterRegister();
+  try{
+    let local=getLetterRegister().map(normalizeLetterRecord);
+    const {data,error}=await window.sb.from('letter_register').select('*').order('date',{ascending:false}).order('created_at',{ascending:false}).limit(5000);
+    if(error)throw error;
+    const byId=new Map();
+    (data||[]).forEach(x=>byId.set(String(x.id),normalizeLetterRecord(x)));
+    // Migrasikan data lokal lama ke cloud agar tidak hilang saat pertama kali sinkron.
+    for(const r of local){
+      const id=String(r.id);
+      if(!byId.has(id)){
+        const payload={...r,created_by:r.created_by||window.currentUser.id,updated_by:window.currentUser.id,created_at:r.created_at||new Date().toISOString(),updated_at:new Date().toISOString()};
+        const {error:upErr}=await window.sb.from('letter_register').upsert(payload,{onConflict:'id'});
+        if(upErr)console.warn('Migrasi register surat gagal',upErr); else byId.set(id,normalizeLetterRecord(payload));
+      }
+    }
+    const merged=[...byId.values()].sort((a,b)=>String(b.date||b.created_at||'').localeCompare(String(a.date||a.created_at||'')));
+    saveLetterRegister(merged);
+    return merged;
+  }catch(e){
+    console.warn('Gagal sinkron Register Surat Desa:',e);
+    return getLetterRegister();
+  }
+}
+async function upsertCloudLetterRecord(rec){
+  if(!window.sb||!window.currentUser)return;
+  const now=new Date().toISOString();
+  const payload=normalizeLetterRecord({...rec,created_by:rec.created_by||window.currentUser.id,updated_by:window.currentUser.id,created_at:rec.created_at||now,updated_at:now});
+  const {error}=await window.sb.from('letter_register').upsert(payload,{onConflict:'id'});
+  if(error)throw error;
+}
+async function deleteCloudLetterRecord(id){
+  if(!window.sb||!window.currentUser)return;
+  const {error}=await window.sb.from('letter_register').delete().eq('id',String(id));
+  if(error)throw error;
+}
 function todayISO(){return new Date().toISOString().slice(0,10)}
 function letterPersonByNik(){
   const nik=$('letterNik').value.trim();
@@ -2816,14 +2869,14 @@ function buildLetterHtml(){
   return `<div class="letter-paper"><div class="letter-head">${logo}<div class="head-text"><div class="gov">PEMERINTAH DAERAH KABUPATEN ${esc(kab).toUpperCase()}</div><div class="district">KECAMATAN ${esc(kec).toUpperCase()}</div><div class="village">DESA ${esc(desa).toUpperCase()}</div>${alamatKantor?`<div class="address">${esc(alamatKantor)}</div>`:''}</div></div><div class="letter-title">${letterTypeTitle(type)}</div><div class="letter-number">Nomor : ${esc(num)}</div><div class="letter-body"><p>Yang bertanda tangan di bawah ini, Kepala Desa ${esc(desa)} Kecamatan ${esc(kec)} Kabupaten ${esc(kab)}, menerangkan dengan sebenarnya bahwa:</p>${biodata}<p>${statement}</p>${extraBlock}<p>Demikian keterangan ini dibuat untuk dipergunakan sebagaimana mestinya.</p></div>${signature}</div>`;
 }
 function renderLetter(){ $('letterPreview').innerHTML=buildLetterHtml(); renderLetterRegister(); }
-function renderLetterRegister(){
+async function renderLetterRegister(){
   const rows=getLetterRegister();
   $('letterRegister').innerHTML=rows.length?'<div style="font-size:16px;font-weight:800;margin-bottom:10px">Register Surat Tersimpan</div><div style="overflow:auto"><table><thead><tr><th>No</th><th>Tanggal</th><th>Nomor</th><th>Jenis</th><th>NIK</th><th>Nama</th><th>KK</th><th>Aksi</th></tr></thead><tbody>'+rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(letterIndoDate(x.date))}</td><td>${esc(x.number)}</td><td>${esc(x.type)}</td><td>${esc(x.nik)}</td><td>${esc(x.name)}</td><td>${esc(x.kk||'')}</td><td><button class="btn-mini edit" data-letter-load="${i}">Muat</button> <button class="btn-mini delete" data-letter-del="${i}">Hapus</button></td></tr>`).join('')+'</tbody></table></div>':'<div class="empty" style="padding:35px 10px">Belum ada surat yang tersimpan dalam Register Surat Desa.</div>';
 }
 function resetLetterForm(){
   selectedLetterPerson=null;letterEditingIndex=-1;$('letterNik').value='';$('letterNumber').value='';$('letterDate').value=todayISO();$('letterPurpose').value='';$('letterNote').value='';$('letterType').value='Domisili';updateLetterTypeOptions();$('letterExtraFields').innerHTML=extraFieldsHtml('Domisili');$('letterPersonPreview').innerHTML='';renderLetter();
 }
-function openLetters(nik=''){closeMenu();resetLetterForm();$('letterOverlay').classList.add('open');const body=$('letterOverlay').querySelector('.modal-body');if(body)body.scrollTop=0;const v=(typeof nik==='string')?nik.trim():'';if(/^\d{16}$/.test(v)){$('letterNik').value=v;showLetterPerson();renderLetter()}}
+async function openLetters(nik=''){closeMenu();await syncCloudLetterRegister();resetLetterForm();$('letterOverlay').classList.add('open');const body=$('letterOverlay').querySelector('.modal-body');if(body)body.scrollTop=0;const v=(typeof nik==='string')?nik.trim():'';if(/^\d{16}$/.test(v)){$('letterNik').value=v;showLetterPerson();renderLetter()}}
 $('tbody').addEventListener('click',e=>{
   const nikBtn=e.target.closest('[data-nik]');
   if(nikBtn){
@@ -2886,7 +2939,7 @@ $('btnRestoreBackup').addEventListener('click',async()=>{
   $('backupOverlay').classList.remove('open');
   toast('Database berhasil dipulihkan dari cadangan');
 });
-$('letterRegister').addEventListener('click',e=>{
+$('letterRegister').addEventListener('click',async e=>{
   const load=e.target.closest('[data-letter-load]'),del=e.target.closest('[data-letter-del]'),rows=getLetterRegister();
   if(load){
     const i=Number(load.dataset.letterLoad),x=rows[i];
@@ -2915,11 +2968,11 @@ $('letterRegister').addEventListener('click',e=>{
     toast('Surat dimuat dari register');
     return;
   }
-  if(del){const i=Number(del.dataset.letterDel);if(confirm('Hapus surat dari Register Surat Desa?')){rows.splice(i,1);saveLetterRegister(rows);renderLetterRegister();toast('Surat dihapus dari register')}}
+  if(del){const i=Number(del.dataset.letterDel);if(confirm('Hapus surat dari Register Surat Desa?')){const rec=rows[i];try{await deleteCloudLetterRecord(rec?.id);rows.splice(i,1);saveLetterRegister(rows);await renderLetterRegister();toast('Surat dihapus dari register dan disinkronkan')}catch(e){toast('Gagal menghapus surat dari server: '+(e.message||e))}}}
 });
 $('btnExportLetterRegister').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(getLetterRegister(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Register_Surat_Desa.json';a.click();URL.revokeObjectURL(a.href)});
 $('btnImportLetterRegister').addEventListener('click',()=>$('letterRegisterFile').click());
-$('letterRegisterFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const v=JSON.parse(rd.result);if(!Array.isArray(v))throw 0;saveLetterRegister(v);renderLetterRegister();toast('Register surat berhasil diimpor')}catch(_){toast('File register tidak valid')}};rd.readAsText(f);e.target.value=''});
+$('letterRegisterFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const v=JSON.parse(rd.result);if(!Array.isArray(v))throw new Error('Format bukan array');const rows=v.map(normalizeLetterRecord);for(const rec of rows)await upsertCloudLetterRecord(rec);saveLetterRegister(rows);await syncCloudLetterRegister();await renderLetterRegister();toast('Register surat berhasil diimpor dan disinkronkan')}catch(err){toast('File register tidak valid atau gagal disinkronkan: '+(err.message||err))}};rd.readAsText(f);e.target.value='' });
 
 $('letterType').addEventListener('change',()=>{
   const type=$('letterType').value;
@@ -2994,14 +3047,18 @@ $('btnPrintLetter').addEventListener('click',()=>{
   const name=selectedLetterPerson['NAMA LENGKAP']||selectedLetterPerson.NIK||'Penduduk';
   printWithFilename(letterTypeTitle($('letterType').value)+' - '+name,()=>window.print(),()=>{document.body.classList.remove('print-letter');clearPrintOrientation()});
 });
-$('btnSaveLetter').addEventListener('click',()=>{
+$('btnSaveLetter').addEventListener('click',async()=>{
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
   const rows=getLetterRegister(),r=selectedLetterPerson;
-  const rec={id:letterEditingIndex>=0&&rows[letterEditingIndex]?.id?rows[letterEditingIndex].id:Date.now(),date:$('letterDate').value||todayISO(),number:$('letterNumber').value.trim(),type:$('letterType').value,nik:String(r.NIK||''),name:r['NAMA LENGKAP']||'',kk:r['NO KK']||'',purpose:$('letterPurpose').value.trim(),note:$('letterNote').value.trim(),extras:collectLetterExtras()};
+  const old=letterEditingIndex>=0?rows[letterEditingIndex]:null;
+  const rec=normalizeLetterRecord({id:old?.id||crypto.randomUUID(),date:$('letterDate').value||todayISO(),number:$('letterNumber').value.trim(),type:$('letterType').value,nik:String(r.NIK||''),name:r['NAMA LENGKAP']||'',kk:r['NO KK']||'',purpose:$('letterPurpose').value.trim(),note:$('letterNote').value.trim(),extras:collectLetterExtras(),created_by:old?.created_by||window.currentUser?.id||null,created_at:old?.created_at||new Date().toISOString()});
   if(!rec.number){toast('Isi Nomor Surat terlebih dahulu');$('letterNumber').focus();return}
-  if(letterEditingIndex>=0&&rows[letterEditingIndex])rows[letterEditingIndex]=rec;else rows.unshift(rec);
-  saveLetterRegister(rows);letterEditingIndex=letterEditingIndex>=0?letterEditingIndex:0;renderLetterRegister();toast('Surat berhasil disimpan ke Register Surat Desa');
+  try{
+    await upsertCloudLetterRecord(rec);
+    if(letterEditingIndex>=0&&rows[letterEditingIndex])rows[letterEditingIndex]=rec;else rows.unshift(rec);
+    saveLetterRegister(rows);letterEditingIndex=letterEditingIndex>=0?letterEditingIndex:0;await renderLetterRegister();toast('Surat berhasil disimpan dan disinkronkan ke Register Surat Desa');
+  }catch(e){toast('Gagal menyimpan Register Surat ke server: '+(e.message||e));}
 });
 
 
@@ -3538,7 +3595,7 @@ $('mutationSearch')?.addEventListener('input',renderMutationRegister);
 $('mutationMonth')?.addEventListener('change',renderMutationRegister);
 $('mutationYear')?.addEventListener('change',renderMutationRegister);
 $('btnPrintMutationRegister')?.addEventListener('click',printMutationRegister);
-$('btnMutationRegister')?.addEventListener('click',()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Register Mutasi Penduduk');closeMenu();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
+$('btnMutationRegister')?.addEventListener('click',async()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Register Mutasi Penduduk');closeMenu();await syncCloudHistory();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
 function renderHistory(){
   const h=getHistory();
   const type=($('historyTypeFilter')?.value||'').trim();
@@ -3558,7 +3615,7 @@ function renderHistory(){
   }).join(''):'<div class="hint">Tidak ada riwayat yang sesuai filter.</div>';
   document.querySelectorAll('[data-print-move-group]').forEach(btn=>btn.addEventListener('click',()=>openMoveApplication(btn.dataset.printMoveGroup)));
 }
-$('btnHistory').addEventListener('click',()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
+$('btnHistory').addEventListener('click',async()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();await syncCloudHistory();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
 $('btnClearHistory').addEventListener('click',()=>{if(confirm('Bersihkan seluruh riwayat perubahan?')){localStorage.removeItem(HISTORY_KEY);renderHistory();toast('Riwayat dibersihkan')}});
 
 function renderReport(){
@@ -3586,6 +3643,7 @@ function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clea
 async function initApp(){
   updateAppTitle();
   data=await loadResidents();
+  await syncCloudLetterRegister();
   fillFilters();
   render();
   updatePinStatusHint();
@@ -3735,9 +3793,23 @@ async function loadProfile(){
 }
 async function syncCloudHistory(){
   if(!window.sb||!window.currentUser)return;
-  const {data,error}=await window.sb.from('mutation_history').select('at,type,nik,name,kk,address,rt,rw,detail,meta').order('at',{ascending:false}).limit(5000);
-  if(error){console.warn(error);return}
-  if(Array.isArray(data))localStorage.setItem(HISTORY_KEY,JSON.stringify(data.map(x=>({at:x.at,type:x.type,NIK:x.nik,name:x.name,kk:x.kk,address:x.address,rt:x.rt,rw:x.rw,detail:x.detail,meta:x.meta||{}}))));
+  const {data,error}=await window.sb.from('mutation_history').select('id,at,type,nik,name,kk,address,rt,rw,detail,meta,created_by').order('at',{ascending:false}).limit(5000);
+  if(error){
+    console.warn('Gagal mengambil riwayat mutasi bersama dari cloud:',error);
+    return;
+  }
+  if(!Array.isArray(data))return;
+  // Register Mutasi harus memakai satu sumber data bersama. Jangan mengganti
+  // riwayat lokal dengan hanya data milik sesi/akun yang sedang login.
+  const local=getHistory();
+  const byId=new Map();
+  local.forEach(x=>{if(x?.id)byId.set(String(x.id),x)});
+  data.forEach(x=>byId.set(String(x.id||`${x.at}|${x.type}|${x.nik||''}`),{
+    id:x.id||crypto.randomUUID(),at:x.at,type:x.type,NIK:x.nik||'',name:x.name||'',kk:x.kk||'',address:x.address||'',rt:x.rt||'',rw:x.rw||'',detail:x.detail||'',meta:x.meta||{}
+  }));
+  const merged=[...byId.values()].sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))).slice(0,1000);
+  localStorage.setItem(HISTORY_KEY,JSON.stringify(merged));
+  syncMutationRegister();
 }
 function profileDisplayName(){
   const full=String(window.currentProfile?.full_name||'').trim();
