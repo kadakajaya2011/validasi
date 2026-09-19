@@ -1205,7 +1205,7 @@ function updateSortIndicators(){document.querySelectorAll('th[data-sort]').forEa
 function setSort(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=1}page=1;render()}
 function unique(f){return [...new Set(data.map(r=>r[f]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'))}
 function fillFilters(){[['RT','fRT'],['RW','fRW'],['JK','fJK'],['SHDRT','fSH'],['STATUS','fStatus'],['AGAMA','fAgama'],['PENDIDIKAN','fPendidikan'],['PEKERJAAN','fPekerjaan']].forEach(([f,id])=>{const el=$(id),val=el.value;const label=el.options[0].textContent;el.innerHTML='';el.add(new Option(label,''));unique(f).forEach(v=>el.add(new Option(v,v)));el.value=val})}
-function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit" data-edit="${idx}">✎ Edit</button><button class="btn-mini delete" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators()}
+function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit ${hasPerm('edit_data')?'':'auth-hidden'}" data-edit="${idx}">✎ Edit</button><button class="btn-mini delete ${hasPerm('delete_data')?'':'auth-hidden'}" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators();applyPermissions()}
 function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.top=(r.bottom+6)+'px';menuPanel.style.right=(window.innerWidth-r.right)+'px'}
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
@@ -2764,9 +2764,9 @@ $('tbody').addEventListener('click',e=>{
   const kkBtn=e.target.closest('[data-kk]');
   if(kkBtn){openF101(kkBtn.dataset.kk||'');return}
   const editBtn=e.target.closest('[data-edit]');
-  if(editBtn){openEdit(Number(editBtn.dataset.edit));return}
+  if(editBtn){if(!hasPerm('edit_data'))return;openEdit(Number(editBtn.dataset.edit));return}
   const delBtn=e.target.closest('[data-delete]');
-  if(delBtn){openDelete(Number(delBtn.dataset.delete));return}
+  if(delBtn){if(!hasPerm('delete_data'))return;openDelete(Number(delBtn.dataset.delete));return}
 });
 $('btnLetters').addEventListener('click',openLetters);
 $('btnSettings').addEventListener('click',openSettings);
@@ -3466,7 +3466,7 @@ const PERMISSION_DEFS={
 const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','reports','letters','mutation'];
 window.currentUser=null;window.currentProfile=null;
 function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
-function hasPerm(p){return isAdmin()||!!window.currentProfile?.permissions?.[p]}
+function hasPerm(p){const v=window.currentProfile?.permissions?.[p];return isAdmin()||v===true||v===1||String(v).toLowerCase()==='true'}
 function showLoginError(msg){const e=$('loginError');e.textContent=msg||'';e.classList.toggle('show',!!msg)}
 function authTitleFromSettings(){const desa=String(desaSettings?.village||'').trim().replace(/^desa\s+/i,'');const title='Aplikasi Kependudukan Desa'+(desa?' '+desa:'');$('authTitle').textContent=title;$('appTitle').textContent=title;document.title=title;$('authLogo').src=desaSettings?.logo||'';$('authLogo').style.display=desaSettings?.logo?'block':'none'}
 function applyPermissions(){
