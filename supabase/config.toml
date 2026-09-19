@@ -1,0 +1,7 @@
+# Supabase CLI configuration.
+# Jalankan `supabase link --project-ref PROJECT_REF` sebelum deployment.
+# Project ID akan disimpan oleh Supabase CLI setelah proses link.
+# File ini sengaja tidak menyimpan service_role key.
+
+[functions.create-operator]
+verify_jwt = false
