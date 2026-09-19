@@ -3411,11 +3411,14 @@ function renderMutationRegister(){
   renderMutationRecapPanel();
 }
 function mutationPrintIdentityHtml(){
-  const village=String(desaSettings?.village||'').trim()||'-';
-  const today=letterIndoDate(new Date().toISOString().slice(0,10));
+  const ds=desaSettings||{};
+  const village=String(ds.village||'').trim().replace(/^desa\s+/i,'')||'-';
+  const district=String(ds.district||'').trim().replace(/^kecamatan\s+/i,'')||'-';
+  const regency=String(ds.regency||'').trim().replace(/^(kabupaten|kab\.|kota)\s+/i,'')||'-';
   return `<div class="mutation-print-identity">
     <div class="mutation-print-village">DESA ${esc(village).toUpperCase()}</div>
-    <div class="mutation-print-date">Tanggal Cetak: ${esc(today)}</div>
+    <div class="mutation-print-location">KECAMATAN ${esc(district).toUpperCase()}</div>
+    <div class="mutation-print-location">KABUPATEN ${esc(regency).toUpperCase()}</div>
   </div>`;
 }
 function mutationPrintSignaturesHtml(){
@@ -3449,7 +3452,7 @@ function mutationPrintStyles(){
     .mutation-print-paper h2{margin:2px 0 7px;text-align:center;font-size:11pt;font-weight:700}
     .mutation-print-identity{text-align:center;margin:0 0 9px}
     .mutation-print-village{font-size:11pt;font-weight:800;text-transform:uppercase}
-    .mutation-print-date{font-size:9pt;margin-top:2px}
+    .mutation-print-location{font-size:9pt;font-weight:700;margin-top:1px}
     .print-meta{margin:0 0 7px;text-align:left}
     .mutation-recap-section{width:100%;margin:0!important;padding:0!important}
     .mutation-recap-heading{display:none!important}
