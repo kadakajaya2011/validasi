@@ -785,6 +785,20 @@
     <div class="modal-foot"><button class="btn" data-close="changeKKOverlay">Batal</button><button class="btn btn-dark" id="btnConfirmChangeKK">Ubah No. KK</button></div>
   </div>
 </div>
+<div class="overlay" id="entryBioOverlay">
+  <div class="modal" style="width:min(900px,96vw)">
+    <div class="modal-head"><div class="modal-title">Entry Bio Penduduk</div><button class="close" data-close="entryBioOverlay">✕</button></div>
+    <div class="modal-body">
+      <div id="entryBioHeadInfo" class="hint" style="margin-bottom:12px"></div>
+      <div id="entryBioInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <label><b>Alasan Penambahan</b><select class="select" id="entryBioReason"><option value="">-- pilih alasan --</option><option value="Kelahiran">Kelahiran</option><option value="Kedatangan">Kedatangan</option><option value="Tidak Terdata">Tidak Terdata</option></select></label>
+        <label><b>Tanggal Penambahan</b><input class="input" id="entryBioDate" type="date"></label>
+      </div>
+      <div id="entryBioFormBody"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="entryBioOverlay">Batal</button><button class="btn btn-dark" id="btnSaveEntryBio">Simpan Entry Bio</button></div>
+  </div>
+</div>
 <div class="overlay" id="splitKKOverlay">
   <div class="modal" style="width:min(760px,96vw)">
     <div class="modal-head"><div class="modal-title">Pisah KK — 1 Orang</div><button class="close" data-close="splitKKOverlay">✕</button></div>
@@ -1291,7 +1305,7 @@ function updateSortIndicators(){document.querySelectorAll('th[data-sort]').forEa
 function setSort(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=1}page=1;render()}
 function unique(f){return [...new Set(data.map(r=>r[f]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'))}
 function fillFilters(){[['RT','fRT'],['RW','fRW'],['JK','fJK'],['SHDRT','fSH'],['STATUS','fStatus'],['AGAMA','fAgama'],['PENDIDIKAN','fPendidikan'],['PEKERJAAN','fPekerjaan']].forEach(([f,id])=>{const el=$(id),val=el.value;const label=el.options[0].textContent;el.innerHTML='';el.add(new Option(label,''));unique(f).forEach(v=>el.add(new Option(v,v)));el.value=val})}
-function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).filter(f=>!HIDDEN_IN_RESIDENT_LIST.includes(f)).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit ${hasPerm('edit_data')?'':'auth-hidden'}" data-edit="${idx}">✎ Edit</button><button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-split-kk="${esc(r.NIK||'')}">↗ Pisah KK</button><button class="btn-mini delete ${hasPerm('delete_data')?'':'auth-hidden'}" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators();applyPermissions()}
+function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).filter(f=>!HIDDEN_IN_RESIDENT_LIST.includes(f)).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit ${hasPerm('edit_data')?'':'auth-hidden'}" data-edit="${idx}">✎ Edit</button>${isHead(r)?`<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-entry-bio="${esc(r.NIK||'')}">➕ Entry Bio</button>`:''}<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-split-kk="${esc(r.NIK||'')}">↗ Pisah KK</button><button class="btn-mini delete ${hasPerm('delete_data')?'':'auth-hidden'}" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators();applyPermissions()}
 function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.top=(r.bottom+6)+'px';menuPanel.style.right=(window.innerWidth-r.right)+'px'}
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
@@ -2944,6 +2958,85 @@ function exportFamilyExcel(){
 $('btnExportFamily').addEventListener('click',exportFamilyExcel);
 $('familySearch').addEventListener('input',renderFamily);
 
+/* ===== Entry Bio dari Kepala Keluarga ===== */
+let entryBioHeadNik='';
+function entryBioHead(){return data.find(r=>String(r.NIK||'').trim()===String(entryBioHeadNik||'').trim())||null}
+function entryBioMembers(){const h=entryBioHead();return h?familyMembersByKK(String(h['NO KK']||'').trim()):[]}
+function entryBioSetValue(field,value){const el=$('entry_'+field.replace(/[^A-Z0-9]/gi,'_'));if(el)el.value=value??''}
+function entryBioRefreshParents(force=true){
+  const head=entryBioHead(); if(!head)return;
+  const rel=$('entry_SHDRT')?.value;
+  if(rel!=='Anak')return;
+  const members=entryBioMembers();
+  const wife=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='ISTRI');
+  if(force||!String($('entry_NAMA_LGKP_AYAH')?.value||'').trim())entryBioSetValue('NAMA_LGKP_AYAH',head['NAMA LENGKAP']||'');
+  if(force||!String($('entry_NAMA_LGKP_IBU')?.value||'').trim())entryBioSetValue('NAMA_LGKP_IBU',wife?.['NAMA LENGKAP']||'');
+}
+function buildEntryBioForm(head){
+  const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];
+  const editableFields=['NIK','NAMA LENGKAP','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','NO_AKTA_KAWIN','TGL_NIKAH','NO_AKTA_CERAI','TGL_CERAI','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH'];
+  let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  editableFields.forEach(f=>{
+    const id='entry_'+f.replace(/[^A-Z0-9]/gi,'_');
+    const val=f==='GD'?'Tidak Tahu':f==='AGAMA'?'Islam':'';
+    const label=f==='NO_AKTA_KAWIN'?'No. Akta Nikah':f==='TGL_NIKAH'?'Tgl Kawin':f==='NO_AKTA_CERAI'?'No. Akta Cerai':f==='TGL_CERAI'?'Tgl Cerai':f;
+    if(select.includes(f))h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`;
+    else h+=`<label><b>${label}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`;
+  });
+  h+=`<label><b>NO KK</b><input class="input" id="entry_NO_KK" value="${esc(head['NO KK']||'')}" readonly></label>`;
+  h+=`<label><b>ALAMAT</b><input class="input" id="entry_ALAMAT" value="${esc(head.ALAMAT||'')}" readonly></label>`;
+  h+=`<label><b>RT</b><input class="input" id="entry_RT" value="${esc(head.RT||'')}" readonly></label>`;
+  h+=`<label><b>RW</b><input class="input" id="entry_RW" value="${esc(head.RW||'')}" readonly></label>`;
+  h+='</div>';
+  $('entryBioFormBody').innerHTML=h;
+  $('entry_SHDRT').addEventListener('change',()=>entryBioRefreshParents(true));
+}
+function openEntryBio(nik){
+  if(!hasPerm('edit_data'))return toast('Anda tidak memiliki hak akses untuk Entry Bio');
+  const head=data.find(r=>String(r.NIK||'').trim()===String(nik||'').trim());
+  if(!head)return toast('Kepala Keluarga tidak ditemukan');
+  if(!isHead(head))return toast('Entry Bio hanya dapat dilakukan melalui Kepala Keluarga');
+  entryBioHeadNik=String(head.NIK||'').trim();
+  $('entryBioHeadInfo').innerHTML=`Kepala Keluarga: <b>${esc(head['NAMA LENGKAP']||'-')}</b> &nbsp;•&nbsp; No. KK: <b>${esc(head['NO KK']||'-')}</b>`;
+  $('entryBioReason').value='';$('entryBioDate').value=todayISO();
+  buildEntryBioForm(head);
+  $('entry_NAMA_LGKP_AYAH').value=head['NAMA LENGKAP']||'';
+  const wife=entryBioMembers().find(r=>String(r.SHDRT||'').trim().toUpperCase()==='ISTRI');
+  $('entry_NAMA_LGKP_IBU').value=wife?.['NAMA LENGKAP']||'';
+  $('entryBioOverlay').classList.add('open');
+}
+$('tbody').addEventListener('click',e=>{
+  const b=e.target.closest('[data-entry-bio]');
+  if(b){if(!hasPerm('edit_data'))return;openEntryBio(b.dataset.entryBio||'');return}
+});
+$('btnSaveEntryBio').addEventListener('click',()=>{
+  const head=entryBioHead(); if(!head)return toast('Kepala Keluarga tidak ditemukan');
+  const reason=$('entryBioReason').value, date=$('entryBioDate').value;
+  if(!reason)return toast('Alasan Penambahan wajib dipilih');
+  if(!date)return toast('Tanggal Penambahan wajib diisi');
+  const r={};
+  const entryFields=['NIK','NAMA LENGKAP','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','NO_AKTA_KAWIN','TGL_NIKAH','NO_AKTA_CERAI','TGL_CERAI','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','NO KK','ALAMAT','RT','RW'];
+  entryFields.forEach(f=>{const el=$('entry_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?String(el.value||'').trim():''});
+  if(!r.NIK)return toast('NIK wajib diisi');
+  if(!isValidNik(r.NIK))return toast('NIK harus terdiri dari 16 digit angka');
+  if(data.some(x=>String(x.NIK||'').trim()===r.NIK))return toast('NIK sudah ada di database');
+  if(!r['NAMA LENGKAP'])return toast('Nama Lengkap wajib diisi');
+  if(!r.TGL_LHR)return toast('Tanggal Lahir wajib diisi');
+  if(!r.JK)return toast('Jenis Kelamin wajib dipilih');
+  if(!r.SHDRT)return toast('Hubungan Keluarga wajib dipilih');
+  r['NO KK']=String(head['NO KK']||'').trim();
+  r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
+  if(r.SHDRT==='Anak')entryBioRefreshParents(false);
+  // Pastikan nilai ayah/ibu yang bisa diedit tetap berasal dari form terakhir.
+  r.NAMA_LGKP_AYAH=String($('entry_NAMA_LGKP_AYAH')?.value||'').trim();
+  r.NAMA_LGKP_IBU=String($('entry_NAMA_LGKP_IBU')?.value||'').trim();
+  const kkCheck=validateFamilyCardRecord(r,-1);
+  if(!kkCheck.ok)return toast(kkCheck.message);
+  data.push(r);
+  addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+date,{kategori:'PENAMBAHAN',alasan:reason,tanggal:date,tanggalLahir:r.TGL_LHR||'',asal:'',keterangan:'Entry Bio'});
+  persist();fillFilters();render();$('entryBioOverlay').classList.remove('open');toast('Entry Bio berhasil disimpan');
+});
+
 /* ===== Pisah KK — satu orang per proses ===== */
 let splitKKNik='';
 function splitKKSelected(){return data.find(r=>String(r.NIK||'').trim()===String(splitKKNik).trim())||null}
@@ -3752,7 +3845,6 @@ function historyToMutation(h){
     jenis='Penambahan';
     const parts=[];
     if(meta.alasan)parts.push(`Alasan: ${meta.alasan}`);
-    if(meta.tanggal)parts.push(`Tanggal Penambahan: ${fmtDate(meta.tanggal)}`);
     if(meta.keterangan)parts.push(`Keterangan: ${meta.keterangan}`);
     keterangan=parts.join(' | ')||h.detail||'-';
   }
