@@ -965,7 +965,7 @@
     <div class="modal-body">
       <div class="mutation-toolbar">
         <div class="mutation-filters">
-          <label><b>Jenis Mutasi</b><select class="select" id="mutationTypeFilter"><option value="">Semua Mutasi</option><option value="Lahir">Lahir</option><option value="Mati">Mati</option><option value="Pindah">Pindah</option><option value="Datang">Datang</option><option value="Penghapusan">Penghapusan</option></select></label>
+          <label><b>Jenis Mutasi</b><select class="select" id="mutationTypeFilter"><option value="">Semua Mutasi</option><option value="Lahir">Lahir</option><option value="Mati">Mati</option><option value="Pindah">Pindah</option><option value="Datang">Datang</option><option value="Penambahan">Penambahan</option><option value="Penghapusan">Penghapusan</option></select></label>
           <label><b>Dari Tanggal</b><input class="input" id="mutationDateFrom" type="date"></label>
           <label><b>Sampai Tanggal</b><input class="input" id="mutationDateTo" type="date"></label>
           <label class="mutation-search"><b>Cari NIK / Nama / KK</b><input class="input" id="mutationSearch" placeholder="Ketik NIK, nama atau No KK"></label>
@@ -973,7 +973,7 @@
         </div>
       </div>
       <div id="mutationSummary"></div>
-      <div class="table-card" style="margin-top:10px"><div class="table-scroll" style="max-height:55vh"><table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody id="mutationBody"></tbody></table></div><div class="footer-bar"><span id="mutationInfo"></span></div></div>
+      <div id="mutationTables" style="margin-top:10px"></div><div class="footer-bar"><span id="mutationInfo"></span></div>
       <div class="mutation-recap-panel" style="margin-top:12px"><div style="display:flex;gap:8px;align-items:end;justify-content:space-between;flex-wrap:wrap"><div><div style="font-size:16px;font-weight:800">Rekap Mutasi</div><div class="hint">Rekap bulanan dan tahunan dipisahkan. Rekap tahunan harus memilih tahun terlebih dahulu.</div></div><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><label style="width:190px"><b>Bulan Rekap</b><input class="input" id="mutationMonth" type="month"></label><label style="width:160px"><b>Tahun Rekap</b><select class="select" id="mutationYear"><option value="">-- Pilih Tahun --</option></select></label></div></div><div id="mutationRecapPanel" style="margin-top:10px"></div></div>
     </div>
     <div class="modal-foot"><button class="btn" data-close="mutationRegisterOverlay">Tutup</button></div>
@@ -3254,6 +3254,16 @@ function historyToMutation(h){
     jenis='Datang';
     keterangan=meta.tanggal?`Tanggal Kedatangan: ${fmtDate(meta.tanggal)}`:'-';
   }
+  else if(h.type==='Data Ditambahkan'&&meta.kategori==='PENAMBAHAN'){
+    // Penambahan mencakup penambahan manual selain Kelahiran dan Kedatangan.
+    // Tetap dipisahkan sebagai register tersendiri.
+    jenis='Penambahan';
+    const parts=[];
+    if(meta.alasan)parts.push(`Alasan: ${meta.alasan}`);
+    if(meta.tanggal)parts.push(`Tanggal Penambahan: ${fmtDate(meta.tanggal)}`);
+    if(meta.keterangan)parts.push(`Keterangan: ${meta.keterangan}`);
+    keterangan=parts.join(' | ')||h.detail||'-';
+  }
   else if(h.type==='Data Dihapus'&&meta.kategori==='PENGHAPUSAN'){
     jenis='Penghapusan';
   }
@@ -3392,7 +3402,7 @@ function mutationGender(x){
   return genderFromNik(latestMutationNik(x));
 }
 function mutationGenderCounts(rows,types=['Lahir','Mati','Pindah','Datang','Penghapusan']){const out=Object.fromEntries(types.map(t=>[t,{l:0,p:0,j:0}]));rows.forEach(x=>{if(!out[x.jenis])return;const g=mutationGender(x);if(g==='l')out[x.jenis].l++;else if(g==='p')out[x.jenis].p++;out[x.jenis].j++;});return out}
-function monthMutationCounts(key){const types=['Lahir','Mati','Pindah','Datang','Penghapusan'],rows=syncMutationRegister().filter(x=>mutationDateValue(x).slice(0,7)===key),counts=mutationGenderCounts(rows,types);return {types,rows,counts,total:rows.length}}
+function monthMutationCounts(key){const types=['Lahir','Mati','Pindah','Datang','Penambahan','Penghapusan'],rows=syncMutationRegister().filter(x=>mutationDateValue(x).slice(0,7)===key),counts=mutationGenderCounts(rows,types);return {types,rows,counts,total:rows.length}}
 function populationGenderValue(r){
   const raw=String(r?.JK??r?.jk??'').trim().toLowerCase();
   if(raw==='l'||raw==='1'||raw==='lk'||raw==='laki'||raw==='laki-laki'||raw==='laki laki'||raw==='pria'||raw==='male')return 'l';
@@ -3456,7 +3466,7 @@ function renderMutationRecapPanel(){
   $('btnPrintMutationAnnual')?.addEventListener('click',printMutationAnnualRecap);
 }
 function mutationSummaryHtml(rows){
-  const types=['Lahir','Mati','Pindah','Datang','Penghapusan'];
+  const types=['Lahir','Mati','Pindah','Datang','Penambahan','Penghapusan'];
   const counts=Object.fromEntries(types.map(t=>[t,rows.filter(x=>x.jenis===t).length]));
   return '<div class="mutation-summary">'+types.map(t=>`<div class="mutation-stat"><span>${t}</span><b>${counts[t]}</b></div>`).join('')+`<div class="mutation-stat"><span>Total</span><b>${rows.length}</b></div></div>`;
 }
@@ -3471,17 +3481,23 @@ function fillMutationYearOptions(){
   if([...years].includes(current))el.value=current;
 }
 
+function mutationRegisterTableHtml(title,rows){
+  const body=rows.length?rows.map((x,i)=>{
+    const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';
+    const latestNik=latestMutationNik(x);
+    const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
+    return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
+  }).join(''):`<tr><td colspan="8" class="empty">Tidak ada data ${esc(title.toLowerCase())} yang sesuai.</td></tr>`;
+  return `<section class="mutation-register-section"><div class="mutation-register-title"><b>Register ${esc(title)}</b><span>${rows.length} data</span></div><div class="table-card"><div class="table-scroll" style="max-height:42vh"><table><thead><tr><th>No</th><th>Tanggal</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
+}
 function renderMutationRegister(){
   const rows=filteredMutations();
-  const body=$('mutationBody');
-  if(body){
-    body.innerHTML=rows.length?rows.map((x,i)=>{
-      const jk=mutationGender(x)==='l'?'Laki-laki':mutationGender(x)==='p'?'Perempuan':'-';
-      const latestNik=latestMutationNik(x);
-      const cls=String(x.jenis||'').toLowerCase().replace(/[^a-z]+/g,'');
-      const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
-      return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td><span class="mutation-type ${cls}">${esc(x.jenis||'-')}</span></td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
-    }).join(''):'<tr><td colspan="8" class="empty">Tidak ada data mutasi yang sesuai.</td></tr>';
+  const types=['Lahir','Mati','Pindah','Datang','Penambahan','Penghapusan'];
+  const container=$('mutationTables');
+  if(container){
+    const selected=$('mutationTypeFilter')?.value||'';
+    const visible=selected?types.filter(t=>t===selected):types;
+    container.innerHTML=visible.map(t=>mutationRegisterTableHtml(t,rows.filter(x=>x.jenis===t))).join('');
   }
   const info=$('mutationInfo');
   if(info) info.textContent=`Menampilkan ${rows.length} data mutasi.`;
@@ -3548,6 +3564,7 @@ function mutationPrintStyles(){
     .mutation-population-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:7mm;margin-top:6mm!important}
     .mutation-population-grid>div{min-width:0}
     .mutation-population-grid table{font-size:8.5pt}
+    .mutation-register-section{margin-bottom:12px}.mutation-register-title{display:flex;justify-content:space-between;align-items:center;font-size:11pt;margin:0 0 5px;padding:6px 8px;border:1px solid #555;background:#e7edf3}.mutation-register-title span{font-size:8.5pt;font-weight:400}.mutation-register-section table{width:100%!important}.mutation-register-print-sections .mutation-register-section{break-inside:avoid;page-break-inside:avoid;margin-bottom:7mm}.mutation-register-print-sections .mutation-register-title{background:#e7edf3!important}.mutation-register-print-sections .table-card{border:0!important}.mutation-register-print-sections .table-scroll{max-height:none!important;overflow:visible!important}.mutation-register-print-sections .mutation-note{white-space:normal}
     .mutation-print-paper>table{margin-top:4px}
     .mutation-print-paper>table th,.mutation-print-paper>table td{text-align:center}
     .mutation-print-paper>table td:nth-child(5),.mutation-print-paper>table td:nth-child(8),.mutation-print-paper>table td:nth-child(9){text-align:left}
@@ -3562,13 +3579,15 @@ function mutationPrintStyles(){
 function printMutationRegister(){
   const rows=filteredMutations();
   const month=$('mutationMonth')?.value||monthKeyNow();
+  const types=['Lahir','Mati','Pindah','Datang','Penambahan','Penghapusan'];
+  const tables=types.map(t=>mutationRegisterTableHtml(t,rows.filter(x=>x.jenis===t)).replace(/<section class="mutation-register-section">/,'<section class="mutation-register-section print-register-section">')).join('');
   const title=`Register Mutasi Penduduk - ${monthLabel(month)}`;
   const html=`<div class="mutation-print-wrap"><div class="mutation-print-paper">
     <h1>REGISTER MUTASI PENDUDUK</h1>
     <h2>${esc(monthLabel(month))}</h2>
     ${mutationPrintIdentityHtml()}
     <div class="print-meta">Jumlah data: <b>${rows.length}</b></div>
-    <table><thead><tr><th>No</th><th>Tanggal</th><th>Jenis Mutasi</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${rows.length?rows.map((x,i)=>{const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';const latestNik=latestMutationNik(x);const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(x.jenis||'-')}</td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td>${esc(x.detail||'-')}</td></tr>`}).join(''):`<tr><td colspan="9">Tidak ada data.</td></tr>`}</tbody></table>
+    <div class="mutation-register-print-sections">${tables}</div>
   </div></div>`;
   openMutationPrint(title,html);
 }
