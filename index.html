@@ -770,6 +770,17 @@
   </div>
 </div>
 
+<div class="overlay" id="changeKKOverlay">
+  <div class="modal" style="width:min(700px,96vw)">
+    <div class="modal-head"><div class="modal-title">Ubah Nomor KK — Seluruh Anggota</div><button class="close" data-close="changeKKOverlay">✕</button></div>
+    <div class="modal-body">
+      <div id="changeKKInfo" style="border:1px solid var(--line);border-radius:9px;padding:12px;margin-bottom:12px"></div>
+      <label><b>No. KK Baru</b><input class="input" id="changeKKNew" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit No. KK baru"></label>
+      <div class="hint" style="margin-top:9px">Semua anggota pada KK lama akan menggunakan No. KK baru ini. Nama, hubungan keluarga, alamat, RT, dan RW tidak diubah.</div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="changeKKOverlay">Batal</button><button class="btn btn-dark" id="btnConfirmChangeKK">Ubah No. KK</button></div>
+  </div>
+</div>
 <div class="overlay" id="splitKKOverlay">
   <div class="modal" style="width:min(760px,96vw)">
     <div class="modal-head"><div class="modal-title">Pisah KK — 1 Orang</div><button class="close" data-close="splitKKOverlay">✕</button></div>
@@ -2717,7 +2728,7 @@ function renderFamily(){
   const detailFields=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];
   $('familyBody').innerHTML=list.length?list.map(g=>{
     const members=familyHeadsOnly?(g.head?[g.head]:[]):sortFamilyMembers(g.members);
-    return `<div class="family-card"><h4>KK ${esc(g.kk)}</h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th><th>Aksi</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td><td><button class="btn-mini" data-split-kk="${esc(r.NIK||'')}">Pisah KK</button></td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
+    return `<div class="family-card"><h4 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>KK ${esc(g.kk)}</span><button class="btn-mini" data-change-kk="${esc(g.kk)}">✏️ Ubah No. KK</button></h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th><th>Aksi</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td><td><button class="btn-mini" data-split-kk="${esc(r.NIK||'')}">Pisah KK</button></td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
   }).join(''):'<div class="empty">Data keluarga tidak ditemukan sesuai filter.</div>';
 }
 function openFamily(){closeMenu();$('familySearch').value='';fillFamilyFilters();$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily();$('familyOverlay').classList.add('open')}
@@ -2814,6 +2825,33 @@ function openSplitKK(nik){
   $('splitKKOverlay').classList.add('open');
 }
 $('familyBody').addEventListener('click',e=>{const b=e.target.closest('[data-split-kk]');if(b){e.preventDefault();openSplitKK(b.dataset.splitKk||'')}});
+$('familyBody').addEventListener('click',e=>{const b=e.target.closest('[data-change-kk]');if(b){e.preventDefault();openChangeKK(b.dataset.changeKk||'')}});
+let changeKKOld='';
+function openChangeKK(oldKK){
+  if(!hasPerm('edit_data'))return toast('Anda tidak memiliki hak akses untuk mengubah data penduduk');
+  oldKK=String(oldKK||'').trim(); const members=data.filter(r=>String(r['NO KK']||'').trim()===oldKK);
+  if(!members.length)return toast('Data KK tidak ditemukan');
+  const head=members.find(r=>isHead(r)); changeKKOld=oldKK; $('changeKKNew').value='';
+  $('changeKKInfo').innerHTML=`<b>KK Lama: ${esc(oldKK)}</b><br>Kepala Keluarga: <b>${esc(head?.['NAMA LENGKAP']||'Belum ditentukan')}</b><br>Jumlah anggota: <b>${members.length} orang</b><div class="hint" style="margin-top:8px">${members.map((r,i)=>`${i+1}. ${esc(r['NAMA LENGKAP']||'-')} — ${esc(r.SHDRT||'-')}`).join('<br>')}</div>`;
+  $('changeKKOverlay').classList.add('open');
+}
+$('changeKKNew').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16)});
+$('btnConfirmChangeKK').addEventListener('click',async()=>{
+  if(!changeKKOld)return; const oldKK=changeKKOld, newKK=String($('changeKKNew').value||'').trim();
+  if(!isValidKK(newKK))return toast('No. KK baru harus terdiri dari 16 digit angka.');
+  if(newKK===oldKK)return toast('No. KK baru sama dengan No. KK lama.');
+  if(data.some(r=>String(r['NO KK']||'').trim()===newKK))return toast('No. KK baru sudah digunakan oleh KK lain.');
+  const members=data.filter(r=>String(r['NO KK']||'').trim()===oldKK); if(!members.length)return toast('Data anggota KK tidak ditemukan.');
+  const head=members.find(r=>isHead(r));
+  if(!confirm(`Ubah No. KK ${oldKK} menjadi ${newKK} untuk ${members.length} anggota${head?' (Kepala Keluarga: '+(head['NAMA LENGKAP']||'-')+')':''}?`))return;
+  if(!(await requirePin('Mengubah No. KK seluruh anggota')))return;
+  try{
+    const changed=members.map(r=>({nik:String(r.NIK||''),name:r['NAMA LENGKAP']||''})); members.forEach(r=>{r['NO KK']=newKK});
+    await persist(); changed.forEach(c=>{const rr=data.find(r=>String(r.NIK||'')===c.nik); if(rr)addHistory('Perubahan No. KK',rr,`No. KK diubah dari ${oldKK} menjadi ${newKK}.`,{kategori:'UBAH_NO_KK',oldKK,newKK,jumlahAnggota:members.length})});
+    render();renderFamily();$('changeKKOverlay').classList.remove('open'); toast(`Berhasil mengubah No. KK ${members.length} anggota dari ${oldKK} menjadi ${newKK}.`);
+  }catch(err){console.error(err);members.forEach(r=>{r['NO KK']=oldKK});toast('Perubahan No. KK gagal: '+(err.message||err));}
+});
+
 $('splitKKDestination').addEventListener('change',()=>{
   const existing=$('splitKKDestination').value==='existing';
   $('splitKKExistingWrap').style.display=existing?'block':'none';$('splitKKNewBox').style.display=existing?'none':'block';
