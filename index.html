@@ -2539,13 +2539,10 @@ $('btnProcessImport').addEventListener('click',async()=>{
       }
     });
   }
-  const kkProblems=validateFamilyCardDataset(data);
-  if(kkProblems.length){
-    data=dataBeforeImport;
-    toast('Impor ditolak: '+kkProblems[0]);
-    return;
-  }
-  enforceFamilyCardAddresses();
+  // Impor tidak menolak struktur KK yang belum valid.
+  // Pemeriksaan jumlah Kepala Keluarga, KK tanpa Kepala Keluarga,
+  // serta ketidaksesuaian alamat/RT/RW dilakukan melalui
+  // menu Validasi Data Kependudukan agar seluruh data tetap dapat masuk.
   persist();fillFilters();page=1;render();$('importOverlay').classList.remove('open');
   const detail=mode==='replace'
     ?`Impor mengganti seluruh database: ${before} data lama digantikan dengan ${data.length} data baru.`
