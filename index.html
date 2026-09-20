@@ -1665,7 +1665,9 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
   if(reason==='Hapus KK')confirmText='Hapus seluruh '+removed.length+' anggota pada KK '+base['NO KK']+' dari data aktif?';
   if(isDouble&&$('doubleScope').value==='KK')confirmText='Hapus seluruh '+removed.length+' anggota pada KK '+base['NO KK']+' sebagai data double?';
   if(!confirm(confirmText))return;
-  removed.forEach(r=>addHistory('Data Dihapus',r,'Alasan: '+reason+(isDouble?' | Lingkup: '+($('doubleScope').value==='KK'?'Semua anggota keluarga':'Hanya NIK yang dipilih'):''),{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'}));
+  // Setiap anggota yang benar-benar dihapus dicatat sebagai baris Penghapusan tersendiri.
+  // Keterangan hanya memuat Alasan; Lingkup tidak ditampilkan pada register.
+  removed.forEach(r=>addHistory('Data Dihapus',r,'Alasan: '+reason,{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'}));
   data=data.filter(r=>!removedNiks.has(r.NIK));persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data dikeluarkan ('+reason+')');
 });
 
@@ -3357,6 +3359,8 @@ function historyToMutation(h){
   }
   else if(h.type==='Data Dihapus'&&meta.kategori==='PENGHAPUSAN'){
     jenis='Penghapusan';
+    // Register Penghapusan hanya menampilkan Alasan; Lingkup tidak dicetak.
+    keterangan=meta.alasan?`Alasan: ${meta.alasan}`:(h.detail||'-').replace(/\s*\|\s*Lingkup:[^|]*/i,'').trim()||'-';
   }
   else return null;
 
@@ -3559,7 +3563,7 @@ function renderMutationRecapPanel(){
 function mutationSummaryHtml(rows){
   const types=['Lahir','Mati','Pindah','Datang','Penambahan','Penghapusan'];
   const counts=Object.fromEntries(types.map(t=>[t,rows.filter(x=>x.jenis===t).length]));
-  return '<div class="mutation-summary">'+types.map(t=>`<div class="mutation-stat"><span>${t}</span><b>${counts[t]}</b></div>`).join('')+`<div class="mutation-stat"><span>Total</span><b>${rows.length}</b></div></div>`;
+  return '<div class="mutation-summary">'+types.map(t=>`<div class="mutation-stat"><span>${t}</span><b>${counts[t]}</b></div>`).join('')+'</div>';
 }
 function fillMutationYearOptions(){
   const el=$('mutationYear');
@@ -3573,12 +3577,13 @@ function fillMutationYearOptions(){
 }
 
 function mutationRegisterTableHtml(title,rows){
-  const body=rows.length?rows.map((x,i)=>{
+  if(!rows.length)return '';
+  const body=rows.map((x,i)=>{
     const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';
     const latestNik=latestMutationNik(x);
     const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
     return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
-  }).join(''):`<tr><td colspan="8" class="empty">Tidak ada data ${esc(title.toLowerCase())} yang sesuai.</td></tr>`;
+  }).join('');
   return `<section class="mutation-register-section"><div class="mutation-register-title"><b>Register ${esc(title)}</b><span>${rows.length} data</span></div><div class="table-card"><div class="table-scroll" style="max-height:42vh"><table><thead><tr><th>No</th><th>Tanggal</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
 }
 function renderMutationRegister(){
@@ -3588,7 +3593,7 @@ function renderMutationRegister(){
   if(container){
     const selected=$('mutationTypeFilter')?.value||'';
     const visible=selected?types.filter(t=>t===selected):types;
-    container.innerHTML=visible.map(t=>mutationRegisterTableHtml(t,rows.filter(x=>x.jenis===t))).join('');
+    container.innerHTML=visible.map(t=>mutationRegisterTableHtml(t,rows.filter(x=>x.jenis===t))).filter(Boolean).join('')||'<div class="hint" style="padding:12px">Tidak ada data register pada periode/filter yang dipilih.</div>';
   }
   const info=$('mutationInfo');
   if(info) info.textContent=`Menampilkan ${rows.length} data mutasi.`;
