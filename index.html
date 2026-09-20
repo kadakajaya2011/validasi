@@ -1271,6 +1271,72 @@ let editingIndex=-1,deletingIndex=-1;
 function formHtml(prefix,existing){const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];const labels={'NO_AKTA_KAWIN':'No. Akta Nikah','TGL_NIKAH':'Tgl Kawin','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tgl Cerai'};let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id=prefix+f.replace(/[^A-Z0-9]/gi,'_'),val=existing?existing[f]:'';const label=labels[f]||f;if(select.includes(f)){h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${label}</b><input class="input" id="${id}" value="${esc(val)}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});return h+'</div>'}
 function openEdit(index){if(index<0||!data[index])return;editingIndex=index;$('editFormBody').innerHTML=formHtml('edit_',data[index]);$('editOverlay').classList.add('open')}
 function familyMembersByKK(kk){if(!kk)return [];const target=String(kk).trim();return sortFamilyMembers(data.filter(r=>String(r['NO KK']||'').trim()===target))}
+function isHead(r){return String(r?.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA'}
+function familyCardIntegrity(kk,ignoreIndex=-1){
+  const target=String(kk||'').trim();
+  if(!target)return {ok:true,members:[],head:null,heads:[]};
+  const members=data.filter((r,i)=>i!==ignoreIndex&&String(r['NO KK']||'').trim()===target);
+  const heads=members.filter(isHead);
+  return {ok:heads.length===1,members,head:heads[0]||null,heads};
+}
+function validateFamilyCardRecord(r,ignoreIndex=-1){
+  const kk=String(r?.['NO KK']||'').trim();
+  if(!kk)return {ok:true,head:null,members:[]};
+  if(!isValidKK(kk))return {ok:false,message:'No KK harus terdiri dari 16 digit angka.'};
+  const card=familyCardIntegrity(kk,ignoreIndex);
+  if(isHead(r)){
+    if(card.heads.length) return {ok:false,message:'Nomor KK ini sudah memiliki Kepala Keluarga: '+(card.heads[0]['NAMA LENGKAP']||'-')+'. Satu Nomor KK hanya boleh memiliki 1 Kepala Keluarga.'};
+    return {ok:true,head:r,members:card.members};
+  }
+  if(!card.head) return {ok:false,message:'Nomor KK '+kk+' belum memiliki Kepala Keluarga. Tetapkan tepat 1 anggota sebagai Kepala Keluarga terlebih dahulu.'};
+  return {ok:true,head:card.head,members:card.members};
+}
+function applyHeadAddressToMembers(kk,head){
+  const target=String(kk||'').trim();
+  if(!target||!head)return 0;
+  let count=0;
+  data.forEach(r=>{
+    if(String(r['NO KK']||'').trim()===target){
+      const a=r.ALAMAT||'',rt=r.RT||'',rw=r.RW||'';
+      r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
+      if(a!==r.ALAMAT||rt!==r.RT||rw!==r.RW)count++;
+    }
+  });
+  return count;
+}
+function validateFamilyCardDataset(rows){
+  const groups=new Map();
+  (rows||[]).forEach(r=>{const kk=String(r['NO KK']||'').trim();if(kk){if(!groups.has(kk))groups.set(kk,[]);groups.get(kk).push(r)}});
+  const problems=[];
+  groups.forEach((members,kk)=>{const heads=members.filter(isHead);if(heads.length!==1)problems.push('KK '+kk+(heads.length===0?': Kepala Keluarga tidak ditemukan.':': terdapat '+heads.length+' Kepala Keluarga.'))});
+  return problems;
+}
+function enforceFamilyCardAddresses(){
+  const groups=new Map();
+  data.forEach((r,i)=>{const kk=String(r['NO KK']||'').trim();if(kk){if(!groups.has(kk))groups.set(kk,[]);groups.get(kk).push({r,i})}});
+  const problems=[];let changed=0;
+  groups.forEach((members,kk)=>{
+    const heads=members.filter(x=>isHead(x.r));
+    if(heads.length===1){
+      const head=heads[0].r;
+      members.forEach(x=>{
+        const r=x.r;
+        const a=r.ALAMAT||'',rt=r.RT||'',rw=r.RW||'';
+        r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
+        if(a!==r.ALAMAT||rt!==r.RT||rw!==r.RW)changed++;
+      });
+    }else if(heads.length===0){problems.push('KK '+kk+': Kepala Keluarga tidak ditemukan.')}else{problems.push('KK '+kk+': terdapat '+heads.length+' Kepala Keluarga.')} 
+  });
+  return {changed,problems};
+}
+function validateFamilyCardAfterEdit(before,after,ignoreIndex=-1){
+  const oldKK=String(before?.['NO KK']||'').trim(),newKK=String(after?.['NO KK']||'').trim();
+  if(oldKK&&oldKK!==newKK&&isHead(before)){
+    const oldRemaining=data.filter((r,i)=>i!==ignoreIndex&&String(r['NO KK']||'').trim()===oldKK);
+    if(oldRemaining.length){const oldHeads=oldRemaining.filter(isHead);if(oldHeads.length!==1)return {ok:false,message:'Perubahan ini membuat KK '+oldKK+' tidak memiliki tepat 1 Kepala Keluarga. Tetapkan Kepala Keluarga pengganti terlebih dahulu.'};}
+  }
+  return validateFamilyCardRecord(after,ignoreIndex);
+}
 
 let f101KK='';
 function f101Set(id,v){const el=$(id);if(!el)return;if('value' in el)el.value=v??'';else el.textContent=v??''}
@@ -1545,7 +1611,7 @@ $('btnOpenKtp').addEventListener('click',openKtpFromF101);
 $('btnPrintKtpSelected').addEventListener('click',printKtpSelected);
 $('btnPrintKtpAll').addEventListener('click',printKtpAll);
 
-$('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():''});if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka (kosongkan bila belum ada)');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];data[editingIndex]=r;addHistory('Perubahan Biodata',r,'Data diedit. NIK sebelumnya: '+(before?.NIK||'')+'.');persist();fillFilters();render();$('editOverlay').classList.remove('open');editingIndex=-1;toast('Data penduduk berhasil diperbarui')});
+$('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():''});if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];const check=validateFamilyCardAfterEdit(before,r,editingIndex);if(!check.ok){toast(check.message);return}if(r['NO KK']&&check.head){r.ALAMAT=String(check.head.ALAMAT||'').trim();r.RT=String(check.head.RT||'').trim();r.RW=String(check.head.RW||'').trim()}data[editingIndex]=r;if(isHead(r)){applyHeadAddressToMembers(r['NO KK'],r)}else if(r['NO KK']){const card=familyCardIntegrity(r['NO KK'],editingIndex);if(card.head)applyHeadAddressToMembers(r['NO KK'],card.head)}if(before['NO KK']&&before['NO KK']!==r['NO KK']){const oldCard=familyCardIntegrity(before['NO KK']);if(oldCard.head)applyHeadAddressToMembers(before['NO KK'],oldCard.head)}addHistory('Perubahan Biodata',r,'Data diedit. NIK sebelumnya: '+(before?.NIK||'')+'.');persist();fillFilters();render();$('editOverlay').classList.remove('open');editingIndex=-1;toast('Data penduduk berhasil diperbarui dan aturan KK diterapkan')});
 function renderDoubleMembers(){if(deletingIndex<0||!data[deletingIndex])return;const r=data[deletingIndex],members=familyMembersByKK(r['NO KK']);if($('doubleScope').value!=='KK'){$('doubleMembers').innerHTML='';return;}$('doubleMembers').innerHTML=members.length?'<b>Anggota yang akan dihapus:</b>'+members.map(m=>'<div class="move-member"><span><b>'+esc(m['NAMA LENGKAP'])+'</b> — '+esc(m.NIK)+' • '+esc(m.SHDRT||'-')+'</span></div>').join(''):'<div class="hint">No KK tidak memiliki anggota lain yang terdaftar.</div>';}
 $('doubleScope').addEventListener('change',renderDoubleMembers);
 $('delReason').addEventListener('change',()=>{const reason=$('delReason').value;const isMove=reason==='Hapus Pindah',isDeath=reason==='Hapus Meninggal',isDouble=reason==='Hapus Double';$('moveDeleteForm').style.display=isMove?'block':'none';$('deathDeleteForm').style.display=isDeath?'block':'none';$('doubleDeleteForm').style.display=isDouble?'block':'none';$('deleteStandardInfo').style.display=(isMove||isDeath||isDouble)?'none':'block';if(isMove){resetMoveForm();renderMoveMembers();}if(isDeath){resetDeathForm();}if(isDouble){$('doubleScope').value='NIK';renderDoubleMembers();}});
@@ -1584,12 +1650,23 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
   const removed=removeByKK?familyMembersByKK(base['NO KK']):[base];
   if(removeByKK&&!base['NO KK']){toast('No KK kosong. Penghapusan berdasarkan KK tidak dapat diproses.');return}
   if(!removed.length){toast('Anggota KK tidak ditemukan');return}
+  const removedNiks=new Set(removed.map(r=>r.NIK));
+  const affectedKKs=[...new Set(removed.map(r=>String(r['NO KK']||'').trim()).filter(Boolean))];
+  for(const kk of affectedKKs){
+    const remaining=data.filter(r=>String(r['NO KK']||'').trim()===kk&&!removedNiks.has(r.NIK));
+    const oldMembers=data.filter(r=>String(r['NO KK']||'').trim()===kk);
+    if(remaining.length){
+      const remainingHeads=remaining.filter(isHead);
+      const removedHead=oldMembers.some(r=>removedNiks.has(r.NIK)&&isHead(r));
+      if(remainingHeads.length!==1 || removedHead&&remainingHeads.length!==1){toast('Penghapusan ditolak: KK '+kk+' harus tetap memiliki tepat 1 Kepala Keluarga. Tetapkan Kepala Keluarga pengganti atau hapus/pindahkan seluruh anggota KK.');return}
+    }
+  }
   let confirmText='Hapus data '+(base['NAMA LENGKAP']||'penduduk')+' dari data aktif?';
   if(reason==='Hapus KK')confirmText='Hapus seluruh '+removed.length+' anggota pada KK '+base['NO KK']+' dari data aktif?';
   if(isDouble&&$('doubleScope').value==='KK')confirmText='Hapus seluruh '+removed.length+' anggota pada KK '+base['NO KK']+' sebagai data double?';
   if(!confirm(confirmText))return;
   removed.forEach(r=>addHistory('Data Dihapus',r,'Alasan: '+reason+(isDouble?' | Lingkup: '+($('doubleScope').value==='KK'?'Semua anggota keluarga':'Hanya NIK yang dipilih'):''),{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'}));
-  const removeNiks=new Set(removed.map(r=>r.NIK));data=data.filter(r=>!removeNiks.has(r.NIK));persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data dikeluarkan ('+reason+')');
+  data=data.filter(r=>!removedNiks.has(r.NIK));persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data dikeluarkan ('+reason+')');
 });
 
 
@@ -2029,9 +2106,10 @@ function syncBirthFamilyFromKK(){
     return;
   }
   const members=familyMembersByKK(kk);
-  const head=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA');
-  if(!head){
-    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>Kepala Keluarga tidak ditemukan.</b><div class="kk-detail">Penambahan data karena kelahiran dengan Nomor KK ini tidak dapat dilanjutkan.</div>';
+  const heads=members.filter(isHead);
+  const head=heads[0];
+  if(heads.length!==1){
+    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>'+esc(heads.length===0?'Kepala Keluarga tidak ditemukan.':'Nomor KK ini memiliki lebih dari satu Kepala Keluarga.')+'</b><div class="kk-detail">Penambahan data karena kelahiran dengan Nomor KK ini tidak dapat dilanjutkan sampai struktur KK diperbaiki.</div>';
     return;
   }
   const wife=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='ISTRI');
@@ -2056,7 +2134,12 @@ $('addReason').addEventListener('change',()=>{
 });
 $('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
 $('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
-$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA');if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI');r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka (kosongkan bila belum ada)');return}if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}data.push(r);addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,tanggalLahir:r['TGL_LHR']||'',asal:origin,keterangan:note});persist();fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')')});
+$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI';r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';if(!r.SHDRT)r.SHDRT='Anak';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}
+if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka');return}
+const kkCheck=validateFamilyCardRecord(r,-1);if(!kkCheck.ok){toast(kkCheck.message);$('in_NO_KK')?.focus();return}
+if(r['NO KK']&&kkCheck.head){r.ALAMAT=String(kkCheck.head.ALAMAT||'').trim();r.RT=String(kkCheck.head.RT||'').trim();r.RW=String(kkCheck.head.RW||'').trim()}
+if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}data.push(r);if(isHead(r))applyHeadAddressToMembers(r['NO KK'],r);else if(r['NO KK']&&kkCheck.head)applyHeadAddressToMembers(r['NO KK'],kkCheck.head);addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,tanggalLahir:r['TGL_LHR']||'',asal:origin,keterangan:note});persist();fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')')});
+
 function toCsv(rows){const headers=fields;return '\ufeff'+headers.join(',')+'\n'+rows.map(r=>headers.map(h=>csvCell(r[h])).join(',')).join('\n')}
 function csvCell(v){v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
 function parseCsv(s){s=s.replace(/^\ufeff/,'');let out=[],row=[],cell='',q=false;for(let i=0;i<s.length;i++){let c=s[i];if(q){if(c==='"'&&s[i+1]==='"'){cell+='"';i++}else if(c==='"')q=false;else cell+=c}else{if(c==='"')q=true;else if(c===','){row.push(cell);cell=''}else if(c==='\n'){row.push(cell);out.push(row);row=[];cell=''}else if(c!=='\r')cell+=c}}row.push(cell);if(row.some(x=>x!==''))out.push(row);if(!out.length)return [];let headers=out[0].map(x=>x.trim());return out.slice(1).map(a=>{let r={};headers.forEach((h,i)=>{if(fields.includes(h))r[h]=a[i]??''});return normalize(r)}).filter(r=>r.NIK||r['NAMA LENGKAP'])}
@@ -2167,6 +2250,7 @@ $('btnProcessImport').addEventListener('click',async()=>{
     :`Anda akan menggabungkan ${pendingImport.length} data dari file ke database yang ada (saat ini ${before} data). Data dengan NIK yang sama akan diperbarui, NIK baru akan ditambahkan. Lanjutkan?`;
   if(!confirm(confirmMsg))return;
   if(!(await requirePin('Memproses impor data ('+(mode==='replace'?'mengganti seluruh database':'menggabungkan data')+')')))return;
+  const dataBeforeImport=data.map(r=>({...r}));
   const seen=new Set(),clean=[];pendingImport.forEach(r=>{if(r.NIK){if(!seen.has(r.NIK)){seen.add(r.NIK);clean.push(r)}}else clean.push(r)});
   let added=0,updated=0;
   if(mode==='replace'){
@@ -2184,6 +2268,13 @@ $('btnProcessImport').addEventListener('click',async()=>{
       }
     });
   }
+  const kkProblems=validateFamilyCardDataset(data);
+  if(kkProblems.length){
+    data=dataBeforeImport;
+    toast('Impor ditolak: '+kkProblems[0]);
+    return;
+  }
+  enforceFamilyCardAddresses();
   persist();fillFilters();page=1;render();$('importOverlay').classList.remove('open');
   const detail=mode==='replace'
     ?`Impor mengganti seluruh database: ${before} data lama digantikan dengan ${data.length} data baru.`
@@ -3684,6 +3775,9 @@ function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clea
 async function initApp(){
   updateAppTitle();
   data=await loadResidents();
+  const kkRepair=enforceFamilyCardAddresses();
+  if(kkRepair.changed) { try{ await persist(); }catch(e){ console.warn('Sinkronisasi alamat KK gagal',e); } }
+  if(kkRepair.problems.length) console.warn('Validasi Kartu Keluarga:',kkRepair.problems);
   await syncCloudLetterRegister();
   fillFilters();
   render();
