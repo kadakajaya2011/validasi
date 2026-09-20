@@ -99,18 +99,33 @@
   body.print-family #familyOverlay .family-card{break-inside:avoid;page-break-inside:avoid}
   body.print-family #familyOverlay .family-table{font-size:10px !important}
   body.print-family #familyOverlay .family-table th,body.print-family #familyOverlay .family-table td{padding:5px !important}
-  body.print-report *{visibility:hidden !important}
+  /* Cetak laporan: keluarkan seluruh layout aplikasi dari flow agar tidak menghasilkan halaman kosong. */
+  body.print-report > *{display:none !important}
   body.print-report #reportOverlay,body.print-report #reportOverlay *{visibility:visible !important}
   body.print-report #reportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
+  body.print-report #reportOverlay .modal-body{font-size:10pt !important}
+  body.print-report #reportOverlay .report-box{margin-bottom:6px !important;padding:7px !important}
+  body.print-report #reportOverlay .report-box h4{margin:0 0 4px !important}
+  body.print-report #reportOverlay .report-box>div{padding:2px 0 !important}
+  body.print-report #reportOverlay .summary{margin-bottom:7px !important}
+  body.print-report #reportOverlay .stat{padding:6px !important}
+  body.print-report #reportOverlay .report-grid{gap:6px !important}
+  body.print-report #reportOverlay table{margin:0 !important}
+  body.print-report #reportOverlay .hint{font-size:9pt !important}
   body.print-report #reportOverlay .modal{position:relative !important;top:auto !important;left:auto !important;margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;max-height:none !important;min-height:0 !important;height:auto !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
   body.print-report #reportOverlay .modal-head{padding:0 0 7px !important;margin:0 0 10px !important;border-bottom:2px solid #222}
   body.print-report #reportOverlay .modal-head .close{display:none !important}
   body.print-report #reportOverlay .modal-body{padding:0 !important}
   body.print-report #reportOverlay .modal-foot{display:none !important}
   body.print-report #reportOverlay .report-box{break-inside:avoid;page-break-inside:avoid}
-  body.print-age-report *{visibility:hidden !important}
+  /* Cetak rekap umur: hanya overlay yang masuk layout cetak. */
+  body.print-age-report > *{display:none !important}
   body.print-age-report #ageReportOverlay,body.print-age-report #ageReportOverlay *{visibility:visible !important}
   body.print-age-report #ageReportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
+  body.print-age-report #ageReportOverlay .modal-body{font-size:10pt !important}
+  body.print-age-report #ageReportOverlay .report-box{margin-bottom:6px !important;padding:7px !important}
+  body.print-age-report #ageReportOverlay table{font-size:10pt !important}
+  body.print-age-report #ageReportOverlay th,body.print-age-report #ageReportOverlay td{padding:4px 6px !important}
   body.print-age-report #ageReportOverlay .modal{position:relative !important;top:auto !important;left:auto !important;margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;max-height:none !important;min-height:0 !important;height:auto !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
   body.print-age-report #ageReportOverlay .modal-head{padding:0 0 7px !important;margin:0 0 10px !important;border-bottom:2px solid #222}
   body.print-age-report #ageReportOverlay .modal-head .close{display:none !important}
@@ -122,10 +137,13 @@
   body.print-report #reportOverlay .summary{width:100% !important;grid-template-columns:repeat(4,1fr) !important;gap:8px !important}
   body.print-report #reportOverlay .report-box{break-inside:avoid !important;page-break-inside:avoid !important}
   body.print-report #reportOverlay table,body.print-age-report #ageReportOverlay table{break-inside:avoid !important;page-break-inside:avoid !important}
-  body.print-report,body.print-age-report{overflow:visible !important}
-  body.print-report #reportOverlay *,body.print-age-report #ageReportOverlay *{box-shadow:none !important}
+  body.print-report,body.print-age-report,body.print-dp4{overflow:visible !important;margin:0 !important;padding:0 !important;background:#fff !important}
+  body.print-report #reportOverlay *,body.print-age-report #ageReportOverlay *,body.print-dp4 #dp4Overlay *{box-shadow:none !important}
+  body.print-report #reportOverlay .modal-head,body.print-age-report #ageReportOverlay .modal-head,body.print-dp4 #dp4Overlay .modal-head{break-after:avoid !important;page-break-after:avoid !important}
+  body.print-report #reportOverlay .modal-body,body.print-age-report #ageReportOverlay .modal-body,body.print-dp4 #dp4Overlay .modal-body{break-before:avoid !important;page-break-before:avoid !important}
 
-  body.print-dp4 *{visibility:hidden !important}
+  /* Cetak DP4 dari overlay: seluruh aplikasi dikeluarkan dari flow cetak. */
+  body.print-dp4 > *{display:none !important}
   body.print-dp4 #dp4Overlay,body.print-dp4 #dp4Overlay *{visibility:visible !important}
   body.print-dp4 #dp4Overlay{position:absolute !important;inset:0 !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
   body.print-dp4 #dp4Overlay .modal{position:relative !important;top:0 !important;left:0 !important;margin:0 !important;width:100% !important;max-width:none !important;max-height:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
