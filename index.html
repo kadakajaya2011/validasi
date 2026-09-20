@@ -1362,11 +1362,30 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 let editingIndex=-1,deletingIndex=-1;
 function residentTextValue(field,value){const v=String(value??'');return (field==='NIK'||DATE_FIELDS.includes(field))?v:v.toUpperCase()}
 function formHtml(prefix,existing){const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];const labels={'NO_AKTA_KAWIN':'No. Akta Nikah','TGL_NIKAH':'Tgl Kawin','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tgl Cerai'};let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id=prefix+f.replace(/[^A-Z0-9]/gi,'_'),val=existing?residentTextValue(f,existing[f]):'';const label=labels[f]||f;if(select.includes(f)){h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${label}</b><input class="input" id="${id}" value="${esc(val)}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});return h+'</div>'}
+function populateEditForm(existing){
+  if(!existing)return;
+  fields.forEach(f=>{
+    const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));
+    if(!el)return;
+    const raw=String(existing[f]??'');
+    if(el.tagName==='SELECT'){
+      let found=false;
+      Array.from(el.options).forEach(opt=>{
+        const same=String(opt.value??opt.textContent??'').trim().toUpperCase()===raw.trim().toUpperCase();
+        if(same&&!found){opt.selected=true;found=true;}
+      });
+      if(!found)el.value='';
+    }else{
+      el.value=raw;
+    }
+  });
+}
 function openEdit(index){
   if(index<0||!data[index])return;
   editingIndex=index;
   const current=data[index];
-  $('editFormBody').innerHTML=formHtml('edit_',current);
+  $('editFormBody').innerHTML=formHtml('edit_',null);
+  populateEditForm(current);
   const kk=String(current['NO KK']||'').trim();
   const currentIsHead=isHead(current);
   if(kk&&currentIsHead){
