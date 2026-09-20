@@ -101,8 +101,8 @@
   body.print-family #familyOverlay .family-table th,body.print-family #familyOverlay .family-table td{padding:5px !important}
   body.print-report *{visibility:hidden !important}
   body.print-report #reportOverlay,body.print-report #reportOverlay *{visibility:visible !important}
-  body.print-report #reportOverlay{position:absolute !important;inset:0 !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
-  body.print-report #reportOverlay .modal{position:relative !important;top:0 !important;left:0 !important;margin:0 !important;width:100% !important;max-width:none !important;max-height:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
+  body.print-report #reportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
+  body.print-report #reportOverlay .modal{position:relative !important;top:auto !important;left:auto !important;margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;max-height:none !important;min-height:0 !important;height:auto !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
   body.print-report #reportOverlay .modal-head{padding:0 0 7px !important;margin:0 0 10px !important;border-bottom:2px solid #222}
   body.print-report #reportOverlay .modal-head .close{display:none !important}
   body.print-report #reportOverlay .modal-body{padding:0 !important}
@@ -110,14 +110,21 @@
   body.print-report #reportOverlay .report-box{break-inside:avoid;page-break-inside:avoid}
   body.print-age-report *{visibility:hidden !important}
   body.print-age-report #ageReportOverlay,body.print-age-report #ageReportOverlay *{visibility:visible !important}
-  body.print-age-report #ageReportOverlay{position:absolute !important;inset:0 !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
-  body.print-age-report #ageReportOverlay .modal{position:relative !important;top:0 !important;left:0 !important;margin:0 !important;width:100% !important;max-width:none !important;max-height:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
+  body.print-age-report #ageReportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
+  body.print-age-report #ageReportOverlay .modal{position:relative !important;top:auto !important;left:auto !important;margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;max-height:none !important;min-height:0 !important;height:auto !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
   body.print-age-report #ageReportOverlay .modal-head{padding:0 0 7px !important;margin:0 0 10px !important;border-bottom:2px solid #222}
   body.print-age-report #ageReportOverlay .modal-head .close{display:none !important}
   body.print-age-report #ageReportOverlay .modal-body{padding:0 !important}
   body.print-age-report #ageReportOverlay .modal-foot{display:none !important}
   body.print-age-report #ageReportOverlay table{width:100% !important;border-collapse:collapse !important}
   body.print-age-report #ageReportOverlay th,body.print-age-report #ageReportOverlay td{border:1px solid #777 !important;padding:7px !important;color:#111 !important;background:#fff !important}
+  body.print-report #reportOverlay .report-grid{width:100% !important;grid-template-columns:1fr 1fr !important;gap:8px !important}
+  body.print-report #reportOverlay .summary{width:100% !important;grid-template-columns:repeat(4,1fr) !important;gap:8px !important}
+  body.print-report #reportOverlay .report-box{break-inside:avoid !important;page-break-inside:avoid !important}
+  body.print-report #reportOverlay table,body.print-age-report #ageReportOverlay table{break-inside:avoid !important;page-break-inside:avoid !important}
+  body.print-report,body.print-age-report{overflow:visible !important}
+  body.print-report #reportOverlay *,body.print-age-report #ageReportOverlay *{box-shadow:none !important}
+
   body.print-dp4 *{visibility:hidden !important}
   body.print-dp4 #dp4Overlay,body.print-dp4 #dp4Overlay *{visibility:visible !important}
   body.print-dp4 #dp4Overlay{position:absolute !important;inset:0 !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
@@ -129,7 +136,8 @@
   body.print-dp4 #dp4Overlay table{width:100% !important;border-collapse:collapse !important}
   body.print-dp4 #dp4Overlay th,body.print-dp4 #dp4Overlay td{border:1px solid #777 !important;padding:5px !important;color:#111 !important;background:#fff !important} body.print-dp4 #dp4Overlay table{font-size:10px !important}
 
-  @page{size:A4 landscape;margin:10mm 10mm 10mm 10mm}
+  html,body{width:100% !important;height:auto !important;min-height:0 !important;margin:0 !important;padding:0 !important;overflow:visible !important}
+  @page{size:A4 landscape;margin:12mm 12mm 12mm 12mm}
   @page printPortrait{size:A4 portrait;margin:10mm 10mm 10mm 10mm}
   @page printLandscape{size:A4 landscape;margin:10mm 10mm 10mm 10mm}
   body.print-portrait{page:printPortrait !important}
@@ -1328,7 +1336,8 @@ $('btnAdd').addEventListener('click',()=>{closeMenu();buildForm();$('addReason')
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.remove('open')));document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 ['search','fRT','fRW','fJK','fSH','fStatus','fAgama','fPendidikan','fPekerjaan'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render()}));document.querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>setSort(th.dataset.sort)));$('prev').addEventListener('click',()=>{if(page>1){page--;render()}});$('next').addEventListener('click',()=>{page++;render()});
 let editingIndex=-1,deletingIndex=-1;
-function formHtml(prefix,existing){const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];const labels={'NO_AKTA_KAWIN':'No. Akta Nikah','TGL_NIKAH':'Tgl Kawin','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tgl Cerai'};let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id=prefix+f.replace(/[^A-Z0-9]/gi,'_'),val=existing?existing[f]:'';const label=labels[f]||f;if(select.includes(f)){h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${label}</b><input class="input" id="${id}" value="${esc(val)}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});return h+'</div>'}
+function residentTextValue(field,value){const v=String(value??'');return (field==='NIK'||DATE_FIELDS.includes(field))?v:v.toUpperCase()}
+function formHtml(prefix,existing){const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];const labels={'NO_AKTA_KAWIN':'No. Akta Nikah','TGL_NIKAH':'Tgl Kawin','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tgl Cerai'};let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id=prefix+f.replace(/[^A-Z0-9]/gi,'_'),val=existing?residentTextValue(f,existing[f]):'';const label=labels[f]||f;if(select.includes(f)){h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${label}</b><input class="input" id="${id}" value="${esc(val)}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});return h+'</div>'}
 function openEdit(index){
   if(index<0||!data[index])return;
   editingIndex=index;
@@ -2437,6 +2446,20 @@ $('addReason').addEventListener('change',()=>{
 });
 $('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
 $('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
+function bindResidentUppercase(containerId){
+  const root=$(containerId);
+  if(!root)return;
+  root.addEventListener('input',e=>{
+    const el=e.target;
+    if(!el||el.tagName!=='INPUT'||el.type==='date'||el.type==='number'||el.type==='time'||el.type==='file')return;
+    const start=el.selectionStart,end=el.selectionEnd;
+    const upper=String(el.value||'').toUpperCase();
+    if(el.value!==upper){el.value=upper;try{el.setSelectionRange(start,end)}catch(_){}}
+  });
+}
+bindResidentUppercase('formBody');
+bindResidentUppercase('editFormBody');
+bindResidentUppercase('entryBioFormBody');
 $('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI');r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';if(!r.SHDRT)r.SHDRT='Anak';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}
 if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka');return}
 const kkCheck=validateFamilyCardRecord(r,-1);if(!kkCheck.ok){toast(kkCheck.message);$('in_NO_KK')?.focus();return}
@@ -2767,10 +2790,10 @@ function printDp4(){
   // Buka preview terlebih dahulu dengan halaman ringan, lalu isi tabel secara bertahap.
   win.document.open();
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Daftar Pemilih DP4</title><style>
-    @page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:0}
+    @page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:0;padding:0}
     h1{font-size:15px;text-align:center;margin:0 0 3px}p{text-align:center;margin:0 0 8px;font-size:9px}
     table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #777;padding:3px 4px;vertical-align:top;word-break:break-word}th{background:#eee;text-align:center}
-    td.c{text-align:center}thead{display:table-header-group}tr{page-break-inside:avoid}
+    td.c{text-align:center}thead{display:table-header-group}tbody tr{page-break-inside:avoid;break-inside:avoid}table{margin:0}
     th:nth-child(1){width:4%}th:nth-child(2){width:14%}th:nth-child(3){width:12%}th:nth-child(4){width:22%}th:nth-child(5){width:10%}th:nth-child(6){width:6%}th:nth-child(7){width:8%}th:nth-child(8){width:14%}th:nth-child(9),th:nth-child(10){width:5%}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>
@@ -2829,11 +2852,11 @@ function printDp4Rekap(){
   const win=window.open('','_blank','width=900,height=800');
   if(!win){toast('Popup cetak diblokir browser. Izinkan popup untuk mencetak rekap DP4.');return;}
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Rekap Pemilih DP4</title><style>
-    @page{size:A4 portrait;margin:15mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0}
+    @page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0;padding:0}
     h1{text-align:center;font-size:15pt;margin:0 0 4px}h2{text-align:center;font-size:12pt;margin:0 0 12px;font-weight:normal}
     .meta{margin:0 auto 14px;max-width:170mm;border:1px solid #555;padding:7px 10px}.meta div{margin:2px 0}
     table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #555;padding:6px 8px}th{text-align:center;font-weight:700}td.c{text-align:center}td.r{text-align:right}
-    tfoot td{font-weight:700}.note{margin-top:18px;font-size:9pt}
+    tfoot td{font-weight:700}.note{margin-top:10px;font-size:9pt}tbody tr{page-break-inside:avoid;break-inside:avoid}table{page-break-inside:avoid;break-inside:avoid}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style>
 <style id="f102-contoh-style">
