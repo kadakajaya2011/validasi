@@ -770,6 +770,32 @@
   </div>
 </div>
 
+<div class="overlay" id="splitKKOverlay">
+  <div class="modal" style="width:min(760px,96vw)">
+    <div class="modal-head"><div class="modal-title">Pisah KK — 1 Orang</div><button class="close" data-close="splitKKOverlay">✕</button></div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">Satu proses hanya untuk <b>1 orang</b>. Orang yang dipilih akan dipindahkan dari KK lama ke KK tujuan.</div>
+      <div id="splitKKPerson" style="border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:12px"></div>
+      <div class="split-kk-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label><b>Tujuan Pisah KK</b><select class="select" id="splitKKDestination"><option value="new">Buat KK Baru</option><option value="existing">Gabung ke No. KK yang Sudah Ada</option></select></label>
+        <label id="splitKKExistingWrap" style="display:none"><b>No. KK Tujuan</b><input class="input" id="splitKKExisting" inputmode="numeric" maxlength="16" placeholder="16 digit No. KK"></label>
+      </div>
+      <div id="splitKKNewBox" style="margin-top:12px;border:1px solid var(--line);border-radius:9px;padding:12px">
+        <b>KK Baru</b>
+        <div class="hint" style="margin:5px 0 9px">Tentukan apakah KK baru sudah memiliki nomor KK SIAK.</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:7px"><input type="radio" name="splitKKStatus" value="siak" checked> Sudah Memiliki KK SIAK</label>
+          <label style="display:flex;align-items:center;gap:7px"><input type="radio" name="splitKKStatus" value="none"> Belum Memiliki KK SIAK</label>
+        </div>
+        <label id="splitKKSiakWrap" style="display:block;margin-top:10px"><b>Nomor KK SIAK</b><input class="input" id="splitKKSiak" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit No. KK SIAK"></label>
+        <div id="splitKKAutoPreview" class="hint" style="margin-top:9px;display:none"></div>
+      </div>
+      <label id="splitKKReplacementWrap" style="display:none;margin-top:12px"><b>Pengganti Kepala Keluarga pada KK Lama</b><select class="select" id="splitKKReplacement"></select><div class="hint" style="margin-top:5px">Karena yang dipisahkan adalah Kepala Keluarga, KK lama harus tetap memiliki tepat 1 Kepala Keluarga.</div></label>
+      <div class="hint" style="margin-top:12px">Alamat, RT, dan RW orang yang dipisahkan akan mengikuti Kepala Keluarga pada KK tujuan. Untuk KK baru, orang yang dipisahkan menjadi Kepala Keluarga.</div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="splitKKOverlay">Batal</button><button class="btn btn-dark" id="btnConfirmSplitKK">Pisahkan KK</button></div>
+  </div>
+</div>
 <div class="overlay" id="f101Overlay">
   <div class="modal f101-modal">
     <div class="modal-head">
@@ -2691,7 +2717,7 @@ function renderFamily(){
   const detailFields=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];
   $('familyBody').innerHTML=list.length?list.map(g=>{
     const members=familyHeadsOnly?(g.head?[g.head]:[]):sortFamilyMembers(g.members);
-    return `<div class="family-card"><h4>KK ${esc(g.kk)}</h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
+    return `<div class="family-card"><h4>KK ${esc(g.kk)}</h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th><th>Aksi</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td><td><button class="btn-mini" data-split-kk="${esc(r.NIK||'')}">Pisah KK</button></td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
   }).join(''):'<div class="empty">Data keluarga tidak ditemukan sesuai filter.</div>';
 }
 function openFamily(){closeMenu();$('familySearch').value='';fillFamilyFilters();$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily();$('familyOverlay').classList.add('open')}
@@ -2738,6 +2764,111 @@ function exportFamilyExcel(){
 }
 $('btnExportFamily').addEventListener('click',exportFamilyExcel);
 $('familySearch').addEventListener('input',renderFamily);
+
+/* ===== Pisah KK — satu orang per proses ===== */
+let splitKKNik='';
+function splitKKSelected(){return data.find(r=>String(r.NIK||'').trim()===String(splitKKNik).trim())||null}
+function splitKKNextAutoNumber(){
+  const prefix='6666662011';
+  let max=0;
+  data.forEach(r=>{
+    const kk=String(r['NO KK']||'').trim();
+    if(kk.startsWith(prefix)&&/^6666662011\d{6}$/.test(kk)){
+      const n=parseInt(kk.slice(prefix.length),10); if(Number.isFinite(n))max=Math.max(max,n);
+    }
+  });
+  let n=max+1;
+  let candidate=prefix+String(n).padStart(6,'0');
+  const used=new Set(data.map(r=>String(r['NO KK']||'').trim()));
+  while(used.has(candidate)){n++;candidate=prefix+String(n).padStart(6,'0')}
+  return candidate;
+}
+function renderSplitKKAutoPreview(){
+  const status=document.querySelector('input[name="splitKKStatus"]:checked')?.value||'siak';
+  const wrap=$('splitKKSiakWrap'), preview=$('splitKKAutoPreview');
+  if(status==='siak'){wrap.style.display='block';preview.style.display='none';}
+  else{wrap.style.display='none';preview.style.display='block';preview.innerHTML=`No. KK otomatis: <b>${esc(splitKKNextAutoNumber())}</b>`;}
+}
+function renderSplitKKReplacement(){
+  const person=splitKKSelected(); const wrap=$('splitKKReplacementWrap'); const sel=$('splitKKReplacement');
+  if(!person||!isHead(person)){wrap.style.display='none';sel.innerHTML='';return}
+  const oldKK=String(person['NO KK']||'').trim();
+  const choices=data.filter(r=>String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim());
+  sel.innerHTML='<option value="">-- Pilih pengganti Kepala Keluarga --</option>'+choices.map(r=>`<option value="${esc(r.NIK)}">${esc(r['NAMA LENGKAP'])} — ${esc(r.SHDRT||'Anggota Keluarga')}</option>`).join('');
+  wrap.style.display=choices.length?'block':'none';
+}
+function openSplitKK(nik){
+  if(!hasPerm('edit_data'))return toast('Anda tidak memiliki hak akses untuk mengubah data penduduk');
+  const r=data.find(x=>String(x.NIK||'').trim()===String(nik||'').trim());
+  if(!r)return toast('Data penduduk tidak ditemukan');
+  const oldKK=String(r['NO KK']||'').trim();
+  if(!isValidKK(oldKK))return toast('No. KK penduduk belum valid. Perbaiki No. KK terlebih dahulu.');
+  const card=familyCardIntegrity(oldKK);
+  if(!card.ok)return toast('KK lama belum valid. Pastikan tepat 1 Kepala Keluarga sebelum melakukan Pisah KK.');
+  splitKKNik=String(r.NIK||'').trim();
+  $('splitKKPerson').innerHTML=`<b>${esc(r['NAMA LENGKAP']||'-')}</b><br><span class="hint">NIK: ${esc(r.NIK||'-')} • KK lama: ${esc(oldKK)} • Hubungan: ${esc(r.SHDRT||'-')}</span>`;
+  $('splitKKDestination').value='new';$('splitKKExisting').value='';$('splitKKSiak').value='';
+  document.querySelector('input[name="splitKKStatus"][value="siak"]').checked=true;
+  $('splitKKExistingWrap').style.display='none';$('splitKKNewBox').style.display='block';
+  renderSplitKKAutoPreview();renderSplitKKReplacement();
+  $('splitKKOverlay').classList.add('open');
+}
+$('familyBody').addEventListener('click',e=>{const b=e.target.closest('[data-split-kk]');if(b){e.preventDefault();openSplitKK(b.dataset.splitKk||'')}});
+$('splitKKDestination').addEventListener('change',()=>{
+  const existing=$('splitKKDestination').value==='existing';
+  $('splitKKExistingWrap').style.display=existing?'block':'none';$('splitKKNewBox').style.display=existing?'none':'block';
+  renderSplitKKReplacement();
+});
+document.querySelectorAll('input[name="splitKKStatus"]').forEach(el=>el.addEventListener('change',renderSplitKKAutoPreview));
+$('splitKKExisting').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16)});
+$('splitKKSiak').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16)});
+$('btnConfirmSplitKK').addEventListener('click',async()=>{
+  const person=splitKKSelected(); if(!person)return;
+  const oldKK=String(person['NO KK']||'').trim();
+  const destination=$('splitKKDestination').value;
+  let newKK='';
+  if(destination==='existing'){
+    newKK=String($('splitKKExisting').value||'').trim();
+    if(!isValidKK(newKK))return toast('No. KK tujuan harus terdiri dari 16 digit angka.');
+    if(newKK===oldKK)return toast('No. KK tujuan sama dengan KK lama.');
+    const target=familyCardIntegrity(newKK);
+    if(!target.ok)return toast('KK tujuan belum valid. Pastikan KK tujuan memiliki tepat 1 Kepala Keluarga.');
+  }else{
+    const status=document.querySelector('input[name="splitKKStatus"]:checked')?.value||'siak';
+    if(status==='siak'){
+      newKK=String($('splitKKSiak').value||'').trim();
+      if(!isValidKK(newKK))return toast('Nomor KK SIAK harus terdiri dari 16 digit angka.');
+      if(data.some(r=>String(r['NO KK']||'').trim()===newKK))return toast('Nomor KK tersebut sudah digunakan oleh KK lain.');
+    }else newKK=splitKKNextAutoNumber();
+  }
+  const replacementNik=String($('splitKKReplacement').value||'').trim();
+  if(isHead(person)&&destination==='new'&&!replacementNik)return toast('Pilih pengganti Kepala Keluarga untuk KK lama.');
+  if(isHead(person)&&destination==='existing'&&!replacementNik)return toast('Pilih pengganti Kepala Keluarga untuk KK lama.');
+  if(replacementNik===String(person.NIK||'').trim())return toast('Pengganti Kepala Keluarga tidak boleh orang yang dipisahkan.');
+  const replacement=data.find(r=>String(r.NIK||'').trim()===replacementNik);
+  if(isHead(person)&&!replacement)return toast('Data pengganti Kepala Keluarga tidak ditemukan.');
+  if(!confirm(`Pisahkan ${person['NAMA LENGKAP']||person.NIK} dari KK ${oldKK} ke KK ${newKK}?`))return;
+  if(!(await requirePin('Memproses Pisah KK')))return;
+  try{
+    const oldSnapshot={...person};
+    const idx=data.findIndex(r=>String(r.NIK||'').trim()===String(person.NIK||'').trim());
+    if(idx<0)throw new Error('Data penduduk tidak ditemukan');
+    if(isHead(person)){
+      replacement.SHDRT='Kepala Keluarga';
+    }
+    person['NO KK']=newKK;
+    if(destination==='new')person.SHDRT='Kepala Keluarga';
+    const targetHead=destination==='existing'?familyCardIntegrity(newKK).head:person;
+    if(!targetHead)throw new Error('Kepala Keluarga tujuan tidak ditemukan');
+    person.ALAMAT=targetHead.ALAMAT||'';person.RT=targetHead.RT||'';person.RW=targetHead.RW||'';
+    enforceFamilyCardAddresses();
+    await persist();
+    addHistory('Pisah KK',person,`Dipisahkan dari KK ${oldKK} ke KK ${newKK}.`,{kategori:'PISAH_KK',oldKK,newKK,tujuan:destination==='existing'?'Gabung KK yang sudah ada':'Membuat KK Baru',statusKK:destination==='existing'?'Sudah Memiliki KK SIAK':(document.querySelector('input[name="splitKKStatus"]:checked')?.value==='siak'?'Sudah Memiliki KK SIAK':'Belum Memiliki KK SIAK'),penggantiKepalaKeluarga:replacement?.['NAMA LENGKAP']||''});
+    if(replacement)addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${oldKK} setelah ${person['NAMA LENGKAP']||person.NIK} dipisahkan.`,{kategori:'PERUBAHAN_KK',kk:oldKK});
+    render();renderFamily();$('splitKKOverlay').classList.remove('open');
+    toast(`Pisah KK berhasil. ${person['NAMA LENGKAP']||person.NIK} sekarang berada di KK ${newKK}.`);
+  }catch(err){console.error(err);toast('Pisah KK gagal: '+(err.message||err));}
+});
 
 
 const LETTER_KEY='suratDesaRegister_v1';
