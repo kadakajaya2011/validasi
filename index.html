@@ -730,7 +730,7 @@
   </div>
 </div>
 <header class="app-header"><div class="head-row"><div><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div><div class="actions"><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
-<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🗂️ <span style="flex:1">Data &amp; Database</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnImport">📥 Impor Data</button><button class="menu-item" id="btnExport">📤 Ekspor Excel</button><button class="menu-item" id="btnBackup">🗄️ Backup &amp; Pulihkan Database</button></div></div>
+<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🗂️ <span style="flex:1">Data &amp; Database</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnImport">📥 Impor Data</button><button class="menu-item" id="btnExport">📤 Ekspor Excel</button><button class="menu-item" id="btnSyncFamilyAddress">🔄 Sinkronkan Alamat KK</button><button class="menu-item" id="btnBackup">🗄️ Backup &amp; Pulihkan Database</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📊 <span style="flex:1">Laporan &amp; Rekap</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnDashboard">📈 Dashboard Kependudukan</button><button class="menu-item" id="btnReport">📊 Laporan Kependudukan</button><button class="menu-item" id="btnAgeReport">👥 Rekap Rentang Umur</button><button class="menu-item" id="btnDp4">🗳️ Rekap DP4</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga / KK</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🏛️ <span style="flex:1">Administrasi Desa</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnLetters">📝 Register Surat Desa</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button><button class="menu-item" id="btnMutationRegister">📋 Register Mutasi Penduduk</button><button class="menu-item" id="btnHistory">📜 Riwayat Perubahan</button><button class="menu-item" id="btnSettings">⚙️ Pengaturan Desa</button></div></div>
 </div></div><button class="btn btn-primary" id="btnAdd">＋ Tambah Data</button></div></div></header>
@@ -1256,6 +1256,7 @@ function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('ar
 document.querySelectorAll('.menu-group-title').forEach(title=>{title.addEventListener('click',e=>{e.stopPropagation();const group=title.closest('.menu-group');const willOpen=!group.classList.contains('open');document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')});if(willOpen){group.classList.add('open');title.setAttribute('aria-expanded','true')}})});
 btnMenu.addEventListener('click',e=>{e.stopPropagation();menuPanel.classList.contains('open')?closeMenu():openMenu()});document.addEventListener('click',e=>{if(!menuWrap.contains(e.target))closeMenu()});window.addEventListener('resize',()=>{if(menuPanel.classList.contains('open'))positionMenu()});window.addEventListener('scroll',()=>{if(menuPanel.classList.contains('open'))closeMenu()},true);
 $('btnImport').addEventListener('click',()=>{if(!hasPerm('import_data'))return toast('Anda tidak memiliki hak akses Impor');closeMenu();pendingImport=null;$('importFile').value='';$('importPreview').textContent='';$('importOverlay').classList.add('open')});
+$('btnSyncFamilyAddress').addEventListener('click',async()=>{closeMenu();await syncAllFamilyAddresses()});
 $('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return toast('Anda tidak memiliki hak akses Ekspor');closeMenu();if(typeof XLSX==='undefined'){toast('Library Excel belum tersedia. Periksa koneksi internet.');return}const exportHeaders=['NO',...fields,'UMUR'];const rows=data.map((r,i)=>{const o={};exportHeaders.forEach(h=>o[h]=h==='NO'?i+1:h==='UMUR'?age(r.TGL_LHR):DATE_FIELDS.includes(h)?fmtDate(r[h]):(r[h]||''));return o});const ws=XLSX.utils.json_to_sheet(rows,{header:exportHeaders});ws['!cols']=exportHeaders.map(h=>({wch:h==='NAMA LENGKAP'||h==='ALAMAT'?24:h==='PEKERJAAN'||h==='PENDIDIKAN'?28:15}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
   const dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yyyy=now.getFullYear();
   const hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0');
@@ -1329,6 +1330,50 @@ function enforceFamilyCardAddresses(){
   });
   return {changed,problems};
 }
+async function syncAllFamilyAddresses(){
+  if(!hasPerm('edit_data')){toast('Anda tidak memiliki hak akses Edit Data');return}
+  const groups=new Map();
+  data.forEach(r=>{
+    const kk=String(r['NO KK']||'').trim();
+    if(!kk)return;
+    if(!groups.has(kk))groups.set(kk,[]);
+    groups.get(kk).push(r);
+  });
+  if(!groups.size){toast('Belum ada data KK yang dapat disinkronkan');return}
+  const invalid=[],changedKK=[];let changedMembers=0;
+  groups.forEach((members,kk)=>{
+    const heads=members.filter(isHead);
+    if(heads.length!==1){
+      invalid.push('KK '+kk+(heads.length===0?' — Kepala Keluarga tidak ditemukan.':' — terdapat '+heads.length+' Kepala Keluarga.'));
+      return;
+    }
+    const head=heads[0];let count=0;
+    members.forEach(r=>{
+      const oldA=String(r.ALAMAT||'').trim(),oldRt=String(r.RT||'').trim(),oldRw=String(r.RW||'').trim();
+      const newA=String(head.ALAMAT||'').trim(),newRt=String(head.RT||'').trim(),newRw=String(head.RW||'').trim();
+      if(oldA!==newA||oldRt!==newRt||oldRw!==newRw){r.ALAMAT=newA;r.RT=newRt;r.RW=newRw;count++}
+    });
+    if(count){changedMembers+=count;changedKK.push({kk,count,head:head['NAMA LENGKAP']||'-'});}
+  });
+  if(!changedMembers){
+    const msg=invalid.length?`Tidak ada alamat yang berubah. Namun ${invalid.length} KK perlu diperbaiki karena struktur Kepala Keluarga belum valid.`:'Semua alamat anggota keluarga sudah sesuai dengan Kepala Keluarga.';
+    toast(msg);return;
+  }
+  let text=`Ditemukan ${changedMembers} anggota dari ${changedKK.length} KK yang alamat/RT/RW-nya berbeda dari Kepala Keluarga.\n\nAlamat anggota akan disamakan dengan Kepala Keluarga dan disimpan ke database bersama.`;
+  if(invalid.length)text+=`\n\n${invalid.length} KK tidak diproses karena Kepala Keluarganya tidak tepat 1.`;
+  if(!confirm(text+'\n\nLanjutkan?'))return;
+  try{
+    await persist();
+    addHistory('Sinkronisasi Alamat KK',null,`Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.` ,{kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid});
+    fillFilters();render();
+    let done=`Sinkronisasi selesai: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.`;
+    if(invalid.length)done+=` ${invalid.length} KK tidak diproses karena struktur Kepala Keluarga belum valid.`;
+    toast(done);
+  }catch(err){
+    toast('Sinkronisasi gagal disimpan ke database: '+(err.message||err));
+  }
+}
+
 function validateFamilyCardAfterEdit(before,after,ignoreIndex=-1){
   const oldKK=String(before?.['NO KK']||'').trim(),newKK=String(after?.['NO KK']||'').trim();
   if(oldKK&&oldKK!==newKK&&isHead(before)){
@@ -3909,6 +3954,7 @@ function applyPermissions(){
     btnAdd:'add_data',
     btnImport:'import_data',
     btnExport:'export_data',
+    btnSyncFamilyAddress:'edit_data',
     btnBackup:'backup_data',
     btnReport:'report',
     btnDashboard:'dashboard',
