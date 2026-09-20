@@ -1227,9 +1227,9 @@ function setPrintPageOrientation(orientation){
   if(!styleEl){styleEl=document.createElement('style');styleEl.id='dynamicPrintPageSize';document.head.appendChild(styleEl)}
   const isBirth=document.body.classList.contains('print-birth-app');
   const isDeath=document.body.classList.contains('print-death-app');
-  const m=(isBirth||isDeath)?'0':((document.body.classList.contains('print-f101'))?'7mm':((document.body.classList.contains('print-f102')||document.body.classList.contains('print-biodata')||document.body.classList.contains('print-letter'))?'0':'2mm'));
+  const m=(isBirth||isDeath)?'0':((document.body.classList.contains('print-f101'))?'7mm':((document.body.classList.contains('print-f102')||document.body.classList.contains('print-biodata')||document.body.classList.contains('print-letter'))?'0':((document.body.classList.contains('print-report')||document.body.classList.contains('print-age-report'))?'10mm':'2mm')));
   const pageSize=(isBirth||isDeath)?'215.9mm 330.2mm':`A4 ${o}`;
-  styleEl.textContent=`@page{size:${pageSize};margin:${m} ${m} ${m} ${m}}`;
+  styleEl.textContent=`@page{size:${pageSize};margin:${m} ${m} ${m} ${m} !important}`;
 }
 function applyPrintOrientation(){const o=(desaSettings.printOrientation||'portrait')==='landscape'?'landscape':'portrait';document.body.classList.remove('print-portrait','print-landscape');document.body.classList.add(o==='landscape'?'print-landscape':'print-portrait');setPrintPageOrientation(o)}
 function clearPrintOrientation(){document.body.classList.remove('print-portrait','print-landscape')}
@@ -2833,7 +2833,7 @@ function printDp4(){
   // Buka preview terlebih dahulu dengan halaman ringan, lalu isi tabel secara bertahap.
   win.document.open();
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Daftar Pemilih DP4</title><style>
-    @page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:0;padding:0}
+    @page{size:A4 landscape;margin:10mm 10mm 10mm 10mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:0;padding:0}
     h1{font-size:15px;text-align:center;margin:0 0 3px}p{text-align:center;margin:0 0 8px;font-size:9px}
     table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #777;padding:3px 4px;vertical-align:top;word-break:break-word}th{background:#eee;text-align:center}
     td.c{text-align:center}thead{display:table-header-group}tbody tr{page-break-inside:avoid;break-inside:avoid}table{margin:0}
@@ -2895,7 +2895,7 @@ function printDp4Rekap(){
   const win=window.open('','_blank','width=900,height=800');
   if(!win){toast('Popup cetak diblokir browser. Izinkan popup untuk mencetak rekap DP4.');return;}
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Rekap Pemilih DP4</title><style>
-    @page{size:A4 portrait;margin:0.7mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0;padding:0}
+    @page{size:A4 portrait;margin:10mm 10mm 10mm 10mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0;padding:0}
     h1{text-align:center;font-size:15pt;margin:0 0 4px}h2{text-align:center;font-size:12pt;margin:0 0 12px;font-weight:normal}
     .meta{margin:0 auto 14px;max-width:100%;border:1px solid #555;padding:7px 10px}.meta div{margin:2px 0}
     table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #555;padding:6px 8px}th{text-align:center;font-weight:700}td.c{text-align:center}td.r{text-align:right}
@@ -4205,7 +4205,7 @@ function mutationPrintSignaturesHtml(){
 }
 function mutationPrintStyles(){
   return `<style>
-    @page{size:A4 landscape;margin:7mm 7mm 7mm 7mm}
+    @page{size:A4 landscape;margin:10mm 10mm 10mm 10mm}
     *{box-sizing:border-box}
     html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111;font-family:Arial,Helvetica,sans-serif}
     body{font-size:9pt;line-height:1.3}
