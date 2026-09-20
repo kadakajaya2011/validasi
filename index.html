@@ -75,6 +75,8 @@
 @media(max-width:700px){.dashboard-grid{grid-template-columns:1fr}.dashboard-box.full{grid-column:auto}.dashboard-kpis{grid-template-columns:repeat(2,1fr)}.gender-chart{grid-template-columns:1fr}.bar-row{grid-template-columns:105px 1fr 40px}.dashboard-headline{display:block}.dashboard-actions{margin-top:9px;justify-content:flex-start}}
 
 @media print{
+  @page{size:A4 portrait;margin:0.7mm !important}
+  body.print-report,body.print-age-report{width:auto !important;min-width:0 !important}
   body.print-biodata .biodata-paper,
   body.print-biodata .biodata-paper *{
     font-family:'Bookman Old Style',Bookman,serif !important;
@@ -101,6 +103,8 @@
   body.print-family #familyOverlay .family-table th,body.print-family #familyOverlay .family-table td{padding:5px !important}
   /* Cetak laporan: keluarkan seluruh layout aplikasi dari flow agar tidak menghasilkan halaman kosong. */
   body.print-report > *{display:none !important}
+  body.print-report{margin:0 !important;padding:0.7mm !important}
+  body.print-report #reportOverlay{box-sizing:border-box !important;padding:0 !important}
   body.print-report #reportOverlay,body.print-report #reportOverlay *{visibility:visible !important}
   body.print-report #reportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
   body.print-report #reportOverlay .modal-body{font-size:10pt !important}
@@ -120,6 +124,8 @@
   body.print-report #reportOverlay .report-box{break-inside:avoid;page-break-inside:avoid}
   /* Cetak rekap umur: hanya overlay yang masuk layout cetak. */
   body.print-age-report > *{display:none !important}
+  body.print-age-report{margin:0 !important;padding:0.7mm !important}
+  body.print-age-report #ageReportOverlay{box-sizing:border-box !important;padding:0 !important}
   body.print-age-report #ageReportOverlay,body.print-age-report #ageReportOverlay *{visibility:visible !important}
   body.print-age-report #ageReportOverlay{position:absolute !important;left:0 !important;top:0 !important;right:0 !important;bottom:auto !important;width:100% !important;min-height:0 !important;height:auto !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
   body.print-age-report #ageReportOverlay .modal-body{font-size:10pt !important}
@@ -2870,9 +2876,9 @@ function printDp4Rekap(){
   const win=window.open('','_blank','width=900,height=800');
   if(!win){toast('Popup cetak diblokir browser. Izinkan popup untuk mencetak rekap DP4.');return;}
   win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Rekap Pemilih DP4</title><style>
-    @page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0;padding:0}
+    @page{size:A4 portrait;margin:0.7mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0;padding:0}
     h1{text-align:center;font-size:15pt;margin:0 0 4px}h2{text-align:center;font-size:12pt;margin:0 0 12px;font-weight:normal}
-    .meta{margin:0 auto 14px;max-width:170mm;border:1px solid #555;padding:7px 10px}.meta div{margin:2px 0}
+    .meta{margin:0 auto 14px;max-width:100%;border:1px solid #555;padding:7px 10px}.meta div{margin:2px 0}
     table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #555;padding:6px 8px}th{text-align:center;font-weight:700}td.c{text-align:center}td.r{text-align:right}
     tfoot td{font-weight:700}.note{margin-top:10px;font-size:9pt}tbody tr{page-break-inside:avoid;break-inside:avoid}table{page-break-inside:avoid;break-inside:avoid}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
