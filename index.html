@@ -1316,7 +1316,31 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 ['search','fRT','fRW','fJK','fSH','fStatus','fAgama','fPendidikan','fPekerjaan'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render()}));document.querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>setSort(th.dataset.sort)));$('prev').addEventListener('click',()=>{if(page>1){page--;render()}});$('next').addEventListener('click',()=>{page++;render()});
 let editingIndex=-1,deletingIndex=-1;
 function formHtml(prefix,existing){const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];const labels={'NO_AKTA_KAWIN':'No. Akta Nikah','TGL_NIKAH':'Tgl Kawin','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tgl Cerai'};let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id=prefix+f.replace(/[^A-Z0-9]/gi,'_'),val=existing?existing[f]:'';const label=labels[f]||f;if(select.includes(f)){h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`}else h+=`<label><b>${label}</b><input class="input" id="${id}" value="${esc(val)}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});return h+'</div>'}
-function openEdit(index){if(index<0||!data[index])return;editingIndex=index;const current=data[index];$('editFormBody').innerHTML=formHtml('edit_',current);const kk=String(current['NO KK']||'').trim();if(kk&&isHead(current)){const members=familyMembersByKK(kk).filter(x=>String(x.NIK||'')!==String(current.NIK||''));let h='<div id="editHeadReplacementWrap" style="margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Kepala Keluarga Pengganti</b><select class="select" id="editHeadReplacement" style="margin-top:6px"><option value="">-- Pilih anggota keluarga yang menjadi Kepala Keluarga --</option>';h+=members.map(m=>`<option value="${esc(m.NIK||'')}">${esc(m['NAMA LENGKAP']||'-')} — ${esc(m.SHDRT||'Anggota Keluarga')} — NIK ${esc(m.NIK||'-')}</option>`).join('');h+='</select></label><div class="hint" style="margin-top:6px">Jika Hubungan di atas diubah dari Kepala Keluarga ke posisi lain, pilih Kepala Keluarga pengganti di sini. Perubahan dilakukan bersamaan agar KK tetap memiliki tepat 1 Kepala Keluarga.</div></div>';$('editFormBody').insertAdjacentHTML('beforeend',h);if(members.length===1)$('editHeadReplacement').value=members[0].NIK;}$('editOverlay').classList.add('open')}
+function openEdit(index){
+  if(index<0||!data[index])return;
+  editingIndex=index;
+  const current=data[index];
+  $('editFormBody').innerHTML=formHtml('edit_',current);
+  const kk=String(current['NO KK']||'').trim();
+  const currentIsHead=isHead(current);
+  if(kk&&currentIsHead){
+    const members=familyMembersByKK(kk).filter(x=>String(x.NIK||'')!==String(current.NIK||''));
+    let h='<div id="editHeadReplacementWrap" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Kepala Keluarga Pengganti</b><select class="select" id="editHeadReplacement" style="margin-top:6px"><option value="">-- Pilih anggota keluarga yang menjadi Kepala Keluarga --</option>';
+    h+=members.map(m=>`<option value="${esc(m.NIK||'')}">${esc(m['NAMA LENGKAP']||'-')} — ${esc(m.SHDRT||'Anggota Keluarga')} — NIK ${esc(m.NIK||'-')}</option>`).join('');
+    h+='</select></label><div class="hint" style="margin-top:6px">Muncul hanya jika Kepala Keluarga ini diubah menjadi hubungan keluarga lain. Pilih anggota yang akan menjadi Kepala Keluarga pengganti.</div></div>';
+    $('editFormBody').insertAdjacentHTML('beforeend',h);
+    const relationSelect=$('edit_SHDRT'),wrap=$('editHeadReplacementWrap'),replacement=$('editHeadReplacement');
+    const syncReplacementVisibility=()=>{
+      const changingAway=String(relationSelect?.value||'').trim().toUpperCase()!=='KEPALA KELUARGA';
+      wrap.style.display=changingAway?'block':'none';
+      if(changingAway&&members.length===1&&!replacement.value)replacement.value=members[0].NIK;
+      if(!changingAway)replacement.value='';
+    };
+    relationSelect?.addEventListener('change',syncReplacementVisibility);
+    syncReplacementVisibility();
+  }
+  $('editOverlay').classList.add('open');
+}
 function familyMembersByKK(kk){if(!kk)return [];const target=String(kk).trim();return sortFamilyMembers(data.filter(r=>String(r['NO KK']||'').trim()===target))}
 function isHead(r){return String(r?.SHDRT||'').trim().toUpperCase()==='KEPALA KELUARGA'}
 function familyCardIntegrity(kk,ignoreIndex=-1){
@@ -4268,6 +4292,8 @@ const PERMISSION_DEFS={
   age_report:'Rekap Rentang Umur',
   dp4:'Rekap DP4',
   family:'Data Keluarga/KK',
+  validation_data:'Validasi Data Kependudukan',
+  sync_address:'Sinkronkan Alamat KK',
   letters:'Register Surat Desa',
   birth_application:'Permohonan Akta Kelahiran',
   death_application:'Permohonan Akta Kematian',
@@ -4276,7 +4302,7 @@ const PERMISSION_DEFS={
   settings:'Pengaturan Desa',
   account:'Kelola Akun Operator'
 };
-const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','letters','birth_application','death_application','mutation_register','history'];
+const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','validation_data','sync_address','letters','birth_application','death_application','mutation_register','history'];
 window.currentUser=null;window.currentProfile=null;
 function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
 function hasPerm(p){const v=window.currentProfile?.permissions?.[p];return isAdmin()||v===true||v===1||String(v).toLowerCase()==='true'}
@@ -4290,9 +4316,9 @@ function applyPermissions(){
     btnExport:'export_data',
     btnPopulation:'view_data',
     btnBirthApplicationMenu:'birth_application',
-    btnValidationData:'view_data',
-    btnUserAccessMenu:'settings',
-    btnSyncFamilyAddress:'edit_data',
+    btnValidationData:'validation_data',
+    btnUserAccessMenu:'account',
+    btnSyncFamilyAddress:'sync_address',
     btnBackup:'backup_data',
     btnReport:'report',
     btnDashboard:'dashboard',
