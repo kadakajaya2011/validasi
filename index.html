@@ -2899,7 +2899,7 @@ function renderFamily(){
   const detailFields=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];
   $('familyBody').innerHTML=list.length?list.map(g=>{
     const members=familyHeadsOnly?(g.head?[g.head]:[]):sortFamilyMembers(g.members);
-    return `<div class="family-card"><h4 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>KK ${esc(g.kk)}</span><button class="btn-mini" data-change-kk="${esc(g.kk)}">✏️ Ubah No. KK</button></h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th><th>Aksi</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td><td><span class="hint">—</span></td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
+    return `<div class="family-card"><h4 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>KK ${esc(g.kk)}</span><button class="btn-mini" data-change-kk="${esc(g.kk)}">✏️ Ubah No. KK</button></h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
   }).join(''):'<div class="empty">Data keluarga tidak ditemukan sesuai filter.</div>';
 }
 function openFamily(){closeMenu();$('familySearch').value='';fillFamilyFilters();$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily();$('familyOverlay').classList.add('open')}
@@ -4412,8 +4412,10 @@ function setOperatorManageVisibility(){
   if(section)section.classList.toggle('auth-hidden',!admin);
 }
 function permissionInputsHtml(prefix, permissions={}){
+  const saved=(permissions&&typeof permissions==='object')?permissions:{};
   return Object.entries(PERMISSION_DEFS).filter(([k])=>k!=='account').map(([k,label])=>{
-    const checked=permissions?.[k]===true;
+    const hasSaved=Object.prototype.hasOwnProperty.call(saved,k);
+    const checked=hasSaved ? (saved[k]===true||saved[k]===1||String(saved[k]).toLowerCase()==='true') : DEFAULT_OPERATOR_PERMS.includes(k);
     return `<label class="permission-item"><input type="checkbox" data-perm="${k}" ${checked?'checked':''}> ${label}</label>`;
   }).join('');
 }
@@ -4446,6 +4448,21 @@ async function saveOperatorEdit(){
   if(!isAdmin())return toast('Hanya Administrator yang dapat mengelola akun operator');
   const {data,error}=await window.sb.functions.invoke('manage-operator',{body:{action:'update',user_id:id,email,password:password||undefined,permissions}});
   if(error)throw error;if(data?.error)throw new Error(data.error);
+  // Verifikasi ulang ke Supabase agar perubahan hak akses tidak hanya tersimpan di tampilan.
+  const check=await window.sb.from('profiles').select('permissions').eq('id',id).maybeSingle();
+  if(check.error)console.warn('Verifikasi hak akses operator gagal:',check.error);
+  else if(check.data && check.data.permissions){
+    const saved=check.data.permissions;
+    const missing=['validation_data','sync_address','birth_application'].filter(k=>!Object.prototype.hasOwnProperty.call(saved,k));
+    if(missing.length){
+      console.warn('Hak akses baru belum tersimpan di Supabase:',missing);
+      // Fallback: bila Edge Function versi lama belum mengenal key baru,
+      // gabungkan permission langsung ke row profiles. RLS Supabase tetap menjadi pengaman.
+      const merged={...(saved||{}),...permissions};
+      const direct=await window.sb.from('profiles').update({permissions:merged}).eq('id',id);
+      if(direct.error)throw new Error('Hak akses gagal disimpan ke Supabase. Perbarui Edge Function manage-operator atau kebijakan RLS profiles: '+direct.error.message);
+    }
+  }
   closeOperatorEdit();toast('Akun operator berhasil diperbarui');await loadOperatorList();
 }
 async function deleteOperator(id,email){
