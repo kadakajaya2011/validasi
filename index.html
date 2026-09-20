@@ -1325,7 +1325,6 @@ $('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return t
   XLSX.writeFile(wb,fileName);toast(`Database berhasil diekspor: ${fileName}`)});
 $('btnReport').addEventListener('click',()=>{if(!hasPerm('report'))return toast('Anda tidak memiliki hak akses Laporan Kependudukan');closeMenu();renderReport();$('reportOverlay').classList.add('open')});
 $('btnAdd').addEventListener('click',()=>{closeMenu();buildForm();$('addReason').value='';$('addDate').value=new Date().toISOString().slice(0,10);$('addOrigin').value='';$('addNote').value='';$('addOriginWrap').style.display='none';$('addOverlay').classList.add('open')});
-$('addReason').addEventListener('change',()=>{$('addOriginWrap').style.display=$('addReason').value==='Kedatangan'?'block':'none'});
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.remove('open')));document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 ['search','fRT','fRW','fJK','fSH','fStatus','fAgama','fPendidikan','fPekerjaan'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render()}));document.querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>setSort(th.dataset.sort)));$('prev').addEventListener('click',()=>{if(page>1){page--;render()}});$('next').addEventListener('click',()=>{page++;render()});
 let editingIndex=-1,deletingIndex=-1;
@@ -2379,37 +2378,56 @@ function syncBirthFamilyFromKK(){
   const kkEl=$('in_NO_KK');
   const preview=$('birthKKPreview');
   if(!kkEl||!preview)return;
-  if(reason!=='Kelahiran'){
-    preview.style.display='none';
+  const setField=(f,v,locked=false)=>{
+    const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));
+    if(!el)return;
+    el.value=v||'';
+    el.readOnly=!!locked;
+    el.style.background=locked?'#f1f5f9':'';
+    el.title=locked?'Otomatis mengikuti Kepala Keluarga dan tidak dapat diubah':'';
+  };
+  const unlockAddress=()=>['ALAMAT','RT','RW'].forEach(f=>setField(f,'',false));
+  const kk=String(kkEl.value||'').trim();
+  if(!kk){
+    unlockAddress();
+    preview.className='birth-kk-preview';preview.style.display='none';
     return;
   }
-  const kk=String(kkEl.value||'').trim();
-  const clearAuto=()=>{['NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'].forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));if(el)el.value='';});};
-  if(!kk){clearAuto();preview.className='birth-kk-preview';preview.style.display='none';return;}
   if(!/^\d{16}$/.test(kk)){
-    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>Nomor KK harus terdiri dari 16 digit angka.</b>';
+    unlockAddress();
+    preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>Nomor KK harus terdiri dari 16 digit angka.</b>';
     return;
   }
   const members=familyMembersByKK(kk);
   const heads=members.filter(isHead);
-  const head=heads[0];
-  if(heads.length!==1){
-    clearAuto();preview.className='birth-kk-preview error';preview.style.display='block';preview.innerHTML='<b>'+esc(heads.length===0?'Kepala Keluarga tidak ditemukan.':'Nomor KK ini memiliki lebih dari satu Kepala Keluarga.')+'</b><div class="kk-detail">Penambahan data karena kelahiran dengan Nomor KK ini tidak dapat dilanjutkan sampai struktur KK diperbaiki.</div>';
+  const head=heads.length===1?heads[0]:null;
+  if(!head){
+    unlockAddress();
+    preview.className='birth-kk-preview'+(heads.length>1?' error':'');
+    preview.style.display=members.length?'block':'none';
+    if(members.length){
+      preview.innerHTML=heads.length>1
+        ? '<b>Nomor KK ini memiliki lebih dari satu Kepala Keluarga.</b><div class="kk-detail">Alamat, RT dan RW tidak dapat diisi otomatis sampai struktur KK diperbaiki melalui Validasi Data Kependudukan.</div>'
+        : '<b>Nomor KK sudah terdaftar, tetapi Kepala Keluarga belum ditemukan.</b>';
+    }
     return;
   }
+  // Bila No. KK yang dimasukkan sudah memiliki tepat satu Kepala Keluarga,
+  // alamat/RT/RW selalu mengikuti Kepala Keluarga dan dikunci.
+  setField('ALAMAT',head.ALAMAT,true);
+  setField('RT',head.RT,true);
+  setField('RW',head.RW,true);
   const wife=members.find(r=>String(r.SHDRT||'').trim().toUpperCase()==='ISTRI');
-  const setVal=(f,v)=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));if(el)el.value=v||'';};
-  setVal('NAMA_LGKP_AYAH',head['NAMA LENGKAP']);
-  setVal('NAMA_LGKP_IBU',wife?.['NAMA LENGKAP']||'');
-  setVal('ALAMAT',head.ALAMAT);
-  setVal('RT',head.RT);
-  setVal('RW',head.RW);
+  if(reason==='Kelahiran'){
+    setField('NAMA_LGKP_AYAH',head['NAMA LENGKAP']);
+    setField('NAMA_LGKP_IBU',wife?.['NAMA LENGKAP']||'');
+  }
   preview.className='birth-kk-preview ok';preview.style.display='block';
-  preview.innerHTML='<div class="kk-head">Nama Kepala Keluarga : '+esc(head['NAMA LENGKAP']||'-')+'</div>'+
-    '<div class="kk-detail">'+(wife?('Nama Istri : '+esc(wife['NAMA LENGKAP']||'-')):'Istri tidak ditemukan pada KK ini.')+'</div>'+
-    '<div class="auto-note">NAMA_LGKP_AYAH, NAMA_LGKP_IBU, ALAMAT, RT dan RW telah diisi otomatis dari data keluarga dan tetap dapat diedit manual.</div>';
+  preview.innerHTML='<div class="kk-head">Nomor KK sudah terdaftar</div>'+
+    '<div class="kk-detail">Kepala Keluarga: <b>'+esc(head['NAMA LENGKAP']||'-')+'</b>'+(wife?' &nbsp;•&nbsp; Istri: <b>'+esc(wife['NAMA LENGKAP']||'-')+'</b>':'')+'</div>'+
+    '<div class="auto-note">Alamat, RT dan RW otomatis mengikuti Kepala Keluarga dan tidak dapat diubah.</div>'+
+    (reason==='Kelahiran'?'<div class="auto-note">Nama Ayah dan Nama Ibu diisi otomatis dan tetap dapat diedit.</div>':'');
 }
-
 function buildForm(){const text=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id='in_'+f.replace(/[^A-Z0-9]/gi,'_');if(select.includes(f)){h+=`<label><b>${f}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}else if(f==='NO KK'){h+=`<label><b>${f}</b><input class="input" id="${id}" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit Nomor KK"><div id="birthKKPreview" class="birth-kk-preview" style="display:none"></div></label>`}else h+=`<label><b>${f}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});h+='</div>';$('formBody').innerHTML=h;syncBirthNik();syncBirthFamilyFromKK()}
 $('addReason').addEventListener('change',()=>{
   const wrap=$('addOriginWrap');
@@ -3808,7 +3826,7 @@ function historyToMutation(h){
   tanggal=(h.at||h.tanggalProses||h.createdAt||'').slice(0,10);
   if(h.type==='Penduduk Meninggal'&&meta.kategori==='KEMATIAN'){
     jenis='Mati';
-    keterangan=meta.tanggal?`Tanggal Kematian: ${fmtDate(meta.tanggal)}`:'-';
+    keterangan=meta.tanggal?`Tanggal Meninggal: ${fmtDate(meta.tanggal)}`:'-';
     // Alamat kematian memakai alamat penduduk/NIK yang meninggal saat proses dicatat.
     // Untuk Register Mati, alamat harus berasal dari snapshot NIK yang meninggal.
     // Gunakan data yang tersimpan pada riwayat kematian terlebih dahulu. Untuk
@@ -3843,10 +3861,7 @@ function historyToMutation(h){
     // Penambahan mencakup penambahan manual selain Kelahiran dan Kedatangan.
     // Tetap dipisahkan sebagai register tersendiri.
     jenis='Penambahan';
-    const parts=[];
-    if(meta.alasan)parts.push(`Alasan: ${meta.alasan}`);
-    if(meta.keterangan)parts.push(`Keterangan: ${meta.keterangan}`);
-    keterangan=parts.join(' | ')||h.detail||'-';
+    keterangan=meta.alasan?`Alasan: ${meta.alasan}`:'-';
   }
   else if(h.type==='Data Dihapus'&&meta.kategori==='PENGHAPUSAN'){
     jenis='Penghapusan';
