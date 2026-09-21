@@ -2271,6 +2271,19 @@ function printSPTJM(){
   const declarantPlace=father?.TMPT_LHR||reporter?.TMPT_LHR||'';
   const declarantDate=father?.TGL_LHR||reporter?.TGL_LHR||'';
   const declarantJob=father?.PEKERJAAN||reporter?.PEKERJAAN||'';
+  const village=desaSettings?.village||'', district=desaSettings?.district||'', regency=desaSettings?.regency||'';
+  const fullAddress=(address,person)=>{
+    const base=String(address||'').trim();
+    const rt=String(person?.RT||r.RT||'').trim(), rw=String(person?.RW||r.RW||'').trim();
+    const parts=[];
+    if(base)parts.push(base);
+    if(rt)parts.push('RT '+rt);
+    if(rw)parts.push('RW '+rw);
+    if(village)parts.push('Desa/Kel. '+village);
+    if(district)parts.push('Kecamatan '+district);
+    if(regency)parts.push('Kabupaten '+regency);
+    return parts.join(', ');
+  };
   const declarantAddress=fullAddress(father?.ALAMAT||reporter?.ALAMAT||r.ALAMAT||'',father||reporter||r);
   const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
   const childNik=String(r.NIK||'').trim();
@@ -2287,19 +2300,6 @@ function printSPTJM(){
   const helperNik=String(r.NIK_PENOLONG||r['NIK PENOLONG']||r.NIK_BIDAN||'').trim();
   const helperJob=String(birthValue('birthAppHelper')||r.PENOLONG_KELAHIRAN||r['PENOLONG KELAHIRAN']||'').trim();
   const w1=getBirthWitness(1),w2=getBirthWitness(2);
-  const village=desaSettings?.village||'', district=desaSettings?.district||'', regency=desaSettings?.regency||'';
-  const fullAddress=(address,person)=>{
-    const base=String(address||'').trim();
-    const rt=String(person?.RT||r.RT||'').trim(), rw=String(person?.RW||r.RW||'').trim();
-    const parts=[];
-    if(base)parts.push(base);
-    if(rt)parts.push('RT '+rt);
-    if(rw)parts.push('RW '+rw);
-    if(village)parts.push('Desa/Kel. '+village);
-    if(district)parts.push('Kecamatan '+district);
-    if(regency)parts.push('Kabupaten '+regency);
-    return parts.join(', ');
-  };
   const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
   const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td>${esc(value||'')}</td></tr>`;
   const birthTypeText=birthType?String(birthType).toUpperCase():'';
