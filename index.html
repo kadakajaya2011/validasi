@@ -4521,7 +4521,19 @@ function mutationRegisterTableHtml(title,rows){
   const body=rows.map((x,i)=>{
     const jk=mutationGender(x)==='l'?'L':mutationGender(x)==='p'?'P':'-';
     const latestNik=latestMutationNik(x);
-    const addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
+    // Register Pindah menampilkan wilayah tujuan tanpa RT/RW.
+    // RT/RW tujuan tetap tersimpan pada data perpindahan dan tidak diubah.
+    let addr='';
+    if(x.jenis==='Pindah'){
+      addr=String(x.address||'')
+        .replace(/(^|,\s*)RT\s*[^,]*/ig,'$1')
+        .replace(/(^|,\s*)RW\s*[^,]*/ig,'$1')
+        .replace(/,\s*,/g,',')
+        .replace(/^\s*,\s*|\s*,\s*$/g,'')
+        .trim();
+    }else{
+      addr=[x.address,x.rt?'RT '+x.rt:'',x.rw?'RW '+x.rw:''].filter(Boolean).join(', ');
+    }
     return `<tr><td>${i+1}</td><td>${esc(fmtDate(mutationDateValue(x)))}</td><td>${esc(latestNik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${jk}</td><td>${esc(addr||'-')}</td><td class="mutation-note">${esc(x.detail||'-')}</td></tr>`;
   }).join('');
   return `<section class="mutation-register-section"><div class="mutation-register-title"><b>Register ${esc(title)}</b><span>${rows.length} data</span></div><div class="table-card"><div class="table-scroll" style="max-height:42vh"><table><thead><tr><th>No</th><th>Tanggal</th><th>NIK</th><th>Nama Penduduk</th><th>No. KK</th><th>JK</th><th>Alamat</th><th>Keterangan</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
