@@ -1476,7 +1476,7 @@ function unique(f){return [...new Set(data.map(r=>r[f]).filter(Boolean))].sort((
 function fillFilters(){[['RT','fRT'],['RW','fRW'],['JK','fJK'],['SHDRT','fSH'],['STATUS','fStatus'],['AGAMA','fAgama'],['PENDIDIKAN','fPendidikan'],['PEKERJAAN','fPekerjaan']].forEach(([f,id])=>{const el=$(id),val=el.value;const label=el.options[0].textContent;el.innerHTML='';el.add(new Option(label,''));unique(f).forEach(v=>el.add(new Option(v,v)));el.value=val})}
 function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).filter(f=>!HIDDEN_IN_RESIDENT_LIST.includes(f)).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit ${hasPerm('edit_data')?'':'auth-hidden'}" data-edit="${idx}">✎ Edit</button>${isHead(r)?`<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-entry-bio="${esc(r.NIK||'')}">➕ Entry Bio</button>`:''}<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-split-kk="${esc(r.NIK||'')}">↗ Pisah KK</button><button class="btn-mini delete ${hasPerm('delete_data')?'':'auth-hidden'}" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators();applyPermissions()}
 function renderInactiveResidents(){const q=String($('inactiveSearch')?.value||'').toLowerCase().trim(),reason=String($('inactiveReasonFilter')?.value||'');const rows=data.filter(r=>!isActiveResident(r)&&(!reason||r.ALASAN_NONAKTIF===reason)&&(!q||[r.NIK,r['NAMA LENGKAP'],r['NO KK'],r.ALASAN_NONAKTIF].join(' ').toLowerCase().includes(q)));$('inactiveBody').innerHTML=rows.length?rows.map(r=>`<tr><td>${rows.indexOf(r)+1}</td><td>${esc(r.NIK||'')}</td><td>${esc(r['NAMA LENGKAP']||'')}</td><td>${esc(r['NO KK']||'')}</td><td>${esc(r.ALASAN_NONAKTIF||'-')}</td><td>${esc(fmtDate(r.TGL_NONAKTIF)||'-')}</td><td><button class="btn-mini" data-reactivate-nik="${esc(r.NIK||'')}">↩ Aktifkan Kembali</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Tidak ada penduduk tidak aktif</td></tr>'}
-function openInactiveResidents(){if(!hasPerm('inactive_population'))return toast('Anda tidak memiliki hak akses Penduduk Tidak Aktif');closeMenu();$('inactiveSearch').value='';$('inactiveReasonFilter').value='';renderInactiveResidents();$('inactiveOverlay').classList.add('open')}
+function openInactiveResidents(){if(!hasPerm('view_data'))return toast('Anda tidak memiliki hak akses Data Penduduk');closeMenu();$('inactiveSearch').value='';$('inactiveReasonFilter').value='';renderInactiveResidents();$('inactiveOverlay').classList.add('open')}
 $('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('inactiveSearch')?.addEventListener('input',renderInactiveResidents);$('inactiveReasonFilter')?.addEventListener('change',renderInactiveResidents);$('inactiveBody')?.addEventListener('click',async e=>{const b=e.target.closest('[data-reactivate-nik]');if(!b)return;const r=data.find(x=>String(x.NIK)===String(b.dataset.reactivateNik));if(!r)return;if(!confirm('Aktifkan kembali '+(r['NAMA LENGKAP']||r.NIK)+'?'))return;reactivateResident(r);addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});try{await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){toast('Gagal menyimpan: '+(err.message||err))}});
 function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.top=(r.bottom+6)+'px';menuPanel.style.right=(window.innerWidth-r.right)+'px'}
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
@@ -4116,7 +4116,8 @@ function dashCount(rows,key){const m={};rows.forEach(r=>{const v=String(r[key]||
 function dashAgeGroup(a){if(a===''||a===null||a===undefined)return 'Tidak diketahui';a=Number(a);if(a<=5)return '0–5 tahun';if(a<=12)return '6–12 tahun';if(a<=17)return '13–17 tahun';if(a<=25)return '18–25 tahun';if(a<=40)return '26–40 tahun';if(a<=59)return '41–59 tahun';return '60+ tahun'}
 function dashBarRows(entries,max,limit=12){const arr=entries.slice(0,limit);return arr.length?arr.map(x=>`<div class="bar-row"><div class="bar-label" title="${esc(x[0])}">${esc(x[0])}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(x[1]/max)*100)}%"></div></div><div class="bar-value">${x[1]}</div></div>`).join(''):'<div class="empty">Belum ada data.</div>'}
 function renderDashboard(){
-  const rows=[...data];
+  // Dashboard hanya merekap penduduk aktif; penduduk TIDAK AKTIF tidak ikut dihitung.
+  const rows=data.filter(isActiveResident);
   const total=rows.length;
   const laki=rows.filter(r=>String(r.JK||'').toLowerCase().includes('laki')).length;
   const perempuan=rows.filter(r=>String(r.JK||'').toLowerCase().includes('perempuan')).length;
@@ -4362,7 +4363,7 @@ function printMoveRegister(){
 $('btnPreviewMoveApplication').addEventListener('click',renderMoveApplication);
 $('btnPrintMoveApplication').addEventListener('click',printMoveApplication);
 $('btnEditMoveDest').addEventListener('click',()=>editMoveDestination(moveApplicationGroupId));
-$('btnMoveRegister')?.addEventListener('click',async()=>{if(!hasPerm('move_register'))return toast('Anda tidak memiliki hak akses Daftar Perpindahan');closeMenu();await syncCloudHistory();renderMoveRegister();$('moveRegisterOverlay').classList.add('open')});
+$('btnMoveRegister')?.addEventListener('click',async()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Daftar Perpindahan');closeMenu();await syncCloudHistory();renderMoveRegister();$('moveRegisterOverlay').classList.add('open')});
 $('btnMoveRegRefresh')?.addEventListener('click',renderMoveRegister);$('moveRegFrom')?.addEventListener('change',renderMoveRegister);$('moveRegTo')?.addEventListener('change',renderMoveRegister);$('moveRegSearch')?.addEventListener('input',renderMoveRegister);$('btnPrintMoveRegister')?.addEventListener('click',printMoveRegister);
 
 
@@ -5000,13 +5001,11 @@ const PERMISSION_DEFS={
   birth_application:'Permohonan Akta Kelahiran',
   death_application:'Permohonan Akta Kematian',
   mutation_register:'Register Mutasi Penduduk',
-  move_register:'Daftar Perpindahan',
-  inactive_population:'Penduduk Tidak Aktif',
   history:'Riwayat Perubahan',
   settings:'Pengaturan Desa',
   account:'Kelola Akun Operator'
 };
-const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','validation_data','sync_address','letters','birth_application','death_application','mutation_register','move_register','inactive_population','history'];
+const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','validation_data','sync_address','letters','birth_application','death_application','mutation_register','history'];
 window.currentUser=null;window.currentProfile=null;
 function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
 function hasPerm(p){const v=window.currentProfile?.permissions?.[p];return isAdmin()||v===true||v===1||String(v).toLowerCase()==='true'}
@@ -5029,11 +5028,10 @@ function applyPermissions(){
     btnAgeReport:'age_report',
     btnDp4:'dp4',
     btnFamily:'family',
-    btnInactivePopulation:'inactive_population',
     btnLetters:'letters',
     btnDeathApplication:'death_application',
     btnMutationRegister:'mutation_register',
-    btnMoveRegister:'move_register',
+    btnMoveRegister:'mutation_register',
     btnHistory:'history',
     btnSettings:'settings'
   };
