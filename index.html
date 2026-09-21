@@ -2286,7 +2286,6 @@ function printSPTJM(){
   const helperName=String(r.NAMA_PENOLONG||r['NAMA PENOLONG']||r.NAMA_BIDAN||'').trim();
   const helperNik=String(r.NIK_PENOLONG||r['NIK PENOLONG']||r.NIK_BIDAN||'').trim();
   const helperJob=String(birthValue('birthAppHelper')||r.PENOLONG_KELAHIRAN||r['PENOLONG KELAHIRAN']||'').trim();
-  const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
   const w1=getBirthWitness(1),w2=getBirthWitness(2);
   const village=desaSettings?.village||'', district=desaSettings?.district||'', regency=desaSettings?.regency||'';
   const fullAddress=(address,person)=>{
@@ -2301,6 +2300,7 @@ function printSPTJM(){
     if(regency)parts.push('Kabupaten '+regency);
     return parts.join(', ');
   };
+  const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
   const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td>${esc(value||'')}</td></tr>`;
   const birthTypeText=birthType?String(birthType).toUpperCase():'';
   const now=new Date();
