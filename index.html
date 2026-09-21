@@ -4445,16 +4445,26 @@ function populationGenderValue(r){
   return genderFromNik(r?.NIK||r?.nik||'');
 }
 function populationSnapshotCounts(cutoff){
-  const state=new Map(data.filter(r=>r&&r.NIK).map(r=>[String(r.NIK),r]));
+  // Bentuk snapshot penduduk pada tanggal cutoff dari kondisi AKTIF saat ini,
+  // lalu mundurkan semua mutasi setelah cutoff. Dengan begitu penambahan dan
+  // penghapusan/perpindahan pada bulan berjalan benar-benar memengaruhi angka.
+  const state=new Map(data.filter(r=>r&&r.NIK&&isActiveResident(r)).map(r=>[String(r.NIK),r]));
   const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
   for(const h of hist){
     const nik=String(h.NIK||'').trim(); if(!nik)continue;
     const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';
     const remove=(h.type==='Penduduk Meninggal'&&h.meta?.kategori==='KEMATIAN')||(h.type==='Penduduk Pindah'&&h.meta?.kategori==='PERPINDAHAN')||(h.type==='Data Dihapus'&&h.meta?.kategori==='PENGHAPUSAN');
+    const reactivated=h.type==='Status Penduduk Diaktifkan Kembali';
     if(add){state.delete(nik);continue}
-    if(remove&&!state.has(nik)){
-      state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''});
+    if(remove){
+      if(!state.has(nik)){
+        state.set(nik,{NIK:nik,'NAMA LENGKAP':h.name||'',JK:h.jk||h.meta?.jk||'','NO KK':h.kk||h.meta?.noKK||h.meta?.['NO KK']||'',ALAMAT:h.address||h.meta?.alamat||h.meta?.ALAMAT||'',RT:h.rt||h.meta?.rt||h.meta?.RT||'',RW:h.rw||h.meta?.rw||h.meta?.RW||''});
+      }
+      continue;
     }
+    // Jika reaktivasi terjadi setelah cutoff, penduduk tersebut pada cutoff
+    // masih tidak aktif, sehingga dikeluarkan dari snapshot.
+    if(reactivated){state.delete(nik);continue}
   }
   const rows=[...state.values()];
   const l=rows.filter(r=>populationGenderValue(r)==='l').length;
@@ -4471,7 +4481,10 @@ function renderMutationRecapPanel(){
   const base=new Date(month+'-01T00:00:00');
   const prevEnd=new Date(base.getFullYear(),base.getMonth(),0);
   const prevKey=prevEnd.getFullYear()+'-'+String(prevEnd.getMonth()+1).padStart(2,'0')+'-'+String(prevEnd.getDate()).padStart(2,'0');
-  const currentKey=month+'-01';
+  const todayKey=todayISO();
+  const monthEnd=new Date(base.getFullYear(),base.getMonth()+1,0);
+  const monthEndKey=monthEnd.getFullYear()+'-'+String(monthEnd.getMonth()+1).padStart(2,'0')+'-'+String(monthEnd.getDate()).padStart(2,'0');
+  const currentKey=month===todayKey.slice(0,7)?todayKey:(monthEndKey);
   const popPrev=populationSnapshotCounts(prevKey),popCurrent=populationSnapshotCounts(currentKey);
   const recapRows=one.types.map(t=>`<tr><td>${t}</td><td>${one.counts[t].l}</td><td>${one.counts[t].p}</td><td>${one.counts[t].j}</td></tr>`).join('');
   const popRow=p=>`<tr><td>Laki-laki</td><td>${p.l}</td></tr><tr><td>Perempuan</td><td>${p.p}</td></tr><tr class="total"><td>Jumlah Penduduk</td><td>${p.j}</td></tr>`;
