@@ -1204,7 +1204,15 @@ async function cloudLoadSettings(){
   if(!window.sb)return desaSettings;
   const {data,error}=await window.sb.from('app_settings').select('settings').eq('id','main').maybeSingle();
   if(error){console.warn('cloudLoadSettings',error);return desaSettings}
-  if(data?.settings){desaSettings=Object.assign(desaSettings,data.settings);localStorage.setItem(SETTINGS_KEY,JSON.stringify(desaSettings));updateAppTitle?.();}
+  if(data?.settings){
+    const localLogo=desaSettings?.logo||'';
+    const cloudSettings=Object.assign({},data.settings);
+    // Jangan menghapus logo lokal hanya karena kolom logo di cloud kosong/tidak tersedia.
+    if(!cloudSettings.logo&&localLogo)cloudSettings.logo=localLogo;
+    desaSettings=Object.assign(desaSettings,cloudSettings);
+    localStorage.setItem(SETTINGS_KEY,JSON.stringify(desaSettings));
+    updateAppTitle?.();
+  }
   return desaSettings;
 }
 async function saveSettings(){
@@ -2249,40 +2257,90 @@ function printSupportDocument(title, bodyHtml, pageCss){
 function printSPTJM(){
   const r=getBirthResident();
   if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
-  const father={name:birthValue('birthAppFatherName'),nik:birthValue('birthAppFatherNik'),place:birthValue('birthAppFatherPlace'),date:birthValue('birthAppFatherDate'),nation:birthValue('birthAppFatherNation')||'WNI'};
-  const mother={name:birthValue('birthAppMotherName'),nik:birthValue('birthAppMotherNik'),place:birthValue('birthAppMotherPlace'),date:birthValue('birthAppMotherDate'),nation:birthValue('birthAppMotherNation')||'WNI'};
-  if(!father.name&&!mother.name){toast('Data ayah atau ibu belum tersedia');return}
+  const fatherName=birthValue('birthAppFatherName');
+  const fatherNik=birthValue('birthAppFatherNik');
+  const father=findResidentByName(fatherName);
+  const motherName=birthValue('birthAppMotherName');
+  const motherNik=birthValue('birthAppMotherNik');
+  const mother=findResidentByName(motherName);
+  const reporterNik=birthValue('birthAppReporter');
+  const reporter=data.find(x=>String(x.NIK||'').trim()===reporterNik)||null;
+  const declarant=father||reporter||{};
+  const declarantName=fatherName||reporter?.['NAMA LENGKAP']||'';
+  const declarantNik=fatherNik||reporter?.NIK||'';
+  const declarantPlace=father?.TMPT_LHR||reporter?.TMPT_LHR||'';
+  const declarantDate=father?.TGL_LHR||reporter?.TGL_LHR||'';
+  const declarantJob=father?.PEKERJAAN||reporter?.PEKERJAAN||'';
+  const declarantAddress=father?.ALAMAT||reporter?.ALAMAT||r.ALAMAT||'';
   const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
-  const childGender=birthValue('birthAppGender')||r.JK||'';
+  const childNik=String(r.NIK||'').trim();
   const childPlace=birthValue('birthAppBirthPlace')||r.TMPT_LHR||'';
   const childDate=birthValue('birthAppBirthDate')||r.TGL_LHR||'';
-  const village=desaSettings?.village||'',district=desaSettings?.district||'',regency=desaSettings?.regency||'';
-  const address=r.ALAMAT||'',rt=r.RT||'',rw=r.RW||'',kk=r['NO KK']||$('birthAppKK')?.value||'';
-  const today=letterIndoDate(todayISO());
+  const childOrder=birthValue('birthAppOrder')||r.KELAHIRAN_KE||'';
+  const birthType=birthValue('birthAppType')||r.JENIS_KELAHIRAN||'';
+  const childAddress=r.ALAMAT||'';
+  const motherPlace=mother?.TMPT_LHR||'';
+  const motherDate=mother?.TGL_LHR||'';
+  const motherJob=mother?.PEKERJAAN||'';
+  const motherAddress=mother?.ALAMAT||r.ALAMAT||'';
+  const helperName=String(r.NAMA_PENOLONG||r['NAMA PENOLONG']||r.NAMA_BIDAN||'').trim();
+  const helperNik=String(r.NIK_PENOLONG||r['NIK PENOLONG']||r.NIK_BIDAN||'').trim();
+  const helperJob=String(r.PEKERJAAN_PENOLONG||r['PEKERJAAN PENOLONG']||r.PEKERJAAN_BIDAN||'').trim();
+  const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
+  const w1=getBirthWitness(1),w2=getBirthWitness(2);
+  const village=desaSettings?.village||'';
+  const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td>${esc(value||'')}</td></tr>`;
+  const birthTypeText=birthType?String(birthType).toUpperCase()+' ..... *)':'TUNGGAL / KEMBAR ..... *)';
   const h=`<div class="sptjm-paper">
-    <h1>SURAT PERNYATAAN TANGGUNG JAWAB MUTLAK</h1>
-    <h2>(SPTJM) KEBENARAN DATA KELAHIRAN</h2>
-    <p>Yang bertanda tangan di bawah ini:</p>
+    <div class="code">F-2.03</div>
+    <h1>SURAT PERNYATAAN TANGGUNG JAWAB MUTLAK (SPTJM)</h1>
+    <h2>KEBENARAN DATA KELAHIRAN</h2>
+    <p>Saya yang bertanda tangan di bawah ini :</p>
     <table class="ident">
-      <tr><td>Nama Ayah</td><td>:</td><td>${esc(father.name)}</td></tr>
-      <tr><td>NIK</td><td>:</td><td>${esc(father.nik)}</td></tr>
-      <tr><td>Nama Ibu</td><td>:</td><td>${esc(mother.name)}</td></tr>
-      <tr><td>NIK</td><td>:</td><td>${esc(mother.nik)}</td></tr>
-      <tr><td>Nomor Kartu Keluarga</td><td>:</td><td>${esc(kk)}</td></tr>
-      <tr><td>Alamat</td><td>:</td><td>${esc(address)}, RT ${esc(rt)} / RW ${esc(rw)}, Desa ${esc(village)}, Kecamatan ${esc(district)}, Kabupaten ${esc(regency)}</td></tr>
+      ${row('Nama',declarantName)}
+      ${row('NIK',declarantNik)}
+      ${row('Tempat/Tanggal Lahir',declarantPlace&&declarantDate?declarantPlace+', '+fmtDate(declarantDate):declarantPlace||fmtDate(declarantDate))}
+      ${row('Pekerjaan',declarantJob)}
+      ${row('Alamat',declarantAddress)}
     </table>
-    <p>Dengan ini menyatakan dengan sebenarnya bahwa data kelahiran anak berikut adalah benar:</p>
+    <p class="sub">menyatakan bahwa :</p>
     <table class="ident">
-      <tr><td>Nama Anak</td><td>:</td><td>${esc(childName)}</td></tr>
-      <tr><td>Jenis Kelamin</td><td>:</td><td>${esc(childGender)}</td></tr>
-      <tr><td>Tempat Kelahiran</td><td>:</td><td>${esc(childPlace)}</td></tr>
-      <tr><td>Tanggal Lahir</td><td>:</td><td>${esc(childDate?fmtDate(childDate):'')}</td></tr>
-      <tr><td>Kelahiran Ke</td><td>:</td><td>${esc(birthValue('birthAppOrder'))}</td></tr>
+      ${row('Nama',childName)}
+      ${row('NIK',childNik)}
+      ${row('Tempat/Tanggal Lahir',childPlace&&childDate?childPlace+', '+fmtDate(childDate):childPlace||fmtDate(childDate))}
+      ${row('Anak ke *)',childOrder)}
+      ${row('Jenis Kelahiran',birthTypeText)}
+      ${row('Alamat',childAddress)}
     </table>
-    <p>Pernyataan ini dibuat dengan sebenar-benarnya untuk digunakan sebagai persyaratan pencatatan kelahiran. Apabila di kemudian hari ternyata pernyataan ini tidak benar, kami bersedia bertanggung jawab sesuai dengan ketentuan peraturan perundang-undangan.</p>
-    <table class="sign"><tr><td>${esc(village)}, ${esc(today)}<br>Ayah</td><td>${esc(village)}, ${esc(today)}<br>Ibu</td></tr><tr><td class="space"></td><td class="space"></td></tr><tr><td><b><u>${esc(father.name||'................................')}</u></b></td><td><b><u>${esc(mother.name||'................................')}</u></b></td></tr></table>
+    <p class="sub">adalah anak kandung dari :</p>
+    <table class="ident">
+      ${row('Nama Ibu',motherName)}
+      ${row('NIK',motherNik)}
+      ${row('Tempat/Tanggal Lahir',motherPlace&&motherDate?motherPlace+', '+fmtDate(motherDate):motherPlace||fmtDate(motherDate))}
+      ${row('Pekerjaan',motherJob)}
+      ${row('Alamat',motherAddress)}
+    </table>
+    <p class="sub">yang lahir dengan penolong kelahiran :</p>
+    <table class="ident">
+      ${row('Nama',helperName)}
+      ${row('NIK',helperNik)}
+      ${row('Pekerjaan',helperJob)}
+      ${row('Alamat',helperAddress)}
+    </table>
+    <p class="declaration">Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila di kemudian hari ternyata pernyataan saya ini tidak benar, maka saya bersedia diproses secara hukum sesuai dengan peraturan perundang-undangan dan dokumen yang diterbitkan akibat dari pernyataan ini menjadi tidak sah.</p>
+    <div class="date-line">${esc(village)},.................................. 20....</div>
+    <table class="sign">
+      <tr><td>Saksi I,</td><td>Saya yang menyatakan,</td></tr>
+      <tr><td class="sigspace"></td><td class="sigspace"></td></tr>
+      <tr><td>(${esc(w1.name||'.................................')})</td><td>(${esc(declarantName||'.................................')})</td></tr>
+      <tr><td>NIK. ${esc(w1.nik||'.................................')}</td><td></td></tr>
+      <tr><td class="witness2">Saksi II,</td><td></td></tr>
+      <tr><td class="sigspace small"></td><td></td></tr>
+      <tr><td>(${esc(w2.name||'.................................')})</td><td></td></tr>
+      <tr><td>NIK. ${esc(w2.nik||'.................................')}</td><td></td></tr>
+    </table>
   </div>`;
-  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:12mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{width:186mm;min-height:273mm;margin:0 auto;box-sizing:border-box;font-size:11pt;line-height:1.45}.sptjm-paper h1{text-align:center;font-size:14pt;margin:0 0 2px;text-decoration:underline}.sptjm-paper h2{text-align:center;font-size:12pt;margin:0 0 14mm}.sptjm-paper p{margin:0 0 6mm;text-align:justify}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin-bottom:5mm}.sptjm-paper .ident td{padding:1.5mm 1mm;vertical-align:top}.sptjm-paper .ident td:first-child{width:45mm}.sptjm-paper .ident td:nth-child(2){width:5mm;text-align:center}.sptjm-paper .sign{width:100%;margin-top:18mm;border-collapse:collapse;text-align:center}.sptjm-paper .sign td{width:50%;vertical-align:top}.sptjm-paper .sign .space{height:25mm}`);
+  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:10mm 12mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{position:relative;width:186mm;min-height:277mm;margin:0 auto;box-sizing:border-box;font-size:11pt;line-height:1.28}.sptjm-paper .code{position:absolute;right:0;top:0;border:1px solid #111;padding:1px 6px;font-weight:700;font-size:10.5pt}.sptjm-paper h1{text-align:center;font-size:14pt;margin:11mm 0 0;font-weight:700}.sptjm-paper h2{text-align:center;font-size:13pt;margin:0 0 7mm;font-weight:700}.sptjm-paper p{margin:0 0 3mm}.sptjm-paper .sub{margin-top:1mm}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 3mm}.sptjm-paper .ident td{padding:0.7mm 0;vertical-align:top}.sptjm-paper .ident .lbl{width:43mm;padding-left:7mm}.sptjm-paper .ident .colon{width:5mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:4mm}.sptjm-paper .date-line{text-align:right;margin-top:8mm;margin-right:2mm}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:1mm}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sigspace{height:24mm}.sptjm-paper .sigspace.small{height:19mm}.sptjm-paper .witness2{padding-top:5mm}`);
 }
 function printSuket(){
   const name=String($('deathAppName')?.value||'').trim();
@@ -4825,10 +4883,10 @@ async function bootAuth(){
   window.sb=window.supabase.createClient(window.SUPABASE_CONFIG.url,window.SUPABASE_CONFIG.anonKey);
   try{await cloudLoadSettings();authTitleFromSettings()}catch(e){console.warn('Gagal memuat pengaturan publik',e)}
   const {data:{session}}=await window.sb.auth.getSession();
-  if(session){window.currentUser=session.user;try{await cloudLoadSettings();authTitleFromSettings();await loadProfile();await syncCloudHistory();$('authScreen').style.display='none';renderAccountUi();await initApp()}catch(e){showLoginError(e.message||'Profil akun tidak dapat dimuat');await window.sb.auth.signOut()}}
+  if(session){window.currentUser=session.user;try{try{await cloudLoadSettings();authTitleFromSettings()}catch(settingsErr){console.warn('Pengaturan desa tidak dapat dimuat:',settingsErr);authTitleFromSettings()}await loadProfile();await syncCloudHistory();$('authScreen').style.display='none';renderAccountUi();await initApp()}catch(e){showLoginError(e.message||'Profil akun tidak dapat dimuat');await window.sb.auth.signOut()}}
   window.sb.auth.onAuthStateChange(async(_event,session2)=>{if(!session2){window.currentUser=null;window.currentProfile=null;$('authScreen').style.display='flex';return}window.currentUser=session2.user});
 }
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();showLoginError('');$('loginSubmit').disabled=true;try{const {data,error}=await window.sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)throw error;window.currentUser=data.user;await cloudLoadSettings();authTitleFromSettings();await loadProfile();await syncCloudHistory();$('authScreen').style.display='none';renderAccountUi();await initApp()}catch(err){showLoginError(err.message||'Login gagal')}finally{$('loginSubmit').disabled=false}});
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();showLoginError('');$('loginSubmit').disabled=true;try{const {data,error}=await window.sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)throw error;window.currentUser=data.user;try{await cloudLoadSettings();authTitleFromSettings()}catch(settingsErr){console.warn('Pengaturan desa tidak dapat dimuat saat login:',settingsErr);authTitleFromSettings()}await loadProfile();await syncCloudHistory();$('authScreen').style.display='none';renderAccountUi();await initApp()}catch(err){showLoginError(err.message||'Login gagal')}finally{$('loginSubmit').disabled=false}});
 $('btnLogout').addEventListener('click',async()=>{closeAccountPanel();await window.sb.auth.signOut()});
 function closeAccountPanel(){document.getElementById('accountPanel')?.classList.remove('open')}
 $('btnAccount').addEventListener('click',e=>{e.stopPropagation();const p=$('accountPanel');p.classList.toggle('open');if(p.classList.contains('open')){const r=$('btnAccount').getBoundingClientRect();p.style.top=(r.bottom+6)+'px';p.style.right=(window.innerWidth-r.right)+'px'}});document.addEventListener('click',e=>{if(!e.target.closest('.account-menu'))closeAccountPanel()});
