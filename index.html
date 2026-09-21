@@ -2876,7 +2876,7 @@ function syncArrivalKKMode(){
     const preview=$('birthKKPreview');if(preview){preview.style.display='none';preview.innerHTML='';preview.className='birth-kk-preview';}
   }
 }
-function buildForm(){const text=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id='in_'+f.replace(/[^A-Z0-9]/gi,'_');if(select.includes(f)){h+=`<label><b>${f}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}else if(f==='NO KK'){h+=`<label><b>${f}</b><input class="input" id="${id}" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit Nomor KK"><div id="birthKKPreview" class="birth-kk-preview" style="display:none"></div></label>`}else h+=`<label><b>${f}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`});h+='</div>';$('formBody').innerHTML=h;syncBirthNik();syncBirthFamilyFromKK();syncArrivalKKMode()}
+function buildForm(){const text=['NIK','NAMA LENGKAP','NO KK','TMPT_LHR','TGL_LHR','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];const select=['JK','SHDRT','STATUS','GD','AGAMA','PENDIDIKAN','PEKERJAAN'];let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';fields.forEach(f=>{const id='in_'+f.replace(/[^A-Z0-9]/gi,'_');const displayLabel=requiredResidentLabel(f,f);const required=REQUIRED_RESIDENT_FIELDS.includes(f)?' required':'';if(select.includes(f)){h+=`<label><b>${displayLabel}</b><select class="select" id="${id}"${required}><option value="">-- pilih --</option>${opts[f].map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}else if(f==='NO KK'){h+=`<label><b>${displayLabel}</b><input class="input" id="${id}" inputmode="numeric" maxlength="16" placeholder="Masukkan 16 digit Nomor KK"${required}><div id="birthKKPreview" class="birth-kk-preview" style="display:none"></div></label>`}else h+=`<label><b>${displayLabel}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}${required}></label>`});h+='</div>';$('formBody').innerHTML=h;syncBirthNik();syncBirthFamilyFromKK();syncArrivalKKMode()}
 $('addReason').addEventListener('change',()=>{
   const wrap=$('addOriginWrap');
   if(wrap)wrap.style.display=$('addReason').value==='Kedatangan'?'block':'none';
@@ -3481,10 +3481,12 @@ function buildEntryBioForm(head){
     const id='entry_'+f.replace(/[^A-Z0-9]/gi,'_');
     const val=f==='GD'?'Tidak Tahu':f==='AGAMA'?'Islam':'';
     const label=f==='NO_AKTA_KAWIN'?'No. Akta Nikah':f==='TGL_NIKAH'?'Tgl Kawin':f==='NO_AKTA_CERAI'?'No. Akta Cerai':f==='TGL_CERAI'?'Tgl Cerai':f;
-    if(select.includes(f))h+=`<label><b>${label}</b><select class="select" id="${id}"><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`;
-    else h+=`<label><b>${label}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}></label>`;
+    const displayLabel=requiredResidentLabel(f,label);
+    const required=REQUIRED_RESIDENT_FIELDS.includes(f)?' required':'';
+    if(select.includes(f))h+=`<label><b>${displayLabel}</b><select class="select" id="${id}"${required}><option value="">-- pilih --</option>${opts[f].map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`;
+    else h+=`<label><b>${displayLabel}</b><input class="input" id="${id}" ${DATE_FIELDS.includes(f)?'type="date"':''}${required}></label>`;
   });
-  h+=`<label><b>NO KK</b><input class="input" id="entry_NO_KK" value="${esc(head['NO KK']||'')}" readonly></label>`;
+  h+=`<label><b>${requiredResidentLabel('NO KK','NO KK')}</b><input class="input" id="entry_NO_KK" value="${esc(head['NO KK']||'')}" readonly required></label>`;
   h+=`<label><b>ALAMAT</b><input class="input" id="entry_ALAMAT" value="${esc(head.ALAMAT||'')}" readonly></label>`;
   h+=`<label><b>RT</b><input class="input" id="entry_RT" value="${esc(head.RT||'')}" readonly></label>`;
   h+=`<label><b>RW</b><input class="input" id="entry_RW" value="${esc(head.RW||'')}" readonly></label>`;
@@ -3523,14 +3525,10 @@ $('btnSaveEntryBio').addEventListener('click',()=>{
   const r={};
   const entryFields=['NIK','NAMA LENGKAP','TMPT_LHR','TGL_LHR','JK','SHDRT','STATUS','NO_AKTA_KAWIN','TGL_NIKAH','NO_AKTA_CERAI','TGL_CERAI','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','NO KK','ALAMAT','RT','RW'];
   entryFields.forEach(f=>{const el=$('entry_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?String(el.value||'').trim():''});
-  if(!r.NIK)return toast('NIK wajib diisi');
+  r['NO KK']=String(head['NO KK']||'').trim();
+  if(!validateRequiredResidentFields(r,'entry_'))return;
   if(!isValidNik(r.NIK))return toast('NIK harus terdiri dari 16 digit angka');
   if(data.some(x=>String(x.NIK||'').trim()===r.NIK))return toast('NIK sudah ada di database');
-  if(!r['NAMA LENGKAP'])return toast('Nama Lengkap wajib diisi');
-  if(!r.TGL_LHR)return toast('Tanggal Lahir wajib diisi');
-  if(!r.JK)return toast('Jenis Kelamin wajib dipilih');
-  if(!r.SHDRT)return toast('Hubungan Keluarga wajib dipilih');
-  r['NO KK']=String(head['NO KK']||'').trim();
   r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
   if(r.SHDRT==='Anak')entryBioRefreshParents(false);
   // Pastikan nilai ayah/ibu yang bisa diedit tetap berasal dari form terakhir.
