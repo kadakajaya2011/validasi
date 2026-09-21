@@ -2013,7 +2013,7 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
     if(!confirm('Catat '+(base['NAMA LENGKAP']||'penduduk')+' sebagai meninggal dan keluarkan dari data aktif?'+(prep.replacements.size?' Kepala Keluarga pengganti akan ditetapkan otomatis sesuai pilihan.':'')))return;
     addHistory('Penduduk Meninggal',base,detail,meta);
     applyHeadReplacements(prep.replacements);
-    markResidentsInactive([base],'Meninggal',$('deathNote')?.value?.trim()||'');persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast('Data kematian dicatat dan ditandai tidak aktif');return;
+    markResidentsInactive([base],'Meninggal',$('deathNote')?.value?.trim()||'');try{await persist()}catch(e){toast('Gagal menyimpan status tidak aktif: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast('Data kematian dicatat dan ditandai tidak aktif');return;
   }
   if(reason==='Hapus Pindah'){
     const members=familyMembersByKK(base['NO KK']);
@@ -2027,7 +2027,7 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
     const detailBase='Nomor SKP: '+$('moveSkp').value.trim()+' | Klasifikasi: '+$('moveClass').value+' | Alasan: '+($('moveReason').value==='Lainnya'?$('moveOther').value.trim():$('moveReason').value)+' | Jenis: '+$('moveType').value+' | Tanggal: '+$('moveDate').value+' | Tujuan: '+[$('moveAddress').value.trim(),$('moveVillage').value.trim(),$('moveDistrict').value.trim(),$('moveRegency').value.trim(),$('moveProvince').value.trim()].filter(Boolean).join(', ')+' | RT/RW: '+[$('moveRT').value.trim(),$('moveRW').value.trim()].filter(Boolean).join('/')+' | Status tidak pindah: '+($('moveStayStatus').value||'-')+' | Status pindah: '+($('moveGoStatus').value||'-');
     const meta={kategori:'PERPINDAHAN',groupId:groupId,nomorSKP:$('moveSkp').value.trim(),klasifikasi:$('moveClass').value,alasan:$('moveReason').value==='Lainnya'?$('moveOther').value.trim():$('moveReason').value,jenis:$('moveType').value,statusTidakPindah:$('moveStayStatus').value,statusPindah:$('moveGoStatus').value,tanggal:$('moveDate').value,tujuan:{alamat:$('moveAddress').value.trim(),rt:$('moveRT').value.trim(),rw:$('moveRW').value.trim(),kodePos:$('movePostal').value.trim(),desa:$('moveVillage').value.trim(),kecamatan:$('moveDistrict').value.trim(),kabupatenKota:$('moveRegency').value.trim(),provinsi:$('moveProvince').value.trim()}};
     selected.forEach(r=>addHistory('Penduduk Pindah',r,detailBase,{...meta,noKK:r['NO KK'],shdrt:r.SHDRT}));
-    const names=selected.map(r=>r['NAMA LENGKAP']).join(', ');applyHeadReplacements(prep.replacements);markResidentsInactive(selected,'Pindah',detailBase);persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(selected.length+' penduduk dicatat pindah dan ditandai tidak aktif');return;
+    const names=selected.map(r=>r['NAMA LENGKAP']).join(', ');applyHeadReplacements(prep.replacements);markResidentsInactive(selected,'Pindah',detailBase);try{await persist()}catch(e){toast('Gagal menyimpan status pindah: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(selected.length+' penduduk dicatat pindah dan ditandai tidak aktif');return;
   }
   const isDouble=reason==='Hapus Double';
   const removeByKK=reason==='Hapus KK'||(isDouble&&$('doubleScope').value==='KK');
@@ -2046,7 +2046,7 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
   // Keterangan hanya memuat Alasan; Lingkup tidak ditampilkan pada register.
   removed.forEach(r=>addHistory('Data Dihapus',r,'Alasan: '+reason,{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'}));
   applyHeadReplacements(prep.replacements);
-  markResidentsInactive(removed,reason);persist();fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data ditandai tidak aktif ('+reason+')');
+  markResidentsInactive(removed,reason);try{await persist()}catch(e){toast('Gagal menyimpan status tidak aktif: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data ditandai tidak aktif ('+reason+')');
 });
 
 
