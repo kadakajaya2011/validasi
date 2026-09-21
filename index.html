@@ -339,7 +339,7 @@
  body.print-ktp #ktpOverlay .ktp-paper{width:100%!important;min-height:0!important;padding:7mm 9mm!important;box-shadow:none!important;margin:0!important}
  body.print-ktp #ktpOverlay .ktp-page{page-break-after:always!important;break-after:page!important}
  body.print-ktp #ktpOverlay .ktp-page:last-child{page-break-after:auto!important;break-after:auto!important}
- @page f101Print{size:A4 landscape;margin:7mm!important}
+ @page f101Print{size:A4 landscape;margin:5mm!important}
  body.print-f101{page:f101Print!important}
  body.print-f101> *{display:none!important}
  body.print-f101>#f101Overlay{display:block!important}
@@ -352,9 +352,9 @@
  body.print-f101 #f101Overlay .modal-body{padding:0!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
  body.print-f101 #f101Overlay .f101-grid{display:none!important}
  body.print-f101 #f101Overlay .f101-paper-wrap{border:0!important;background:#fff!important;padding:0!important;overflow:visible!important}
- body.print-f101 #f101Overlay .f101-paper{box-shadow:none!important;margin:0 auto!important;width:100%!important;max-width:100%!important;min-height:0!important;padding:2mm 2mm!important;box-sizing:border-box!important;font-size:7.1pt!important;flex:1 1 auto!important}
+ body.print-f101 #f101Overlay .f101-paper{box-shadow:none!important;margin:0 auto!important;width:100%!important;max-width:100%!important;min-height:0!important;padding:1.5mm 2mm!important;box-sizing:border-box!important;font-size:6.85pt!important;flex:none!important}
  body.print-f101 #f101Overlay #f101Preview{display:block!important;width:100%!important}
- body.print-f101 #f101Overlay .f101-page{height:auto!important;min-height:0!important;max-height:none!important;page-break-after:auto!important;break-after:auto!important;overflow:hidden!important;display:block!important;margin:0!important}
+ body.print-f101 #f101Overlay .f101-page{height:auto!important;min-height:0!important;max-height:none!important;page-break-after:avoid!important;break-after:avoid-page!important;overflow:hidden!important;display:block!important;margin:0!important}
  body.print-f101 #f101Overlay .f101-page + .f101-page{page-break-before:always!important;break-before:page!important}
  body.print-f101 #f101Overlay .f101-table tbody tr{height:4.65mm!important}
  body.print-f101 #f101Overlay .f101-empty-row td{height:4.65mm!important}
@@ -964,7 +964,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
         <div class="birth-app-preview-wrap"><div id="birthApplicationPreview"></div></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
+    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
   </div>
 </div>
 <div class="overlay" id="deathApplicationOverlay">
@@ -1039,7 +1039,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
         <div class="death-app-preview-wrap"><div id="deathApplicationPreview"></div></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn" data-close="deathApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewDeathApplication">👁 Pratinjau</button><button class="btn btn-primary" id="btnPrintDeathApplication">🖨 Cetak F-2.01</button></div>
+    <div class="modal-foot"><button class="btn" data-close="deathApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewDeathApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSuket">📄 Suket</button><button class="btn btn-primary" id="btnPrintDeathApplication">🖨 Cetak F-2.01</button></div>
   </div>
 </div>
 <div class="overlay" id="moveApplicationOverlay">
@@ -2140,7 +2140,7 @@ function renderBirthApplication(){
     <div class="section">DATA SAKSI I</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(w1.name)}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td>${esc(w1.nik)}</td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td>${esc(w1.kk)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(w1.nation)}</td></tr></table></div>
     <div class="section">DATA SAKSI II</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(w2.name)}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td>${esc(w2.nik)}</td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td>${esc(w2.kk)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(w2.nation)}</td></tr></table></div>
     <div class="section">DATA ORANG TUA** <i>(hanya diisi untuk keperluan pencatatan kelahiran, lahir mati dan kematian)</i></div><div class="box"><table class="row"><tr><td class="lbl">Nama Ayah</td><td class="colon">:</td><td>${esc(fName)}</td></tr><tr><td class="lbl">NIK Ayah</td><td class="colon">:</td><td>${esc(fNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ayah</td><td class="colon">:</td><td>${esc(fPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ayah</td><td class="colon">:</td><td>${birthDateBoxes(fDate)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppFatherNation')||'WNI')}</td></tr><tr><td class="lbl">Nama Ibu</td><td class="colon">:</td><td>${esc(mName)}</td></tr><tr><td class="lbl">NIK Ibu</td><td class="colon">:</td><td>${esc(mNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ibu</td><td class="colon">:</td><td>${esc(mPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ibu</td><td class="colon">:</td><td>${birthDateBoxes(mDate)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppMotherNation')||'WNI')}</td></tr></table></div>
-    <div class="section">DATA ANAK</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(childName)}</td></tr><tr><td class="lbl">Jenis Kelamin</td><td class="colon">:</td><td>${birthCheck('1. Laki-laki',birthGender==='Laki-laki')} ${birthCheck('2. Perempuan',birthGender==='Perempuan')}</td></tr><tr><td class="lbl">Tempat Dilahirkan</td><td class="colon">:</td><td>${birthCheck('1. RS/RB',bornPlace==='RS/RB')} ${birthCheck('2. Puskesmas',bornPlace==='Puskesmas')} ${birthCheck('3. Polindes',bornPlace==='Polindes')} ${birthCheck('4. Rumah',bornPlace==='Rumah')} ${birthCheck('5. Lainnya',bornPlace==='Lainnya')}</td></tr><tr><td class="lbl">Tempat Kelahiran</td><td class="colon">:</td><td>${esc(birthValue('birthAppBirthPlace'))}</td></tr><tr><td class="lbl">Hari dan Tanggal Lahir</td><td class="colon">:</td><td>Hari: ${esc(birthValue('birthAppBirthDay'))} &nbsp; ${birthDateBoxes(birthValue('birthAppBirthDate'))}</td></tr><tr><td class="lbl">Pukul</td><td class="colon">:</td><td>${esc(birthValue('birthAppTime'))}</td></tr><tr><td class="lbl">Jenis Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Tunggal',birthType==='Tunggal')} ${birthCheck('2. Kembar 2',birthType==='Kembar 2')} ${birthCheck('3. Kembar 3',birthType==='Kembar 3')} ${birthCheck('4. Kembar 4',birthType==='Kembar 4')} ${birthCheck('5. Lainnya',birthType==='Lainnya')}</td></tr><tr><td class="lbl">Kelahiran Ke</td><td class="colon">:</td><td>${esc(order)}</td></tr><tr><td class="lbl">Penolong Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Dokter',helper==='Dokter')} ${birthCheck('2. Bidan/Perawat',helper==='Bidan/Perawat')} ${birthCheck('3. Dukun',helper==='Dukun')} ${birthCheck('4. Lainnya',helper==='Lainnya')}</td></tr><tr><td class="lbl">Berat Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppWeight'))} kg</td></tr><tr><td class="lbl">Panjang Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppLength'))} cm</td></tr></table></div>
+    <div class="section">DATA ANAK</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(childName)}</td></tr><tr><td class="lbl">Jenis Kelamin</td><td class="colon">:</td><td>${birthCheck('1. Laki-laki',birthGender==='Laki-laki')} ${birthCheck('2. Perempuan',birthGender==='Perempuan')}</td></tr><tr><td class="lbl">Tempat Dilahirkan</td><td class="colon">:</td><td>${birthCheck('1. RS/RB',bornPlace==='RS/RB')} ${birthCheck('2. Puskesmas',bornPlace==='Puskesmas')} ${birthCheck('3. Polindes',bornPlace==='Polindes')} ${birthCheck('4. Rumah',bornPlace==='Rumah')} ${birthCheck('5. Lainnya',bornPlace==='Lainnya')}</td></tr><tr><td class="lbl">Tempat Kelahiran</td><td class="colon">:</td><td>${esc(birthValue('birthAppBirthPlace'))}</td></tr><tr><td class="lbl">Hari dan Tanggal Lahir</td><td class="colon">:</td><td>${esc(birthValue('birthAppBirthDay'))} &nbsp; ${birthDateBoxes(birthValue('birthAppBirthDate'))}</td></tr><tr><td class="lbl">Pukul</td><td class="colon">:</td><td>${esc(birthValue('birthAppTime'))}</td></tr><tr><td class="lbl">Jenis Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Tunggal',birthType==='Tunggal')} ${birthCheck('2. Kembar 2',birthType==='Kembar 2')} ${birthCheck('3. Kembar 3',birthType==='Kembar 3')} ${birthCheck('4. Kembar 4',birthType==='Kembar 4')} ${birthCheck('5. Lainnya',birthType==='Lainnya')}</td></tr><tr><td class="lbl">Kelahiran Ke</td><td class="colon">:</td><td>${esc(order)}</td></tr><tr><td class="lbl">Penolong Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Dokter',helper==='Dokter')} ${birthCheck('2. Bidan/Perawat',helper==='Bidan/Perawat')} ${birthCheck('3. Dukun',helper==='Dukun')} ${birthCheck('4. Lainnya',helper==='Lainnya')}</td></tr><tr><td class="lbl">Berat Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppWeight'))} kg</td></tr><tr><td class="lbl">Panjang Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppLength'))} cm</td></tr></table></div>
     <table class="signature"><tr><td></td><td>${esc(village)}, ${esc(today)}<br>Pelapor<div class="sigspace"></div><b>( ${esc(reporter?.['NAMA LENGKAP']||'................................')} )</b></td></tr></table><div class="muted" style="margin-top:2px">F-2.01 &nbsp; FORMULIR PELAPORAN PENCATATAN SIPIL DI DALAM WILAYAH NKRI</div>
   </div>`;
 }
@@ -2228,6 +2228,78 @@ $('btnPreviewBirthApplication').addEventListener('click',()=>{
   if(validateBirthApplication()){renderBirthApplication();}
 });
 $('btnPrintBirthApplication').addEventListener('click',printBirthApplication);
+$('btnPrintSPTJM').addEventListener('click',printSPTJM);
+
+
+/* ===== Dokumen pendukung Akta Kelahiran / Kematian ===== */
+function printSupportDocument(title, bodyHtml, pageCss){
+  const frame=document.createElement('iframe');
+  frame.setAttribute('aria-hidden','true');
+  Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'1px',height:'1px',border:'0',visibility:'hidden'});
+  document.body.appendChild(frame);
+  const doc=frame.contentDocument;
+  const styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');
+  doc.open();
+  doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>${pageCss}</style></head><body>${bodyHtml}</body></html>`);
+  doc.close();
+  const cleanup=()=>setTimeout(()=>frame.remove(),700);
+  const doPrint=()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}finally{cleanup()}};
+  if(frame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else frame.onload=()=>setTimeout(doPrint,250);
+}
+function printSPTJM(){
+  const r=getBirthResident();
+  if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
+  const father={name:birthValue('birthAppFatherName'),nik:birthValue('birthAppFatherNik'),place:birthValue('birthAppFatherPlace'),date:birthValue('birthAppFatherDate'),nation:birthValue('birthAppFatherNation')||'WNI'};
+  const mother={name:birthValue('birthAppMotherName'),nik:birthValue('birthAppMotherNik'),place:birthValue('birthAppMotherPlace'),date:birthValue('birthAppMotherDate'),nation:birthValue('birthAppMotherNation')||'WNI'};
+  if(!father.name&&!mother.name){toast('Data ayah atau ibu belum tersedia');return}
+  const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
+  const childGender=birthValue('birthAppGender')||r.JK||'';
+  const childPlace=birthValue('birthAppBirthPlace')||r.TMPT_LHR||'';
+  const childDate=birthValue('birthAppBirthDate')||r.TGL_LHR||'';
+  const village=desaSettings?.village||'',district=desaSettings?.district||'',regency=desaSettings?.regency||'';
+  const address=r.ALAMAT||'',rt=r.RT||'',rw=r.RW||'',kk=r['NO KK']||$('birthAppKK')?.value||'';
+  const today=letterIndoDate(todayISO());
+  const h=`<div class="sptjm-paper">
+    <h1>SURAT PERNYATAAN TANGGUNG JAWAB MUTLAK</h1>
+    <h2>(SPTJM) KEBENARAN DATA KELAHIRAN</h2>
+    <p>Yang bertanda tangan di bawah ini:</p>
+    <table class="ident">
+      <tr><td>Nama Ayah</td><td>:</td><td>${esc(father.name)}</td></tr>
+      <tr><td>NIK</td><td>:</td><td>${esc(father.nik)}</td></tr>
+      <tr><td>Nama Ibu</td><td>:</td><td>${esc(mother.name)}</td></tr>
+      <tr><td>NIK</td><td>:</td><td>${esc(mother.nik)}</td></tr>
+      <tr><td>Nomor Kartu Keluarga</td><td>:</td><td>${esc(kk)}</td></tr>
+      <tr><td>Alamat</td><td>:</td><td>${esc(address)}, RT ${esc(rt)} / RW ${esc(rw)}, Desa ${esc(village)}, Kecamatan ${esc(district)}, Kabupaten ${esc(regency)}</td></tr>
+    </table>
+    <p>Dengan ini menyatakan dengan sebenarnya bahwa data kelahiran anak berikut adalah benar:</p>
+    <table class="ident">
+      <tr><td>Nama Anak</td><td>:</td><td>${esc(childName)}</td></tr>
+      <tr><td>Jenis Kelamin</td><td>:</td><td>${esc(childGender)}</td></tr>
+      <tr><td>Tempat Kelahiran</td><td>:</td><td>${esc(childPlace)}</td></tr>
+      <tr><td>Tanggal Lahir</td><td>:</td><td>${esc(childDate?fmtDate(childDate):'')}</td></tr>
+      <tr><td>Kelahiran Ke</td><td>:</td><td>${esc(birthValue('birthAppOrder'))}</td></tr>
+    </table>
+    <p>Pernyataan ini dibuat dengan sebenar-benarnya untuk digunakan sebagai persyaratan pencatatan kelahiran. Apabila di kemudian hari ternyata pernyataan ini tidak benar, kami bersedia bertanggung jawab sesuai dengan ketentuan peraturan perundang-undangan.</p>
+    <table class="sign"><tr><td>${esc(village)}, ${esc(today)}<br>Ayah</td><td>${esc(village)}, ${esc(today)}<br>Ibu</td></tr><tr><td class="space"></td><td class="space"></td></tr><tr><td><b><u>${esc(father.name||'................................')}</u></b></td><td><b><u>${esc(mother.name||'................................')}</u></b></td></tr></table>
+  </div>`;
+  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:12mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{width:186mm;min-height:273mm;margin:0 auto;box-sizing:border-box;font-size:11pt;line-height:1.45}.sptjm-paper h1{text-align:center;font-size:14pt;margin:0 0 2px;text-decoration:underline}.sptjm-paper h2{text-align:center;font-size:12pt;margin:0 0 14mm}.sptjm-paper p{margin:0 0 6mm;text-align:justify}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin-bottom:5mm}.sptjm-paper .ident td{padding:1.5mm 1mm;vertical-align:top}.sptjm-paper .ident td:first-child{width:45mm}.sptjm-paper .ident td:nth-child(2){width:5mm;text-align:center}.sptjm-paper .sign{width:100%;margin-top:18mm;border-collapse:collapse;text-align:center}.sptjm-paper .sign td{width:50%;vertical-align:top}.sptjm-paper .sign .space{height:25mm}`);
+}
+function printSuket(){
+  const name=String($('deathAppName')?.value||'').trim();
+  if(!name){toast('Pilih data kematian terlebih dahulu');return}
+  const r=data.find(x=>String(x.NIK||'').trim()===String($('deathAppNIK')?.value||'').trim())||{};
+  const date=String($('deathAppDate')?.value||'').trim();
+  if(!date){toast('Tanggal kematian wajib diisi');return}
+  const day=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date(date+'T00:00:00').getDay()]||'';
+  const place=$('deathAppPlaceType')?.value||'';
+  const village=desaSettings?.village||'',district=desaSettings?.district||'',regency=desaSettings?.regency||'',province=desaSettings?.province||'',head=desaSettings?.head||'';
+  const docNo=String($('deathAppDocNo')?.value||'').trim();
+  const dateCert=letterIndoDate(todayISO());
+  const copies=['Arsip Kecamatan','Arsip Desa','Arsip Keluarga'];
+  const card=(copy)=>`<div class="suket-card"><div class="copy-label">${esc(copy)}</div><h1>SURAT KEMATIAN</h1><div class="no">No . ${esc(docNo||'................................')}</div><p>Yang bertanda tangan dibawah ini,<br>menerangkan bahwa pada :</p><table class="info"><tr><td>Hari</td><td>:</td><td>${esc(day.toUpperCase())}</td></tr><tr><td>Tanggal</td><td>:</td><td>${esc(fmtDate(date))}</td></tr><tr><td>Pukul</td><td>:</td><td>${esc($('deathAppTime')?.value||'')}</td></tr><tr><td>Tempat</td><td>:</td><td>${esc(place.toUpperCase())}</td></tr></table><div class="dead-title">Telah Meninggal Dunia yang bernama :</div><div class="dead-name">== ${esc(name.toUpperCase())} ==</div><table class="info"><tr><td>NIK</td><td>:</td><td>${esc($('deathAppNIK')?.value||r.NIK||'')}</td></tr><tr><td>Nomor KK</td><td>:</td><td>${esc($('deathAppKK')?.value||r['NO KK']||'')}</td></tr><tr><td>Jenis Kel</td><td>:</td><td>${esc($('deathAppJK')?.value||r.JK||'')}</td></tr><tr><td>Tgl Lahir</td><td>:</td><td>${esc($('deathAppBirthDate')?.value?fmtDate($('deathAppBirthDate').value):fmtDate(r.TGL_LHR||''))}</td></tr><tr><td>Agama</td><td>:</td><td>${esc(r.AGAMA||'')}</td></tr><tr><td>Alamat</td><td>:</td><td>${esc(r.ALAMAT||'')}</td></tr><tr><td></td><td></td><td>RT : ${esc(r.RT||'')} &nbsp;&nbsp;&nbsp; RW : ${esc(r.RW||'')}</td></tr><tr><td>Desa/Kel</td><td>:</td><td>${esc(village.toUpperCase())}</td></tr><tr><td>Kecamatan</td><td>:</td><td>${esc(district.toUpperCase())}</td></tr><tr><td>Kabupaten</td><td>:</td><td>${esc(regency.toUpperCase())}</td></tr><tr><td>Provinsi</td><td>:</td><td>${esc(province.toUpperCase())}</td></tr></table><p class="statement">Surat keterangan ini dibuat atas<br>dasar yang sebenarnya.</p><div class="sign">${esc(regency)}, ${esc(dateCert)}<br>Kepala Desa ${esc(village.toUpperCase())}<div class="signspace"></div><b><u>${esc(head.toUpperCase()||'................................')}</u></b></div></div>`;
+  const h=`<div class="suket-page">${copies.map(card).join('')}</div>`;
+  printSupportDocument('Surat Kematian - '+safePrintName(name),h,`@page{size:A4 landscape;margin:7mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.suket-page{width:283mm;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:12mm;align-items:start}.suket-card{position:relative;width:100%;height:185mm;border:1px solid #111;box-sizing:border-box;padding:4mm 5mm 3mm;font-size:9.3pt;line-height:1.28}.suket-card .copy-label{position:absolute;right:4mm;top:-7mm;font-style:italic;font-size:9pt;white-space:nowrap}.suket-card h1{text-align:center;font-size:13pt;margin:0 0 1mm}.suket-card .no{text-align:center;margin-bottom:7mm}.suket-card p{margin:0 0 5mm}.suket-card .info{width:100%;border-collapse:collapse;margin:0 0 6mm}.suket-card .info td{padding:0.7mm 0;vertical-align:top}.suket-card .info td:first-child{width:25mm}.suket-card .info td:nth-child(2){width:4mm;text-align:center}.suket-card .dead-title{text-align:center;font-weight:700;text-decoration:underline;margin:7mm 0 5mm}.suket-card .dead-name{text-align:center;font-weight:700;margin-bottom:7mm}.suket-card .statement{text-align:center;margin-top:7mm}.suket-card .sign{text-align:center;margin-top:4mm}.suket-card .signspace{height:18mm}`);
+}
 
 /* ===== Permohonan Akta Kematian dari Riwayat Hapus Meninggal ===== */
 let deathApplicationHistory=[];
@@ -2399,6 +2471,7 @@ $('btnFindDeathWitness2').addEventListener('click',()=>findDeathWitness(2));
 ['deathAppCause','deathAppPlaceType','deathAppReporterType'].forEach(id=>$(id)?.addEventListener('change',renderDeathApplication));
 $('btnPreviewDeathApplication').addEventListener('click',()=>{if(validateDeathApplication())renderDeathApplication()});
 $('btnPrintDeathApplication').addEventListener('click',printDeathApplication);
+$('btnPrintSuket').addEventListener('click',printSuket);
 
 const BIRTH_NIK_PREFIX='9999992011';
 function generateBirthNik(){
