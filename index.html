@@ -2285,12 +2285,14 @@ function printSPTJM(){
   const motherAddress=mother?.ALAMAT||r.ALAMAT||'';
   const helperName=String(r.NAMA_PENOLONG||r['NAMA PENOLONG']||r.NAMA_BIDAN||'').trim();
   const helperNik=String(r.NIK_PENOLONG||r['NIK PENOLONG']||r.NIK_BIDAN||'').trim();
-  const helperJob=String(r.PEKERJAAN_PENOLONG||r['PEKERJAAN PENOLONG']||r.PEKERJAAN_BIDAN||'').trim();
+  const helperJob=String(birthValue('birthAppHelper')||r.PENOLONG_KELAHIRAN||r['PENOLONG KELAHIRAN']||'').trim();
   const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
   const w1=getBirthWitness(1),w2=getBirthWitness(2);
   const village=desaSettings?.village||'';
   const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td>${esc(value||'')}</td></tr>`;
-  const birthTypeText=birthType?String(birthType).toUpperCase()+' ..... *)':'TUNGGAL / KEMBAR ..... *)';
+  const birthTypeText=birthType?String(birthType).toUpperCase():'';
+  const now=new Date();
+  const printDate=String(now.getDate()).padStart(2,'0')+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+now.getFullYear();
   const h=`<div class="sptjm-paper">
     <div class="code">F-2.03</div>
     <h1>SURAT PERNYATAAN TANGGUNG JAWAB MUTLAK (SPTJM)</h1>
@@ -2308,7 +2310,7 @@ function printSPTJM(){
       ${row('Nama',childName)}
       ${row('NIK',childNik)}
       ${row('Tempat/Tanggal Lahir',childPlace&&childDate?childPlace+', '+fmtDate(childDate):childPlace||fmtDate(childDate))}
-      ${row('Anak ke *)',childOrder)}
+      ${row('Anak ke',childOrder)}
       ${row('Jenis Kelahiran',birthTypeText)}
       ${row('Alamat',childAddress)}
     </table>
@@ -2328,7 +2330,7 @@ function printSPTJM(){
       ${row('Alamat',helperAddress)}
     </table>
     <p class="declaration">Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila di kemudian hari ternyata pernyataan saya ini tidak benar, maka saya bersedia diproses secara hukum sesuai dengan peraturan perundang-undangan dan dokumen yang diterbitkan akibat dari pernyataan ini menjadi tidak sah.</p>
-    <div class="date-line">${esc(village)},.................................. 20....</div>
+    <div class="date-line">${esc(village)}, ${esc(printDate)}</div>
     <table class="sign">
       <tr><td>Saksi I,</td><td>Saya yang menyatakan,</td></tr>
       <tr><td class="sigspace"></td><td class="sigspace"></td></tr>
@@ -2340,7 +2342,7 @@ function printSPTJM(){
       <tr><td>NIK. ${esc(w2.nik||'.................................')}</td><td></td></tr>
     </table>
   </div>`;
-  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:10mm 12mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{position:relative;width:186mm;min-height:277mm;margin:0 auto;box-sizing:border-box;font-size:11pt;line-height:1.28}.sptjm-paper .code{position:absolute;right:0;top:0;border:1px solid #111;padding:1px 6px;font-weight:700;font-size:10.5pt}.sptjm-paper h1{text-align:center;font-size:14pt;margin:11mm 0 0;font-weight:700}.sptjm-paper h2{text-align:center;font-size:13pt;margin:0 0 7mm;font-weight:700}.sptjm-paper p{margin:0 0 3mm}.sptjm-paper .sub{margin-top:1mm}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 3mm}.sptjm-paper .ident td{padding:0.7mm 0;vertical-align:top}.sptjm-paper .ident .lbl{width:43mm;padding-left:7mm}.sptjm-paper .ident .colon{width:5mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:4mm}.sptjm-paper .date-line{text-align:right;margin-top:8mm;margin-right:2mm}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:1mm}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sigspace{height:24mm}.sptjm-paper .sigspace.small{height:19mm}.sptjm-paper .witness2{padding-top:5mm}`);
+  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:7mm 10mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{position:relative;width:190mm;height:283mm;max-height:283mm;margin:0 auto;box-sizing:border-box;font-size:10pt;line-height:1.16;overflow:hidden}.sptjm-paper .code{position:absolute;right:0;top:0;border:1px solid #111;padding:1px 6px;font-weight:700;font-size:9.5pt}.sptjm-paper h1{text-align:center;font-size:13pt;margin:7mm 0 0;font-weight:700}.sptjm-paper h2{text-align:center;font-size:12pt;margin:0 0 4mm;font-weight:700}.sptjm-paper p{margin:0 0 1.5mm}.sptjm-paper .sub{margin-top:0.5mm}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 1.5mm}.sptjm-paper .ident td{padding:0.35mm 0;vertical-align:top}.sptjm-paper .ident .lbl{width:43mm;padding-left:5mm}.sptjm-paper .ident .colon{width:4mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:2mm}.sptjm-paper .date-line{text-align:right;margin-top:4mm;margin-right:2mm}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:0.5mm}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sigspace{height:15mm}.sptjm-paper .sigspace.small{height:12mm}.sptjm-paper .witness2{padding-top:2mm}`);
 }
 function printSuket(){
   const name=String($('deathAppName')?.value||'').trim();
