@@ -2275,14 +2275,15 @@ function printSPTJM(){
   const fullAddress=(address,person)=>{
     const base=String(address||'').trim();
     const rt=String(person?.RT||r.RT||'').trim(), rw=String(person?.RW||r.RW||'').trim();
-    const parts=[];
-    if(base)parts.push(base);
-    if(rt)parts.push('RT '+rt);
-    if(rw)parts.push('RW '+rw);
-    if(village)parts.push('Desa/Kel. '+village);
-    if(district)parts.push('Kecamatan '+district);
-    if(regency)parts.push('Kabupaten '+regency);
-    return parts.join(', ');
+    const l1=[],l2=[];
+    if(base)l1.push(base);
+    if(rt)l1.push('RT '+rt);
+    if(rw)l1.push('RW '+rw);
+    if(village)l1.push('Desa/Kel. '+village);
+    if(district)l2.push('Kecamatan '+district);
+    if(regency)l2.push('Kabupaten '+regency);
+    const t1=l1.join(', '),t2=l2.join(', ');
+    return t1&&t2?[t1+',',t2]:[t1||t2].filter(Boolean);
   };
   const declarantAddress=fullAddress(father?.ALAMAT||reporter?.ALAMAT||r.ALAMAT||'',father||reporter||r);
   const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
@@ -2301,7 +2302,8 @@ function printSPTJM(){
   const helperJob=String(birthValue('birthAppHelper')||r.PENOLONG_KELAHIRAN||r['PENOLONG KELAHIRAN']||'').trim();
   const w1=getBirthWitness(1),w2=getBirthWitness(2);
   const helperAddress=String(r.ALAMAT_PENOLONG||r['ALAMAT PENOLONG']||r.ALAMAT_BIDAN||'').trim();
-  const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td>${esc(value||'')}</td></tr>`;
+  const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td class="val">${esc(value||'')}</td></tr>`;
+  const rowAddr=(label,lines)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td class="val">${(lines||[]).map(l=>'<span class="al">'+esc(l)+'</span>').join('')}</td></tr>`;
   const birthTypeText=birthType?String(birthType).toUpperCase():'';
   const now=new Date();
   const printDate=String(now.getDate()).padStart(2,'0')+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+now.getFullYear();
@@ -2315,7 +2317,7 @@ function printSPTJM(){
       ${row('NIK',declarantNik)}
       ${row('Tempat/Tanggal Lahir',declarantPlace&&declarantDate?declarantPlace+', '+fmtDate(declarantDate):declarantPlace||fmtDate(declarantDate))}
       ${row('Pekerjaan',declarantJob)}
-      ${row('Alamat',declarantAddress)}
+      ${rowAddr('Alamat',declarantAddress)}
     </table>
     <p class="sub">menyatakan bahwa :</p>
     <table class="ident">
@@ -2324,7 +2326,7 @@ function printSPTJM(){
       ${row('Tempat/Tanggal Lahir',childPlace&&childDate?childPlace+', '+fmtDate(childDate):childPlace||fmtDate(childDate))}
       ${row('Anak ke',childOrder)}
       ${row('Jenis Kelahiran',birthTypeText)}
-      ${row('Alamat',childAddress)}
+      ${rowAddr('Alamat',childAddress)}
     </table>
     <p class="sub">adalah anak kandung dari :</p>
     <table class="ident">
@@ -2332,14 +2334,14 @@ function printSPTJM(){
       ${row('NIK',motherNik)}
       ${row('Tempat/Tanggal Lahir',motherPlace&&motherDate?motherPlace+', '+fmtDate(motherDate):motherPlace||fmtDate(motherDate))}
       ${row('Pekerjaan',motherJob)}
-      ${row('Alamat',motherAddress)}
+      ${rowAddr('Alamat',motherAddress)}
     </table>
     <p class="sub">yang lahir dengan penolong kelahiran :</p>
     <table class="ident">
       ${row('Nama',helperName)}
       ${row('NIK',helperNik)}
       ${row('Pekerjaan',helperJob)}
-      ${row('Alamat',fullAddress(helperAddress,r))}
+      ${row('Alamat','')}
     </table>
     <p class="declaration">Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila di kemudian hari ternyata pernyataan saya ini tidak benar, maka saya bersedia diproses secara hukum sesuai dengan peraturan perundang-undangan dan dokumen yang diterbitkan akibat dari pernyataan ini menjadi tidak sah.</p>
     <table class="sign">
@@ -2354,8 +2356,8 @@ function printSPTJM(){
       <tr><td class="nik-sign">NIK. ${esc(w2.nik||'.................................')}</td><td></td></tr>
     </table>
   </div>
-  <script>(function(){var p=document.querySelector('.sptjm-paper');if(!p)return;var m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;width:1px;height:100mm';document.body.appendChild(m);var u=m.offsetHeight/100;document.body.removeChild(m);if(!u)return;var max=294*u,k=1;while(p.offsetHeight>max&&k>0.62){k=Math.round((k-0.02)*100)/100;p.style.setProperty('--k',k)}})();<\/script>`;
-  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:0!important}html,body{margin:0!important;padding:0!important;background:#fff;color:#111;font-family:Arial,sans-serif;height:auto!important;overflow:visible!important}.sptjm-paper{--k:1;position:relative;width:210mm;height:auto;box-sizing:border-box;margin:0 auto;padding:14mm 14mm 8mm;line-height:1.3;overflow:visible;page-break-inside:avoid;break-inside:avoid}.sptjm-paper,.sptjm-paper *{font-size:calc(10pt*var(--k));line-height:1.3}.sptjm-paper .code{position:absolute;right:14mm;top:11mm;border:1px solid #111;padding:1px 6px;font-weight:700}.sptjm-paper h1{text-align:center;font-weight:700;margin:calc(3mm*var(--k)) 0 0;line-height:1.25}.sptjm-paper h2{text-align:center;font-weight:700;margin:0 0 calc(6mm*var(--k));line-height:1.25}.sptjm-paper p{margin:0 0 calc(3mm*var(--k))}.sptjm-paper .sub{margin-top:calc(1.5mm*var(--k));margin-bottom:calc(2.5mm*var(--k))}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 calc(3mm*var(--k))}.sptjm-paper .ident td{padding:calc(.9mm*var(--k)) 0;vertical-align:top;word-break:break-word}.sptjm-paper .ident .lbl{width:43mm;padding-left:5mm}.sptjm-paper .ident .colon{width:4mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:calc(3mm*var(--k));margin-bottom:calc(3.5mm*var(--k))}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:calc(2mm*var(--k));page-break-inside:avoid;break-inside:avoid}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left;padding:0}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sign .date-line{text-align:center;margin:0 0 calc(3mm*var(--k))}.sptjm-paper .sigspace{height:calc(19mm*var(--k))}.sptjm-paper .sigspace.small{height:calc(15mm*var(--k))}.sptjm-paper .nik-sign{padding-top:0!important;line-height:1.15!important}.sptjm-paper .witness2{padding-top:calc(3mm*var(--k))!important}`);
+  <script>(function(){var p=document.querySelector('.sptjm-paper');if(!p)return;var m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;width:1px;height:100mm';document.body.appendChild(m);var u=m.offsetHeight/100;document.body.removeChild(m);if(!u)return;var max=294*u,k=1;var wide=function(){var a=p.querySelectorAll('.al');for(var i=0;i<a.length;i++){if(a[i].scrollWidth>a[i].clientWidth+1)return true}return false};while((p.offsetHeight>max||wide())&&k>0.62){k=Math.round((k-0.02)*100)/100;p.style.setProperty('--k',k)}if(wide()){p.classList.add('wrapok');while(p.offsetHeight>max&&k>0.62){k=Math.round((k-0.02)*100)/100;p.style.setProperty('--k',k)}}})();<\/script>`;
+  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:0!important}html,body{margin:0!important;padding:0!important;background:#fff;color:#111;font-family:Arial,sans-serif;height:auto!important;overflow:visible!important}.sptjm-paper{--k:1;position:relative;width:210mm;height:auto;box-sizing:border-box;margin:0 auto;padding:14mm 14mm 8mm;line-height:1.3;overflow:visible;page-break-inside:avoid;break-inside:avoid}.sptjm-paper,.sptjm-paper *{font-size:calc(10pt*var(--k));line-height:1.3}.sptjm-paper .code{position:absolute;right:14mm;top:11mm;border:1px solid #111;padding:1px 6px;font-weight:700}.sptjm-paper h1{text-align:center;font-weight:700;margin:calc(3mm*var(--k)) 0 0;line-height:1.25}.sptjm-paper h2{text-align:center;font-weight:700;margin:0 0 calc(6mm*var(--k));line-height:1.25}.sptjm-paper p{margin:0 0 calc(3mm*var(--k))}.sptjm-paper .sub{margin-top:calc(1.5mm*var(--k));margin-bottom:calc(2.5mm*var(--k))}.sptjm-paper .ident{width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 calc(3mm*var(--k))}.sptjm-paper .ident td{padding:calc(.9mm*var(--k)) 0;vertical-align:top;word-break:break-word}.sptjm-paper .ident .lbl{width:43mm;padding-left:5mm}.sptjm-paper .ident .colon{width:4mm;text-align:center}.sptjm-paper .ident td.val{padding-left:2.5mm}.sptjm-paper .al{display:block;white-space:nowrap}.sptjm-paper.wrapok .al{white-space:normal}.sptjm-paper .declaration{text-align:justify;margin-top:calc(3mm*var(--k));margin-bottom:calc(3.5mm*var(--k))}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:calc(2mm*var(--k));page-break-inside:avoid;break-inside:avoid}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left;padding:0}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sign .date-line{text-align:center;margin:0 0 calc(3mm*var(--k))}.sptjm-paper .sigspace{height:calc(19mm*var(--k))}.sptjm-paper .sigspace.small{height:calc(15mm*var(--k))}.sptjm-paper .nik-sign{padding-top:0!important;line-height:1.15!important}.sptjm-paper .witness2{padding-top:calc(3mm*var(--k))!important}`);
 }
 function printSuket(){
   const name=String($('deathAppName')?.value||'').trim();
