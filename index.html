@@ -894,7 +894,10 @@ body{font-family:Arial,Helvetica,sans-serif!important}
       <div id="splitKKPerson" style="border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:12px"></div>
       <div class="split-kk-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <label><b>Tujuan Pisah KK</b><select class="select" id="splitKKDestination"><option value="new">Buat KK Baru</option><option value="existing">Gabung ke No. KK yang Sudah Ada</option></select></label>
-        <label id="splitKKExistingWrap" style="display:none"><b>No. KK Tujuan</b><input class="input" id="splitKKExisting" inputmode="numeric" maxlength="16" placeholder="16 digit No. KK"></label>
+        <div id="splitKKExistingWrap" style="display:none">
+  <label><b>No. KK Tujuan</b><input class="input" id="splitKKExisting" inputmode="numeric" maxlength="16" placeholder="16 digit No. KK"></label>
+  <label id="splitKKRelationWrap" style="display:block;margin-top:10px"><b>Hubungan Keluarga pada KK Tujuan</b><select class="select" id="splitKKRelation"><option value="">-- pilih Hubungan Keluarga --</option></select></label>
+</div>
       </div>
       <div id="splitKKNewBox" style="margin-top:12px;border:1px solid var(--line);border-radius:9px;padding:12px">
         <b>KK Baru</b>
@@ -3543,7 +3546,7 @@ function openSplitKK(nik){
   if(!card.ok)return toast('KK lama belum valid. Pastikan tepat 1 Kepala Keluarga sebelum melakukan Pisah KK.');
   splitKKNik=String(r.NIK||'').trim();
   $('splitKKPerson').innerHTML=`<b>${esc(r['NAMA LENGKAP']||'-')}</b><br><span class="hint">NIK: ${esc(r.NIK||'-')} • KK lama: ${esc(oldKK)} • Hubungan: ${esc(r.SHDRT||'-')}</span>`;
-  $('splitKKDestination').value='new';$('splitKKExisting').value='';$('splitKKSiak').value='';
+  $('splitKKDestination').value='new';$('splitKKExisting').value='';$('splitKKRelation').value='';$('splitKKSiak').value='';
   document.querySelector('input[name="splitKKStatus"][value="siak"]').checked=true;
   $('splitKKExistingWrap').style.display='none';$('splitKKNewBox').style.display='block';
   renderSplitKKAutoPreview();renderSplitKKReplacement();
@@ -3576,9 +3579,19 @@ $('btnConfirmChangeKK').addEventListener('click',async()=>{
   }catch(err){console.error(err);members.forEach(r=>{r['NO KK']=oldKK});toast('Perubahan No. KK gagal: '+(err.message||err));}
 });
 
+function renderSplitKKRelationOptions(){
+  const sel=$('splitKKRelation');
+  if(!sel)return;
+  const current=String(sel.value||'').trim();
+  const relations=(opts.SHDRT||[]).filter(x=>String(x).trim().toUpperCase()!=='KEPALA KELUARGA');
+  sel.innerHTML='<option value="">-- pilih Hubungan Keluarga --</option>'+relations.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(relations.includes(current))sel.value=current;
+}
 $('splitKKDestination').addEventListener('change',()=>{
   const existing=$('splitKKDestination').value==='existing';
   $('splitKKExistingWrap').style.display=existing?'block':'none';$('splitKKNewBox').style.display=existing?'none':'block';
+  if(existing)renderSplitKKRelationOptions();
+  else $('splitKKRelation').value='';
   renderSplitKKReplacement();
 });
 document.querySelectorAll('input[name="splitKKStatus"]').forEach(el=>el.addEventListener('change',renderSplitKKAutoPreview));
@@ -3589,12 +3602,16 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
   const oldKK=String(person['NO KK']||'').trim();
   const destination=$('splitKKDestination').value;
   let newKK='';
+  let targetRelation='';
   if(destination==='existing'){
     newKK=String($('splitKKExisting').value||'').trim();
     if(!isValidKK(newKK))return toast('No. KK tujuan harus terdiri dari 16 digit angka.');
     if(newKK===oldKK)return toast('No. KK tujuan sama dengan KK lama.');
     const target=familyCardIntegrity(newKK);
     if(!target.ok)return toast('KK tujuan belum valid. Pastikan KK tujuan memiliki tepat 1 Kepala Keluarga.');
+    targetRelation=String($('splitKKRelation').value||'').trim();
+    if(!targetRelation)return toast('Pilih Hubungan Keluarga pada KK tujuan.');
+    if(targetRelation.toUpperCase()==='KEPALA KELUARGA')return toast('KK tujuan sudah memiliki Kepala Keluarga. Pilih Hubungan Keluarga selain Kepala Keluarga.');
   }else{
     const status=document.querySelector('input[name="splitKKStatus"]:checked')?.value||'siak';
     if(status==='siak'){
@@ -3620,6 +3637,7 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
     }
     person['NO KK']=newKK;
     if(destination==='new')person.SHDRT='Kepala Keluarga';
+    else person.SHDRT=targetRelation;
     const targetHead=destination==='existing'?familyCardIntegrity(newKK).head:person;
     if(!targetHead)throw new Error('Kepala Keluarga tujuan tidak ditemukan');
     person.ALAMAT=targetHead.ALAMAT||'';person.RT=targetHead.RT||'';person.RW=targetHead.RW||'';
@@ -4116,8 +4134,7 @@ function dashCount(rows,key){const m={};rows.forEach(r=>{const v=String(r[key]||
 function dashAgeGroup(a){if(a===''||a===null||a===undefined)return 'Tidak diketahui';a=Number(a);if(a<=5)return '0–5 tahun';if(a<=12)return '6–12 tahun';if(a<=17)return '13–17 tahun';if(a<=25)return '18–25 tahun';if(a<=40)return '26–40 tahun';if(a<=59)return '41–59 tahun';return '60+ tahun'}
 function dashBarRows(entries,max,limit=12){const arr=entries.slice(0,limit);return arr.length?arr.map(x=>`<div class="bar-row"><div class="bar-label" title="${esc(x[0])}">${esc(x[0])}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(x[1]/max)*100)}%"></div></div><div class="bar-value">${x[1]}</div></div>`).join(''):'<div class="empty">Belum ada data.</div>'}
 function renderDashboard(){
-  // Dashboard hanya merekap penduduk aktif; penduduk TIDAK AKTIF tidak ikut dihitung.
-  const rows=data.filter(isActiveResident);
+  const rows=[...data];
   const total=rows.length;
   const laki=rows.filter(r=>String(r.JK||'').toLowerCase().includes('laki')).length;
   const perempuan=rows.filter(r=>String(r.JK||'').toLowerCase().includes('perempuan')).length;
