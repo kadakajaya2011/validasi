@@ -2429,6 +2429,7 @@ function syncBirthNik(){
     el.title='NIK sementara untuk penambahan karena kelahiran, dibuat otomatis';
     el.style.background='#f1f5f9';
   }else{
+    el.value='';
     el.readOnly=false;
     el.title='';
     el.style.background='';
@@ -2517,6 +2518,8 @@ function syncArrivalKKMode(){
   const setLock=(el,locked)=>{if(el.tagName==='SELECT')el.disabled=!!locked;else el.readOnly=!!locked;el.style.background=locked?'#f1f5f9':'';};
   if(reason!=='Kedatangan'){
     if($('arrivalKKModeWrap'))$('arrivalKKModeWrap').style.display='none';
+    kk.value='';
+    rel.value='';
     setLock(kk,false);setLock(rel,false);
     return;
   }
@@ -2529,7 +2532,8 @@ function syncArrivalKKMode(){
     setLock(rel,true);
     syncBirthFamilyFromKK();
   }else if(mode==='existing'){
-    kk.value=kk.value==='6666662011000001'?'':'';
+    kk.value='';
+    rel.value='';
     setLock(kk,false);setLock(rel,false);
     syncBirthFamilyFromKK();
   }else{
@@ -2551,7 +2555,12 @@ $('addReason').addEventListener('change',()=>{
 $('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
 $('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
 $('arrivalKKMode')?.addEventListener('change',syncArrivalKKMode);
-document.querySelector('[data-close="addOverlay"]')?.addEventListener('click',()=>{if($('arrivalKKMode'))$('arrivalKKMode').value='';syncArrivalKKMode();});
+document.querySelector('[data-close="addOverlay"]')?.addEventListener('click',()=>{
+  if($('arrivalKKMode'))$('arrivalKKMode').value='';
+  if($('addReason'))$('addReason').value='';
+  syncBirthNik();
+  syncArrivalKKMode();
+});
 function bindResidentUppercase(containerId){
   const root=$(containerId);
   if(!root)return;
