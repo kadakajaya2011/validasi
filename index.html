@@ -2330,19 +2330,19 @@ function printSPTJM(){
       ${row('Alamat',helperAddress)}
     </table>
     <p class="declaration">Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila di kemudian hari ternyata pernyataan saya ini tidak benar, maka saya bersedia diproses secara hukum sesuai dengan peraturan perundang-undangan dan dokumen yang diterbitkan akibat dari pernyataan ini menjadi tidak sah.</p>
-    <div class="date-line">${esc(village)}, ${esc(printDate)}</div>
     <table class="sign">
+      <tr><td></td><td class="date-line">${esc(village)}, ${esc(printDate)}</td></tr>
       <tr><td>Saksi I,</td><td>Saya yang menyatakan,</td></tr>
       <tr><td class="sigspace"></td><td class="sigspace"></td></tr>
-      <tr><td>(${esc(w1.name||'.................................')})</td><td>(${esc(declarantName||'.................................')})</td></tr>
-      <tr><td>NIK. ${esc(w1.nik||'.................................')}</td><td></td></tr>
+      <tr><td>(<u>${esc(w1.name||'.................................')}</u>)</td><td>(<u>${esc(declarantName||'.................................')}</u>)</td></tr>
+      <tr><td class="nik-sign">NIK. ${esc(w1.nik||'.................................')}</td><td></td></tr>
       <tr><td class="witness2">Saksi II,</td><td></td></tr>
       <tr><td class="sigspace small"></td><td></td></tr>
-      <tr><td>(${esc(w2.name||'.................................')})</td><td></td></tr>
-      <tr><td>NIK. ${esc(w2.nik||'.................................')}</td><td></td></tr>
+      <tr><td>(<u>${esc(w2.name||'.................................')}</u>)</td><td></td></tr>
+      <tr><td class="nik-sign">NIK. ${esc(w2.nik||'.................................')}</td><td></td></tr>
     </table>
   </div>`;
-  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:7mm 10mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif}.sptjm-paper{position:relative;width:190mm;height:283mm;max-height:283mm;margin:0 auto;box-sizing:border-box;font-size:10pt;line-height:1.16;overflow:hidden}.sptjm-paper .code{position:absolute;right:0;top:0;border:1px solid #111;padding:1px 6px;font-weight:700;font-size:9.5pt}.sptjm-paper h1{text-align:center;font-size:13pt;margin:7mm 0 0;font-weight:700}.sptjm-paper h2{text-align:center;font-size:12pt;margin:0 0 4mm;font-weight:700}.sptjm-paper p{margin:0 0 1.5mm}.sptjm-paper .sub{margin-top:0.5mm}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 1.5mm}.sptjm-paper .ident td{padding:0.35mm 0;vertical-align:top}.sptjm-paper .ident .lbl{width:43mm;padding-left:5mm}.sptjm-paper .ident .colon{width:4mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:2mm}.sptjm-paper .date-line{text-align:right;margin-top:4mm;margin-right:2mm}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:0.5mm}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sigspace{height:15mm}.sptjm-paper .sigspace.small{height:12mm}.sptjm-paper .witness2{padding-top:2mm}`);
+  printSupportDocument('SPTJM Kebenaran Data Kelahiran - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:11mm 10mm 9mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif;font-size:10pt}.sptjm-paper{position:relative;width:190mm;height:277mm;max-height:277mm;margin:0 auto;box-sizing:border-box;font-size:10pt;line-height:1.14;overflow:hidden}.sptjm-paper *{font-size:10pt;line-height:1.14}.sptjm-paper .code{position:absolute;right:0;top:0;border:1px solid #111;padding:1px 6px;font-weight:700}.sptjm-paper h1{text-align:center;font-weight:700;margin:8mm 0 0}.sptjm-paper h2{text-align:center;font-weight:700;margin:0 0 3mm}.sptjm-paper p{margin:0 0 1.2mm}.sptjm-paper .sub{margin-top:0.4mm}.sptjm-paper .ident{width:100%;border-collapse:collapse;margin:0 0 1.2mm}.sptjm-paper .ident td{padding:0.28mm 0;vertical-align:top}.sptjm-paper .ident .lbl{width:43mm;padding-left:5mm}.sptjm-paper .ident .colon{width:4mm;text-align:center}.sptjm-paper .declaration{text-align:justify;margin-top:1.5mm}.sptjm-paper .sign{width:100%;border-collapse:collapse;margin-top:0.4mm}.sptjm-paper .sign td{width:50%;vertical-align:top;text-align:left;padding:0}.sptjm-paper .sign td:nth-child(2){text-align:center}.sptjm-paper .sign .date-line{text-align:center;margin:0 0 1mm}.sptjm-paper .sigspace{height:13mm}.sptjm-paper .sigspace.small{height:10mm}.sptjm-paper .nik-sign{padding-top:0!important;line-height:1.02!important}.sptjm-paper .witness2{padding-top:1mm!important}`);
 }
 function printSuket(){
   const name=String($('deathAppName')?.value||'').trim();
