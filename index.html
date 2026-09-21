@@ -1665,7 +1665,11 @@ function validatePopulationData(){
     ['PEKERJAAN','Pekerjaan'],['ALAMAT','Alamat'],['RT','RT'],['RW','RW']
   ];
   const nikMap=new Map(),kkMap=new Map();
-  data.forEach(r=>{
+  // Validasi hanya memeriksa biodata penduduk yang masih AKTIF.
+  // Penduduk berstatus TIDAK AKTIF tetap tersimpan dan ditampilkan di menu Penduduk Tidak Aktif,
+  // tetapi tidak ikut menghasilkan temuan validasi.
+  const activeData=data.filter(isActiveResident);
+  activeData.forEach(r=>{
     const nik=String(r.NIK||'').trim(),kk=String(r['NO KK']||'').trim();
     if(nik){if(!nikMap.has(nik))nikMap.set(nik,[]);nikMap.get(nik).push(r)}
     if(kk){if(!kkMap.has(kk))kkMap.set(kk,[]);kkMap.get(kk).push(r)}
@@ -1698,17 +1702,37 @@ function openPopulationValidation(){
   renderPopulationValidation();$('populationValidationOverlay').classList.add('open');
 }
 function renderPopulationValidation(){
-  const issues=validatePopulationData();window._populationValidationIssues=issues;
-  const errors=issues.filter(x=>x.level==='error').length,warnings=issues.filter(x=>x.level==='warning').length;
-  const uniqueResidents=new Set(issues.map(x=>x.index)).size;
+  const issues=validatePopulationData();
+  // Gabungkan seluruh temuan untuk biodata yang sama menjadi satu baris.
+  // Keterangan/masalah dipisahkan dengan koma agar satu biodata tidak tampil berulang.
+  const grouped=new Map();
+  issues.forEach(x=>{
+    const key=String(x.index);
+    if(!grouped.has(key))grouped.set(key,{index:x.index,nik:x.nik,name:x.name,kk:x.kk,categories:[],fields:[],messages:[],levels:[]});
+    const g=grouped.get(key);
+    if(x.category&&!g.categories.includes(x.category))g.categories.push(x.category);
+    if(x.field&&!g.fields.includes(x.field))g.fields.push(x.field);
+    if(x.message&&!g.messages.includes(x.message))g.messages.push(x.message);
+    g.levels.push(x.level||'error');
+  });
+  const groupedIssues=[...grouped.values()].map(g=>({
+    ...g,
+    category:g.categories.join(', '),
+    field:g.fields.join(', '),
+    message:g.messages.join(', '),
+    level:g.levels.includes('error')?'error':'warning'
+  }));
+  window._populationValidationIssues=groupedIssues;
+  const errors=groupedIssues.filter(x=>x.level==='error').length,warnings=groupedIssues.filter(x=>x.level==='warning').length;
+  const uniqueResidents=groupedIssues.length;
   const categories={};issues.forEach(x=>categories[x.category]=(categories[x.category]||0)+1);
-  $('validationSummary').innerHTML=`<div class="stat"><span>Data Bermasalah</span><b>${uniqueResidents}</b></div><div class="stat"><span>Kesalahan</span><b>${errors}</b></div><div class="stat"><span>Perlu Diperiksa</span><b>${warnings}</b></div><div class="stat"><span>Total Temuan</span><b>${issues.length}</b></div>`;
+  $('validationSummary').innerHTML=`<div class="stat"><span>Data Bermasalah</span><b>${uniqueResidents}</b></div><div class="stat"><span>Kesalahan</span><b>${errors}</b></div><div class="stat"><span>Perlu Diperiksa</span><b>${warnings}</b></div><div class="stat"><span>Total Temuan</span><b>${groupedIssues.length}</b></div>`;
   const q=String($('validationSearch').value||'').toLowerCase().trim(),cat=$('validationCategory').value;
-  const rows=issues.filter(x=>!cat||x.category===cat).filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
+  const rows=groupedIssues.filter(x=>!cat||x.categories.includes(cat)).filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
   const counts=Object.entries(categories).map(([k,v])=>`${k}: ${v}`).join(' • ');
   const countNote=counts?('Temuan: '+esc(counts)+'.'):'';
   const tableRows=rows.map((x,i)=>'<tr><td>'+String(i+1)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.nik||'-')+'</td><td>'+esc(x.name||'-')+'</td><td>'+esc(x.kk||'-')+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.message)+'</td><td><button class="btn btn-sm" data-validation-edit="'+x.index+'">✎ Edit</button></td></tr>').join('');
-  const intro='<div class="hint" style="margin-bottom:8px">Pemeriksaan mencakup format NIK/KK, duplikasi NIK, struktur KK, alamat anggota terhadap Kepala Keluarga, serta kolom data wajib. '+countNote+'</div>';
+  const intro='<div class="hint" style="margin-bottom:8px">Pemeriksaan mencakup format NIK/KK, duplikasi NIK, struktur KK, alamat anggota terhadap Kepala Keluarga, serta kolom data wajib. Jika satu biodata memiliki beberapa masalah, semuanya digabung dalam satu keterangan dan dipisahkan dengan koma. '+countNote+'</div>';
   const table=rows.length?'<div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>No</th><th>Kategori</th><th>NIK</th><th>Nama</th><th>No. KK</th><th>Kolom</th><th>Masalah</th><th>Aksi</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><div class="hint" style="margin-top:8px">Menampilkan '+rows.length+' dari '+issues.length+' temuan.</div>':'<div class="empty">Tidak ditemukan masalah sesuai filter.</div>';
   $('validationBody').innerHTML=intro+table;
   document.querySelectorAll('[data-validation-edit]').forEach(btn=>btn.addEventListener('click',()=>{const idx=Number(btn.dataset.validationEdit);if(idx<0||!data[idx])return;openEdit(idx);$('populationValidationOverlay').classList.remove('open');}));
