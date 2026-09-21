@@ -946,17 +946,36 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           </div>
           <div style="margin-top:9px">
             <div style="font-weight:700;margin-bottom:5px">Data Orang Tua</div>
+            <div class="hint">Pekerjaan dan alamat terisi otomatis dari data penduduk (bila orang tua tidak ada di data, alamat mengikuti alamat anak). Ubah manual bila orang tua tinggal di luar desa; isian ini dipakai pada cetakan F-2.01 dan SPTJM.</div>
+            <div style="font-weight:600;margin:8px 0 4px">Ayah</div>
             <div class="birth-app-grid">
               <label><b>Nama Ayah</b><input class="input" id="birthAppFatherName"></label>
               <label><b>NIK Ayah</b><input class="input" id="birthAppFatherNik"></label>
               <label><b>Tempat Lahir Ayah</b><input class="input" id="birthAppFatherPlace"></label>
               <label><b>Tanggal Lahir Ayah</b><input class="input" id="birthAppFatherDate" type="date"></label>
               <label><b>Kewarganegaraan Ayah</b><input class="input" id="birthAppFatherNation" value="WNI"></label>
+              <label><b>Pekerjaan Ayah</b><select class="select" id="birthAppFatherJob"><option value="">-- pilih --</option></select></label>
+              <label class="full"><b>Alamat Ayah</b><input class="input" id="birthAppFatherAddress" placeholder="Nama jalan / dusun / nomor rumah"></label>
+              <label><b>RT</b><input class="input" id="birthAppFatherRT" inputmode="numeric"></label>
+              <label><b>RW</b><input class="input" id="birthAppFatherRW" inputmode="numeric"></label>
+              <label><b>Desa/Kelurahan</b><input class="input" id="birthAppFatherVillage"></label>
+              <label><b>Kecamatan</b><input class="input" id="birthAppFatherDistrict"></label>
+              <label class="full"><b>Kabupaten/Kota</b><input class="input" id="birthAppFatherRegency"></label>
+            </div>
+            <div style="font-weight:600;margin:8px 0 4px">Ibu</div>
+            <div class="birth-app-grid">
               <label><b>Nama Ibu</b><input class="input" id="birthAppMotherName"></label>
               <label><b>NIK Ibu</b><input class="input" id="birthAppMotherNik"></label>
               <label><b>Tempat Lahir Ibu</b><input class="input" id="birthAppMotherPlace"></label>
               <label><b>Tanggal Lahir Ibu</b><input class="input" id="birthAppMotherDate" type="date"></label>
               <label><b>Kewarganegaraan Ibu</b><input class="input" id="birthAppMotherNation" value="WNI"></label>
+              <label><b>Pekerjaan Ibu</b><select class="select" id="birthAppMotherJob"><option value="">-- pilih --</option></select></label>
+              <label class="full"><b>Alamat Ibu</b><input class="input" id="birthAppMotherAddress" placeholder="Nama jalan / dusun / nomor rumah"></label>
+              <label><b>RT</b><input class="input" id="birthAppMotherRT" inputmode="numeric"></label>
+              <label><b>RW</b><input class="input" id="birthAppMotherRW" inputmode="numeric"></label>
+              <label><b>Desa/Kelurahan</b><input class="input" id="birthAppMotherVillage"></label>
+              <label><b>Kecamatan</b><input class="input" id="birthAppMotherDistrict"></label>
+              <label class="full"><b>Kabupaten/Kota</b><input class="input" id="birthAppMotherRegency"></label>
             </div>
           </div>
           <div class="hint" style="margin-top:9px">Saksi I dan Saksi II wajib dipilih dari penduduk selain anak, ayah, dan ibu. Pelapor boleh ayah/ibu.</div>
@@ -2025,9 +2044,29 @@ function birthOptionHtml(rows,placeholder){
 }
 function getBirthResident(){const selected=String(($('birthAppSelect')?.value)||birthApplicationNik||'').trim(); if(selected) birthApplicationNik=selected; return data.find(r=>String(r.NIK||'').trim()===selected)||null}
 function birthValue(id){const el=$(id);return el?String(el.value||'').trim():''}
+function birthSetSelect(id,val){const el=$(id);if(!el)return;val=String(val||'').trim();if(val&&!Array.from(el.options).some(o=>o.value===val)){const o=document.createElement('option');o.value=val;o.textContent=val;el.appendChild(o)}el.value=val}
+function birthFillJobOptions(){['birthAppFatherJob','birthAppMotherJob'].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.innerHTML='<option value="">-- pilih --</option>'+Array.from(new Set(opts.PEKERJAAN)).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');birthSetSelect(id,cur)})}
+function birthAddressLines(base,rt,rw,village,district,regency){
+  const l1=[],l2=[];
+  const t=x=>String(x||'').trim();
+  const pre=(x,re,label)=>{x=t(x);return x?(re.test(x)?x:label+' '+x):''};
+  base=t(base);rt=t(rt);rw=t(rw);
+  village=pre(village,/^(desa|des\.|kel(urahan)?\.?)(\/|\s|$)/i,'Desa/Kel.');
+  district=pre(district,/^(kecamatan|kec\.?)(\s|$)/i,'Kecamatan');
+  regency=pre(regency,/^(kabupaten|kab\.?|kota)(\s|$)/i,'Kabupaten');
+  if(base)l1.push(base);
+  if(rt)l1.push('RT '+rt);
+  if(rw)l1.push('RW '+rw);
+  if(village)l1.push(village);
+  if(district)l2.push(district);
+  if(regency)l2.push(regency);
+  const t1=l1.join(', '),t2=l2.join(', ');
+  return t1&&t2?[t1+',',t2]:[t1||t2].filter(Boolean);
+}
+function birthParentAddressLines(who){const g=k=>birthValue('birthApp'+who+k);return birthAddressLines(g('Address'),g('RT'),g('RW'),g('Village'),g('District'),g('Regency'))}
 function birthParentNikFromRecord(r,which){return String(r?.[which==='ayah'?'NIK_AYAH':'NIK_IBU']||'').trim()}
 function clearBirthChildFields(){
-  ['birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppBirthDay','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppFatherName','birthAppFatherNik','birthAppFatherPlace','birthAppFatherDate','birthAppMotherName','birthAppMotherNik','birthAppMotherPlace','birthAppMotherDate'].forEach(id=>{if($(id))$(id).value=''});
+  ['birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppBirthDay','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppFatherName','birthAppFatherNik','birthAppFatherPlace','birthAppFatherDate','birthAppMotherName','birthAppMotherNik','birthAppMotherPlace','birthAppMotherDate','birthAppFatherJob','birthAppFatherAddress','birthAppFatherRT','birthAppFatherRW','birthAppFatherVillage','birthAppFatherDistrict','birthAppFatherRegency','birthAppMotherJob','birthAppMotherAddress','birthAppMotherRT','birthAppMotherRW','birthAppMotherVillage','birthAppMotherDistrict','birthAppMotherRegency'].forEach(id=>{if($(id))$(id).value=''});
   $('birthAppFatherNation').value='WNI';$('birthAppMotherNation').value='WNI';
   ['birthAppWitness1Nik','birthAppWitness1Name','birthAppWitness1KK','birthAppWitness2Nik','birthAppWitness2Name','birthAppWitness2KK'].forEach(id=>{if($(id))$(id).value=''});
   $('birthAppWitness1Nation').value='WNI';$('birthAppWitness2Nation').value='WNI';
@@ -2053,6 +2092,18 @@ function fillBirthApplication(nik){
   $('birthAppMotherNik').value=birthParentNikFromRecord(r,'ibu')||(ibu?.NIK||'');
   $('birthAppMotherPlace').value=ibu?.TMPT_LHR||'';
   $('birthAppMotherDate').value=ibu?.TGL_LHR||'';
+  const fillParentExtra=(who,name,p)=>{
+    const src=name?(p||r):null;
+    birthSetSelect('birthApp'+who+'Job',name?(p?.PEKERJAAN||''):'');
+    $('birthApp'+who+'Address').value=src?.ALAMAT||'';
+    $('birthApp'+who+'RT').value=src?.RT||'';
+    $('birthApp'+who+'RW').value=src?.RW||'';
+    $('birthApp'+who+'Village').value=name?(desaSettings?.village||''):'';
+    $('birthApp'+who+'District').value=name?(desaSettings?.district||''):'';
+    $('birthApp'+who+'Regency').value=name?(desaSettings?.regency||''):'';
+  };
+  fillParentExtra('Father',ayahName,ayah);
+  fillParentExtra('Mother',ibuName,ibu);
   $('birthAppBornPlace').value=r.TEMPAT_DILAHIRKAN||'';
   $('birthAppTime').value=r.JAM_LAHIR||r.PUKUL_LAHIR||'';
   $('birthAppType').value=r.JENIS_KELAHIRAN||'';
@@ -2147,7 +2198,7 @@ function renderBirthApplication(){
     <div class="section">DATA PELAPOR</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td colspan="2">${esc(reporter?.['NAMA LENGKAP']||'')}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td colspan="2">${esc(reporter?.NIK||'')}</td></tr><tr><td class="lbl">Nomor Dokumen Perjalanan*</td><td class="colon">:</td><td colspan="2"></td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td colspan="2">${esc(reporter?.['NO KK']||$('birthAppKK').value||'')}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td colspan="2">${esc(reporter?.KEWARGANEGARAAN||'WNI')}</td></tr></table></div>
     <div class="section">DATA SAKSI I</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(w1.name)}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td>${esc(w1.nik)}</td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td>${esc(w1.kk)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(w1.nation)}</td></tr></table></div>
     <div class="section">DATA SAKSI II</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(w2.name)}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td>${esc(w2.nik)}</td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td>${esc(w2.kk)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(w2.nation)}</td></tr></table></div>
-    <div class="section">DATA ORANG TUA** <i>(hanya diisi untuk keperluan pencatatan kelahiran, lahir mati dan kematian)</i></div><div class="box"><table class="row"><tr><td class="lbl">Nama Ayah</td><td class="colon">:</td><td>${esc(fName)}</td></tr><tr><td class="lbl">NIK Ayah</td><td class="colon">:</td><td>${esc(fNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ayah</td><td class="colon">:</td><td>${esc(fPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ayah</td><td class="colon">:</td><td>${birthDateBoxes(fDate)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppFatherNation')||'WNI')}</td></tr><tr><td class="lbl">Nama Ibu</td><td class="colon">:</td><td>${esc(mName)}</td></tr><tr><td class="lbl">NIK Ibu</td><td class="colon">:</td><td>${esc(mNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ibu</td><td class="colon">:</td><td>${esc(mPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ibu</td><td class="colon">:</td><td>${birthDateBoxes(mDate)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppMotherNation')||'WNI')}</td></tr></table></div>
+    <div class="section">DATA ORANG TUA** <i>(hanya diisi untuk keperluan pencatatan kelahiran, lahir mati dan kematian)</i></div><div class="box"><table class="row"><tr><td class="lbl">Nama Ayah</td><td class="colon">:</td><td>${esc(fName)}</td></tr><tr><td class="lbl">NIK Ayah</td><td class="colon">:</td><td>${esc(fNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ayah</td><td class="colon">:</td><td>${esc(fPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ayah</td><td class="colon">:</td><td>${birthDateBoxes(fDate)}</td></tr><tr><td class="lbl">Pekerjaan</td><td class="colon">:</td><td>${esc(birthValue('birthAppFatherJob'))}</td></tr><tr><td class="lbl">Alamat</td><td class="colon">:</td><td>${birthParentAddressLines('Father').map(esc).join('<br>')}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppFatherNation')||'WNI')}</td></tr><tr><td class="lbl">Nama Ibu</td><td class="colon">:</td><td>${esc(mName)}</td></tr><tr><td class="lbl">NIK Ibu</td><td class="colon">:</td><td>${esc(mNik)}</td></tr><tr><td class="lbl">Tempat Lahir Ibu</td><td class="colon">:</td><td>${esc(mPlace)}</td></tr><tr><td class="lbl">Tanggal Lahir Ibu</td><td class="colon">:</td><td>${birthDateBoxes(mDate)}</td></tr><tr><td class="lbl">Pekerjaan</td><td class="colon">:</td><td>${esc(birthValue('birthAppMotherJob'))}</td></tr><tr><td class="lbl">Alamat</td><td class="colon">:</td><td>${birthParentAddressLines('Mother').map(esc).join('<br>')}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(birthValue('birthAppMotherNation')||'WNI')}</td></tr></table></div>
     <div class="section">DATA ANAK</div><div class="box"><table class="row"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(childName)}</td></tr><tr><td class="lbl">Jenis Kelamin</td><td class="colon">:</td><td>${birthCheck('1. Laki-laki',birthGender==='Laki-laki')} ${birthCheck('2. Perempuan',birthGender==='Perempuan')}</td></tr><tr><td class="lbl">Tempat Dilahirkan</td><td class="colon">:</td><td>${birthCheck('1. RS/RB',bornPlace==='RS/RB')} ${birthCheck('2. Puskesmas',bornPlace==='Puskesmas')} ${birthCheck('3. Polindes',bornPlace==='Polindes')} ${birthCheck('4. Rumah',bornPlace==='Rumah')} ${birthCheck('5. Lainnya',bornPlace==='Lainnya')}</td></tr><tr><td class="lbl">Tempat Kelahiran</td><td class="colon">:</td><td>${esc(birthValue('birthAppBirthPlace'))}</td></tr><tr><td class="lbl">Hari dan Tanggal Lahir</td><td class="colon">:</td><td>${esc(birthValue('birthAppBirthDay'))} &nbsp; ${birthDateBoxes(birthValue('birthAppBirthDate'))}</td></tr><tr><td class="lbl">Pukul</td><td class="colon">:</td><td>${esc(birthValue('birthAppTime'))}</td></tr><tr><td class="lbl">Jenis Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Tunggal',birthType==='Tunggal')} ${birthCheck('2. Kembar 2',birthType==='Kembar 2')} ${birthCheck('3. Kembar 3',birthType==='Kembar 3')} ${birthCheck('4. Kembar 4',birthType==='Kembar 4')} ${birthCheck('5. Lainnya',birthType==='Lainnya')}</td></tr><tr><td class="lbl">Kelahiran Ke</td><td class="colon">:</td><td>${esc(order)}</td></tr><tr><td class="lbl">Penolong Kelahiran</td><td class="colon">:</td><td>${birthCheck('1. Dokter',helper==='Dokter')} ${birthCheck('2. Bidan/Perawat',helper==='Bidan/Perawat')} ${birthCheck('3. Dukun',helper==='Dukun')} ${birthCheck('4. Lainnya',helper==='Lainnya')}</td></tr><tr><td class="lbl">Berat Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppWeight'))} kg</td></tr><tr><td class="lbl">Panjang Bayi</td><td class="colon">:</td><td>${esc(birthValue('birthAppLength'))} cm</td></tr></table></div>
     <table class="signature"><tr><td></td><td>${esc(village)}, ${esc(today)}<br>Pelapor<div class="sigspace"></div><b>( ${esc(reporter?.['NAMA LENGKAP']||'................................')} )</b></td></tr></table><div class="muted" style="margin-top:2px">F-2.01 &nbsp; FORMULIR PELAPORAN PENCATATAN SIPIL DI DALAM WILAYAH NKRI</div>
   </div>`;
@@ -2209,7 +2260,7 @@ body{display:block!important}
 .print-sheet .birth-app-paper .signature td{display:table-cell!important}
 .print-sheet .birth-app-paper .sigspace{height:14mm!important}
 .print-sheet .birth-app-paper .section,.print-sheet .birth-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}
-</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);
+</style></head><body><div class="print-sheet">${paper.outerHTML}</div><script>(function(){var sh=document.querySelector('.print-sheet'),p=sh&&sh.querySelector('.birth-app-paper');if(!p)return;var m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;width:1px;height:100mm';document.body.appendChild(m);var u=m.offsetHeight/100;document.body.removeChild(m);if(!u)return;var max=328*u,h=p.offsetHeight;if(h>max){p.style.setProperty('transform-origin','top center','important');p.style.setProperty('transform','scale('+(max/h)+')','important');sh.style.setProperty('height',max+'px','important');sh.style.setProperty('overflow','hidden','important')}})();<\/script></body></html>`);
   doc.close();
 
   const cleanup=()=>{setTimeout(()=>printFrame.remove(),500)};
@@ -2226,7 +2277,8 @@ $('birthAppSelect').addEventListener('change',()=>{birthApplicationNik=$('birthA
 $('btnFindBirthWitness1').addEventListener('click',()=>findBirthWitness(1));
 $('btnFindBirthWitness2').addEventListener('click',()=>findBirthWitness(2));
 ['birthAppWitness1Nik','birthAppWitness1Name','birthAppWitness1KK','birthAppWitness1Nation','birthAppWitness2Nik','birthAppWitness2Name','birthAppWitness2KK','birthAppWitness2Nation'].forEach(id=>$(id).addEventListener('input',renderBirthApplication));
-['birthAppFatherNik','birthAppMotherNik','birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppReporter','birthAppFatherName','birthAppFatherPlace','birthAppFatherDate','birthAppFatherNation','birthAppMotherName','birthAppMotherPlace','birthAppMotherDate','birthAppMotherNation'].forEach(id=>$(id).addEventListener('input',renderBirthApplication));
+['birthAppFatherNik','birthAppMotherNik','birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppReporter','birthAppFatherName','birthAppFatherPlace','birthAppFatherDate','birthAppFatherNation','birthAppMotherName','birthAppMotherPlace','birthAppMotherDate','birthAppMotherNation','birthAppFatherJob','birthAppFatherAddress','birthAppFatherRT','birthAppFatherRW','birthAppFatherVillage','birthAppFatherDistrict','birthAppFatherRegency','birthAppMotherJob','birthAppMotherAddress','birthAppMotherRT','birthAppMotherRW','birthAppMotherVillage','birthAppMotherDistrict','birthAppMotherRegency'].forEach(id=>$(id).addEventListener('input',renderBirthApplication));
+birthFillJobOptions();
 $('birthAppGender').addEventListener('change',renderBirthApplication);$('birthAppBornPlace').addEventListener('change',renderBirthApplication);$('birthAppType').addEventListener('change',renderBirthApplication);$('birthAppHelper').addEventListener('change',renderBirthApplication);$('birthAppReporter').addEventListener('change',renderBirthApplication);
 $('birthAppBirthDate').addEventListener('change',()=>{updateBirthDay();renderBirthApplication()});
 $('btnPreviewBirthApplication').addEventListener('click',()=>{
@@ -2268,24 +2320,12 @@ function printSPTJM(){
   const declarant=father||reporter||{};
   const declarantName=fatherName||reporter?.['NAMA LENGKAP']||'';
   const declarantNik=fatherNik||reporter?.NIK||'';
-  const declarantPlace=father?.TMPT_LHR||reporter?.TMPT_LHR||'';
-  const declarantDate=father?.TGL_LHR||reporter?.TGL_LHR||'';
-  const declarantJob=father?.PEKERJAAN||reporter?.PEKERJAAN||'';
+  const declarantPlace=fatherName?birthValue('birthAppFatherPlace'):(reporter?.TMPT_LHR||'');
+  const declarantDate=fatherName?birthValue('birthAppFatherDate'):(reporter?.TGL_LHR||'');
+  const declarantJob=fatherName?birthValue('birthAppFatherJob'):(reporter?.PEKERJAAN||'');
   const village=desaSettings?.village||'', district=desaSettings?.district||'', regency=desaSettings?.regency||'';
-  const fullAddress=(address,person)=>{
-    const base=String(address||'').trim();
-    const rt=String(person?.RT||r.RT||'').trim(), rw=String(person?.RW||r.RW||'').trim();
-    const l1=[],l2=[];
-    if(base)l1.push(base);
-    if(rt)l1.push('RT '+rt);
-    if(rw)l1.push('RW '+rw);
-    if(village)l1.push('Desa/Kel. '+village);
-    if(district)l2.push('Kecamatan '+district);
-    if(regency)l2.push('Kabupaten '+regency);
-    const t1=l1.join(', '),t2=l2.join(', ');
-    return t1&&t2?[t1+',',t2]:[t1||t2].filter(Boolean);
-  };
-  const declarantAddress=fullAddress(father?.ALAMAT||reporter?.ALAMAT||r.ALAMAT||'',father||reporter||r);
+  const fullAddress=(address,person)=>birthAddressLines(address,person?.RT||r.RT,person?.RW||r.RW,village,district,regency);
+  const declarantAddress=fatherName?birthParentAddressLines('Father'):fullAddress(reporter?.ALAMAT||r.ALAMAT||'',reporter||r);
   const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
   const childNik=String(r.NIK||'').trim();
   const childPlace=birthValue('birthAppBirthPlace')||r.TMPT_LHR||'';
@@ -2293,10 +2333,10 @@ function printSPTJM(){
   const childOrder=birthValue('birthAppOrder')||r.KELAHIRAN_KE||'';
   const birthType=birthValue('birthAppType')||r.JENIS_KELAHIRAN||'';
   const childAddress=fullAddress(r.ALAMAT||'',r);
-  const motherPlace=mother?.TMPT_LHR||'';
-  const motherDate=mother?.TGL_LHR||'';
-  const motherJob=mother?.PEKERJAAN||'';
-  const motherAddress=fullAddress(mother?.ALAMAT||r.ALAMAT||'',mother||r);
+  const motherPlace=birthValue('birthAppMotherPlace');
+  const motherDate=birthValue('birthAppMotherDate');
+  const motherJob=birthValue('birthAppMotherJob');
+  const motherAddress=birthParentAddressLines('Mother');
   const helperName=String(r.NAMA_PENOLONG||r['NAMA PENOLONG']||r.NAMA_BIDAN||'').trim();
   const helperNik=String(r.NIK_PENOLONG||r['NIK PENOLONG']||r.NIK_BIDAN||'').trim();
   const helperJob=String(birthValue('birthAppHelper')||r.PENOLONG_KELAHIRAN||r['PENOLONG KELAHIRAN']||'').trim();
