@@ -1362,6 +1362,45 @@ async function persist(){
 function isActiveResident(r){return String(r?.STATUS_AKTIF||'AKTIF').toUpperCase()!=='TIDAK AKTIF'}
 function markResidentsInactive(rows,reason,extra=''){const now=todayISO();(rows||[]).forEach(r=>{r.STATUS_AKTIF='TIDAK AKTIF';r.ALASAN_NONAKTIF=reason;r.TGL_NONAKTIF=now;r.KETERANGAN_NONAKTIF=extra||''})}
 function reactivateResident(r){if(!r)return;r.STATUS_AKTIF='AKTIF';r.ALASAN_NONAKTIF='';r.TGL_NONAKTIF='';r.KETERANGAN_NONAKTIF=''}
+function repairInactiveFromMoveHistory(){
+  const history=getHistory();
+  const latest=new Map();
+  history.filter(h=>h&&h.NIK&&(['Penduduk Pindah','Status Penduduk Diaktifkan Kembali'].includes(h.type))).forEach(h=>{
+    const nik=String(h.NIK).trim();
+    const old=latest.get(nik);
+    if(!old||String(h.at||'')>String(old.at||''))latest.set(nik,h);
+  });
+  let changed=false;
+  latest.forEach((h,nik)=>{
+    if(h.type!=='Penduduk Pindah')return;
+    const meta=h.meta||{};
+    let r=data.find(x=>String(x.NIK||'').trim()===nik);
+    if(!r){
+      r=normalize({
+        NIK:nik,
+        'NAMA LENGKAP':h.name||'',
+        'NO KK':h.kk||meta.noKK||'',
+        ALAMAT:h.address||'',
+        RT:h.rt||'',
+        RW:h.rw||'',
+        JK:h.jk||'',
+        TGL_LHR:h.tanggalLahir||meta.tanggalLahir||'',
+        SHDRT:meta.shdrt||'',
+        STATUS_AKTIF:'AKTIF'
+      });
+      data.push(r);
+      changed=true;
+    }
+    if(isActiveResident(r)){
+      r.STATUS_AKTIF='TIDAK AKTIF';
+      r.ALASAN_NONAKTIF='Pindah';
+      r.TGL_NONAKTIF=String(meta.tanggal||'').trim()||String(h.at||'').slice(0,10);
+      r.KETERANGAN_NONAKTIF=h.detail||'';
+      changed=true;
+    }
+  });
+  return changed;
+}
 const HISTORY_KEY='residents-history-v1';
 function getHistory(){try{const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
 async function cloudInsertMutationHistory(row){
@@ -4693,6 +4732,11 @@ async function initApp(){
   if(kkRepair.changed) { try{ await persist(); }catch(e){ console.warn('Sinkronisasi alamat KK gagal',e); } }
   if(kkRepair.problems.length) console.warn('Validasi Kartu Keluarga:',kkRepair.problems);
   await syncCloudLetterRegister();
+  // Pulihkan status tidak aktif untuk perpindahan lama yang sudah tercatat
+  // di Register Mutasi/Riwayat tetapi belum memiliki STATUS_AKTIF.
+  await syncCloudHistory();
+  const inactiveRepair=repairInactiveFromMoveHistory();
+  if(inactiveRepair){try{await persist()}catch(e){console.warn('Pemulihan penduduk tidak aktif gagal',e)}}
   fillFilters();
   render();
   updatePinStatusHint();
