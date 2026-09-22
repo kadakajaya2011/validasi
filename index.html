@@ -1509,16 +1509,15 @@ $('btnValidationData')?.addEventListener('click',()=>{closeMenu();openPopulation
 $('btnUserAccessMenu')?.addEventListener('click',()=>{closeMenu();document.getElementById('btnAccountSettings')?.click();});
 $('btnSyncFamilyAddress').addEventListener('click',async()=>{closeMenu();await syncAllFamilyAddresses()});
 $('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return toast('Anda tidak memiliki hak akses Ekspor');closeMenu();if(typeof XLSX==='undefined'){toast('Library Excel belum tersedia. Periksa koneksi internet.');return}
-  const dp4Order=['NO','NIK','NO KK','NAMA LENGKAP','TGL_LHR','UMUR','JK','STATUS','RT','RW'];
-  const remainingFields=fields.filter(h=>!dp4Order.includes(h));
-  const exportHeaders=[...dp4Order,...remainingFields];
+  const dp4Order=['NO','NIK','NO KK','NAMA LENGKAP','TMPT_LHR','TGL_LHR','UMUR','JK','SHDRT','STATUS','NO_AKTA_KAWIN','TGL_NIKAH','NO_AKTA_CERAI','TGL_CERAI','GD','AGAMA','PENDIDIKAN','PEKERJAAN','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];
+  const exportHeaders=[...dp4Order];
   const activeRows=data.filter(isActiveResident).slice();
   const sortNumDp4=(a,b)=>{const na=parseInt(String(a||'').replace(/\D/g,''),10),nb=parseInt(String(b||'').replace(/\D/g,''),10);if(Number.isNaN(na)&&Number.isNaN(nb))return 0;if(Number.isNaN(na))return 1;if(Number.isNaN(nb))return -1;return na-nb};
   activeRows.sort((a,b)=>sortNumDp4(a.RW,b.RW)||sortNumDp4(a.RT,b.RT)||String(a['NO KK']||'').localeCompare(String(b['NO KK']||''),'id',{numeric:true,sensitivity:'base'})||String(a['NAMA LENGKAP']||'').localeCompare(String(b['NAMA LENGKAP']||''),'id',{numeric:true,sensitivity:'base'}));
   const rows=activeRows.map((r,i)=>{const o={};exportHeaders.forEach(h=>o[h]=h==='NO'?i+1:h==='UMUR'?age(r.TGL_LHR):DATE_FIELDS.includes(h)?fmtDate(r[h]):(r[h]||''));return o});
   const ws=XLSX.utils.json_to_sheet(rows,{header:exportHeaders});
   ws['!cols']=exportHeaders.map(h=>({wch:h==='NAMA LENGKAP'||h==='ALAMAT'?24:h==='PEKERJAAN'||h==='PENDIDIKAN'?28:h==='NIK'||h==='NO KK'?18:15}));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['Urutan kolom utama mengikuti REKAP DATA PENDUDUK POTENSIAL PEMILIH (DP4): NO, NIK, NO KK, NAMA LENGKAP, TGL_LHR, UMUR, JK, STATUS, RT, RW.'],['Data yang diekspor adalah seluruh penduduk AKTIF; penduduk TIDAK AKTIF tidak disertakan.'],['Baris diurutkan seperti DP4 berdasarkan RW, RT, NO KK, kemudian Nama Lengkap.'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['Urutan kolom ekspor: NO, NIK, NO KK, NAMA LENGKAP, TMPT_LHR, TGL_LHR, UMUR, JK, SHDRT, STATUS, NO_AKTA_KAWIN, TGL_NIKAH, NO_AKTA_CERAI, TGL_CERAI, GD, AGAMA, PENDIDIKAN, PEKERJAAN, NAMA_LGKP_IBU, NAMA_LGKP_AYAH, ALAMAT, RT, RW.'],['Data yang diekspor adalah seluruh penduduk AKTIF; penduduk TIDAK AKTIF tidak disertakan.'],['Baris diurutkan seperti DP4 berdasarkan RW, RT, NO KK, kemudian Nama Lengkap.'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
   const dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yyyy=now.getFullYear();
   const hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0');
   const namaDesa=String(desaSettings?.village||'Desa').trim().replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')||'Desa';
@@ -3227,15 +3226,36 @@ function exportDp4Xlsx(){
   // Ekspor mengikuti urutan tampilan/cetakan DP4: RT → RW → No KK → Nama.
   const sortNumDp4=(a,b)=>{const na=parseInt(String(a||'').replace(/\D/g,''),10),nb=parseInt(String(b||'').replace(/\D/g,''),10);if(Number.isNaN(na)&&Number.isNaN(nb))return 0;if(Number.isNaN(na))return 1;if(Number.isNaN(nb))return -1;return na-nb};
   eligible.sort((a,b)=>sortNumDp4(a.r.RW,b.r.RW)||sortNumDp4(a.r.RT,b.r.RT)||String(a.r['NO KK']||'').localeCompare(String(b.r['NO KK']||''),'id',{numeric:true,sensitivity:'base'})||String(a.r['NAMA LENGKAP']||'').localeCompare(String(b.r['NAMA LENGKAP']||''),'id',{numeric:true,sensitivity:'base'}));
-  const headers=['NO','NIK','NO KK','NAMA LENGKAP','TGL_LHR','UMUR','JK','STATUS','RT','RW'];
-  const rows=eligible.map((x,i)=>({NO:i+1,NIK:x.r.NIK,'NO KK':x.r['NO KK'],'NAMA LENGKAP':x.r['NAMA LENGKAP'],TGL_LHR:fmtDate(x.r.TGL_LHR),UMUR:x.umur,JK:x.r.JK,STATUS:x.r.STATUS,RT:x.r.RT,RW:x.r.RW}));
+  const headers=['NO','NIK','NO KK','NAMA LENGKAP','TMPT_LHR','TGL_LHR','UMUR','JK','STATUS','NAMA_LGKP_IBU','NAMA_LGKP_AYAH','ALAMAT','RT','RW'];
+  const rows=eligible.map((x,i)=>({
+    NO:i+1,
+    NIK:x.r.NIK,
+    'NO KK':x.r['NO KK'],
+    'NAMA LENGKAP':x.r['NAMA LENGKAP'],
+    TMPT_LHR:x.r.TMPT_LHR,
+    TGL_LHR:fmtDate(x.r.TGL_LHR),
+    UMUR:x.umur,
+    JK:String(x.r.JK||'').toUpperCase().startsWith('P')?'P':'L',
+    STATUS:x.r.STATUS,
+    NAMA_LGKP_IBU:x.r.NAMA_LGKP_IBU,
+    NAMA_LGKP_AYAH:x.r.NAMA_LGKP_AYAH,
+    ALAMAT:x.r.ALAMAT,
+    RT:x.r.RT,
+    RW:x.r.RW
+  }));
   const ws=XLSX.utils.json_to_sheet(rows,{header:headers});
-  ws['!cols']=headers.map(h=>({wch:h==='NAMA LENGKAP'?28:h==='NIK'?18:15}));
+  ws['!cols']=headers.map(h=>({wch:h==='NAMA LENGKAP'?28:h==='ALAMAT'?32:h==='NAMA_LGKP_IBU'||h==='NAMA_LGKP_AYAH'?25:h==='NIK'||h==='NO KK'?18:h==='TMPT_LHR'?18:15}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'DP4');
-  const info=[['REKAP DP4'],['Tanggal pemungutan suara',date],['Jumlah DP4',eligible.length],['Keterangan','Hanya data yang sudah genap 17 tahun pada tanggal pemungutan suara dan tidak terindikasi TNI/Polri. WNI, hak politik, dan domisili/KTP-el perlu verifikasi administratif.']];
+  const info=[['REKAP DP4'],['Tanggal pemungutan suara',fmtDate(date)],['Jumlah DP4',eligible.length],['Urutan kolom','NO, NIK, NO KK, NAMA LENGKAP, TMPT_LHR, TGL_LHR, UMUR, JK (L/P), STATUS, NAMA_LGKP_IBU, NAMA_LGKP_AYAH, ALAMAT, RT, RW'],['Keterangan','Hanya data yang sudah genap 17 tahun pada tanggal pemungutan suara dan tidak terindikasi TNI/Polri. WNI, hak politik, dan domisili/KTP-el perlu verifikasi administratif.']];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Keterangan');
-  XLSX.writeFile(wb,'Rekap_DP4_Desa.xlsx');
+  const cetak=new Date();
+  const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
+  const tanggalCetak=`${dd}-${mm}-${yyyy}`;
+  const namaDesa=String(desaSettings?.village||'Desa').trim().replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_')||'Desa';
+  const tanggalPemungutan=fmtDate(date);
+  const fileName=`Cetakan_${tanggalCetak}_Rekap_DP4_Desa_${namaDesa}_sd_${tanggalPemungutan}.xlsx`;
+  XLSX.writeFile(wb,fileName);
   toast('Rekap DP4 berhasil diekspor ke Excel (.xlsx)');
 }
 function printDp4(){
