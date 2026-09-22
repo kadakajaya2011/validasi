@@ -4171,7 +4171,8 @@ function dashCount(rows,key){const m={};rows.forEach(r=>{const v=String(r[key]||
 function dashAgeGroup(a){if(a===''||a===null||a===undefined)return 'Tidak diketahui';a=Number(a);if(a<=5)return '0–5 tahun';if(a<=12)return '6–12 tahun';if(a<=17)return '13–17 tahun';if(a<=25)return '18–25 tahun';if(a<=40)return '26–40 tahun';if(a<=59)return '41–59 tahun';return '60+ tahun'}
 function dashBarRows(entries,max,limit=12){const arr=entries.slice(0,limit);return arr.length?arr.map(x=>`<div class="bar-row"><div class="bar-label" title="${esc(x[0])}">${esc(x[0])}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,(x[1]/max)*100)}%"></div></div><div class="bar-value">${x[1]}</div></div>`).join(''):'<div class="empty">Belum ada data.</div>'}
 function renderDashboard(){
-  const rows=[...data];
+  // Dashboard hanya menghitung penduduk AKTIF; penduduk TIDAK AKTIF tidak ikut direkap.
+  const rows=data.filter(r=>String(r?.STATUS_AKTIF||'AKTIF').trim().toUpperCase()!=='TIDAK AKTIF');
   const total=rows.length;
   const laki=rows.filter(r=>String(r.JK||'').toLowerCase().includes('laki')).length;
   const perempuan=rows.filter(r=>String(r.JK||'').toLowerCase().includes('perempuan')).length;
