@@ -1176,7 +1176,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 </div><div class="modal-foot"><button class="btn" data-close="backupOverlay">Tutup</button><button class="btn btn-danger" id="btnRestoreBackup" disabled>Pulihkan Database</button></div></div></div>
 <div class="overlay" id="inactiveOverlay"><div class="modal" style="width:min(1100px,97vw)"><div class="modal-head"><div class="modal-title">Penduduk Tidak Aktif</div><button class="close" data-close="inactiveOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Penduduk yang ditandai tidak aktif tetap tersimpan dan dapat diaktifkan kembali. Gunakan <b>Hapus Permanen</b> hanya jika biodata memang ingin dikeluarkan dari database.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px"><label><b>Cari NIK / Nama / KK</b><input class="input" id="inactiveSearch" placeholder="Ketik NIK, nama atau No KK"></label><label><b>Alasan</b><select class="select" id="inactiveReasonFilter"><option value="">Semua</option><option>Meninggal</option><option>Pindah</option><option>Hapus KK</option><option>Hapus Double</option><option>Hapus Tidak Dikenal</option></select></label></div><div class="table-scroll"><table><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>No KK</th><th>Alasan</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="inactiveBody"></tbody></table></div></div><div class="modal-foot"><button class="btn" data-close="inactiveOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="addOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Tambah Data Penduduk</div><button class="close" data-close="addOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Setiap penambahan penduduk harus memiliki alasan. Alasan dan keterangan penambahan disimpan sebagai riwayat agar dapat dipakai oleh modul register desa berikutnya.</div><div id="additionInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><label><b>Alasan Penambahan</b><select class="select" id="addReason"><option value="">-- pilih alasan --</option><option value="Kelahiran">Kelahiran</option><option value="Kedatangan">Kedatangan</option><option value="Tidak Terdata">Tidak Terdata</option><option value="Susulan Memiliki KK SIAK">Susulan Memiliki KK SIAK</option></select></label><label><b>Tanggal Penambahan</b><input class="input" id="addDate" type="date"></label><label id="addOriginWrap" style="display:none"><b>Asal Kedatangan</b><input class="input" id="addOrigin" placeholder="Desa/Kelurahan, Kecamatan, Kabupaten/Kota"></label><label id="arrivalKKModeWrap" style="display:none"><b>Status KK Kedatangan</b><select class="select" id="arrivalKKMode"><option value="">-- pilih --</option><option value="new">Membuat KK Baru</option><option value="existing">Numpang KK</option></select></label><label style="grid-column:1/-1"><b>Keterangan Penambahan</b><textarea class="input" id="addNote" rows="2" placeholder="Keterangan tambahan bila diperlukan"></textarea></label></div><div id="formBody"></div></div><div class="modal-foot"><button class="btn" data-close="addOverlay">Batal</button><button class="btn btn-dark" id="btnSave">Simpan Data</button></div></div></div>
-<div class="overlay" id="populationValidationOverlay"><div class="modal" style="width:min(1180px,97vw)"><div class="modal-head"><div class="modal-title">🔍 Validasi Data Kependudukan</div><button class="close" data-close="populationValidationOverlay">✕</button></div><div class="modal-body"><div id="validationSummary" class="summary" style="margin-bottom:12px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input class="input" id="validationSearch" placeholder="Cari NIK, nama, No. KK, atau masalah..." style="flex:1;min-width:260px"><select class="select" id="validationCategory" style="min-width:220px"><option value="">Semua kategori</option><option value="IDENTITAS">Identitas</option><option value="KK">Kartu Keluarga</option><option value="ALAMAT">Alamat</option><option value="DATA WAJIB">Data wajib</option><option value="DUPLIKASI">Duplikasi</option></select><button class="btn" id="btnRunValidation">🔄 Periksa Ulang</button></div><div id="validationBody"></div></div><div class="modal-foot"><button class="btn" data-close="populationValidationOverlay">Tutup</button></div></div></div>
+<div class="overlay" id="populationValidationOverlay"><div class="modal" style="width:min(1180px,97vw)"><div class="modal-head"><div class="modal-title">🔍 Validasi Data Kependudukan</div><button class="close" data-close="populationValidationOverlay">✕</button></div><div class="modal-body"><div id="validationSummary" class="summary" style="margin-bottom:12px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input class="input" id="validationSearch" placeholder="Cari NIK, nama, No. KK, atau masalah..." style="flex:1;min-width:260px"><select class="select" id="validationCategory" style="min-width:220px"><option value="">Semua kategori</option><option value="IDENTITAS">Identitas</option><option value="KK">Kartu Keluarga</option><option value="ALAMAT">Alamat</option><option value="DATA WAJIB">Data Wajib</option><option value="DUPLIKASI">Duplikasi</option><option value="NIK PERLU DIPERBAHARUI">NIK Perlu Diperbaharui</option><option value="KK PERLU DIPERBAHARUI">KK Perlu Diperbaharui</option></select><button class="btn" id="btnRunValidation">🔄 Periksa Ulang</button></div><div id="validationBody"></div></div><div class="modal-foot"><button class="btn" data-close="populationValidationOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="invalidKKOverlay"><div class="modal" style="width:min(980px,97vw)"><div class="modal-head"><div class="modal-title">⚠️ KK Belum Valid</div><button class="close" data-close="invalidKKOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Daftar ini berisi No. KK yang belum dapat disinkronkan karena belum memiliki tepat 1 Kepala Keluarga. Gunakan pencarian untuk menemukan KK tertentu.</div><input class="input" id="invalidKKSearch" placeholder="Cari No. KK, nama, atau keterangan..." style="margin-bottom:10px"><div id="invalidKKBody"></div></div><div class="modal-foot"><button class="btn" data-close="invalidKKOverlay">Tutup</button></div></div></div><div class="overlay" id="reportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Data Kependudukan</div><button class="close" data-close="reportOverlay">✕</button></div><div class="modal-body" id="reportBody"></div><div class="modal-foot"><button class="btn" id="btnPrintReport">🖨 Cetak Rekap</button><button class="btn" data-close="reportOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="ageReportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Berdasarkan Rentang Umur</div><button class="close" data-close="ageReportOverlay">✕</button></div><div class="modal-body" id="ageReportBody"></div><div class="modal-foot"><button class="btn" id="btnPrintAgeReport">🖨 Cetak Rekap</button><button class="btn" data-close="ageReportOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="dp4Overlay"><div class="modal" style="width:min(1100px,97vw)"><div class="modal-head"><div class="modal-title">Rekap DP4 — Data Penduduk Potensial Pemilih</div><button class="close" data-close="dp4Overlay">✕</button></div><div class="modal-foot" style="justify-content:flex-end;border-top:0;border-bottom:1px solid #e5e7eb"><button class="btn" id="btnExportDp4">📤 Ekspor XLSX</button><button class="btn" id="btnPrintDp4">🖨 Cetak Daftar Pemilih DP4</button><button class="btn btn-dark" id="btnPrintDp4Rekap">🖨 Cetak Rekap Pemilih</button><button class="btn" data-close="dp4Overlay">Tutup</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><label><b>Tanggal pemungutan suara</b><input class="input" type="date" id="dp4ElectionDate"></label><div class="hint" style="padding:8px 0">Kriteria umur dihitung pada tanggal pemungutan suara. Untuk laporan DP4 ini, <b>hanya penduduk yang sudah genap 17 tahun atau lebih pada tanggal pemungutan suara</b> yang ditampilkan. Penduduk yang masih di bawah 17 tahun dikecualikan. Kewarganegaraan, hak politik, domisili/KTP-el dan status aktif TNI/Polri perlu verifikasi bila belum tersedia pada database master.</div></div><div id="dp4Body"></div></div></div></div><div class="overlay" id="editOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Edit Data Penduduk</div><button class="close" data-close="editOverlay">✕</button></div><div class="modal-body" id="editFormBody"></div><div class="modal-foot"><button class="btn" data-close="editOverlay">Batal</button><button class="btn btn-dark" id="btnSaveEdit">Simpan Perubahan</button></div></div></div>
@@ -1709,44 +1709,29 @@ async function syncAllFamilyAddresses(){
 }
 function validatePopulationData(){
   const issues=[];
-  const add=(r,category,field,message,level='error')=>issues.push({nik:String(r?.NIK||'').trim(),name:String(r?.['NAMA LENGKAP']||'').trim(),kk:String(r?.['NO KK']||'').trim(),category,field,message,level,index:data.indexOf(r)});
-  const required=[
-    ['NIK','NIK'],['NAMA LENGKAP','Nama Lengkap'],['NO KK','No. KK'],['TMPT_LHR','Tempat Lahir'],['TGL_LHR','Tanggal Lahir'],
-    ['JK','Jenis Kelamin'],['SHDRT','Hubungan Keluarga'],['STATUS','Status Perkawinan'],['AGAMA','Agama'],['PENDIDIKAN','Pendidikan'],
-    ['PEKERJAAN','Pekerjaan'],['ALAMAT','Alamat'],['RT','RT'],['RW','RW']
-  ];
+  const add=(r,category,field,message,level='error',kind='problem')=>issues.push({nik:String(r?.NIK||'').trim(),name:String(r?.['NAMA LENGKAP']||'').trim(),kk:String(r?.['NO KK']||'').trim(),category,field,message,level,kind,index:data.indexOf(r)});
+  const required=[['NIK','NIK'],['NAMA LENGKAP','Nama Lengkap'],['NO KK','No. KK'],['TMPT_LHR','Tempat Lahir'],['TGL_LHR','Tanggal Lahir'],['JK','Jenis Kelamin'],['SHDRT','Hubungan Keluarga'],['STATUS','Status Perkawinan'],['AGAMA','Agama'],['PENDIDIKAN','Pendidikan'],['PEKERJAAN','Pekerjaan'],['ALAMAT','Alamat'],['RT','RT'],['RW','RW']];
   const nikMap=new Map(),kkMap=new Map();
-  // Validasi hanya memeriksa biodata penduduk yang masih AKTIF.
-  // Penduduk berstatus TIDAK AKTIF tetap tersimpan dan ditampilkan di menu Penduduk Tidak Aktif,
-  // tetapi tidak ikut menghasilkan temuan validasi.
   const activeData=data.filter(isActiveResident);
   activeData.forEach(r=>{
     const nik=String(r.NIK||'').trim(),kk=String(r['NO KK']||'').trim();
     if(nik){if(!nikMap.has(nik))nikMap.set(nik,[]);nikMap.get(nik).push(r)}
     if(kk){if(!kkMap.has(kk))kkMap.set(kk,[]);kkMap.get(kk).push(r)}
     if(!isValidNik(nik))add(r,'IDENTITAS','NIK','NIK harus terdiri dari 16 digit angka.');
-    else if(nik.startsWith(BIRTH_NIK_PREFIX) && !isAutoSystemNik(nik))add(r,'NOMOR OTOMATIS','NIK','NIK otomatis sistem harus diawali 9999992011 dan diikuti 6 digit nomor urut.');
     if(!isValidKK(kk))add(r,'KK','NO KK','No. KK harus terdiri dari 16 digit angka.');
-    else if(kk.startsWith(AUTO_KK_PREFIX) && !isAutoSystemKK(kk))add(r,'NOMOR OTOMATIS','NO KK','No. KK otomatis sistem harus diawali 6666662011 dan diikuti 6 digit nomor urut.');
-    required.forEach(([f,label])=>{
-      if(!String(r[f]??'').trim())add(r,'DATA WAJIB',f,`${label} belum diisi.`);
-    });
-    const t=String(r.TGL_LHR||'').trim();
-    if(t && isNaN(new Date(t).getTime()))add(r,'IDENTITAS','TGL_LHR','Tanggal Lahir tidak valid.');
+    required.forEach(([f,label])=>{if(!String(r[f]??'').trim())add(r,'DATA WAJIB',f,`${label} belum diisi.`)});
+    const t=String(r.TGL_LHR||'').trim();if(t&&isNaN(new Date(t).getTime()))add(r,'IDENTITAS','TGL_LHR','Tanggal Lahir tidak valid.');
+    if(isAutoSystemNik(nik))add(r,'NIK PERLU DIPERBAHARUI','NIK','NIK menggunakan nomor otomatis sistem dan perlu diperbaharui.','warning','autoNik');
   });
+  const autoKkSeen=new Set();
+  activeData.forEach(r=>{const kk=String(r['NO KK']||'').trim();if(isAutoSystemKK(kk)&&!autoKkSeen.has(kk)){autoKkSeen.add(kk);add(r,'KK PERLU DIPERBAHARUI','NO KK','Nomor KK menggunakan nomor otomatis sistem dan perlu diperbaharui.','warning','autoKk')}});
   nikMap.forEach((rows,nik)=>{if(rows.length>1)rows.forEach(r=>add(r,'DUPLIKASI','NIK',`NIK ${nik} terdaftar ${rows.length} kali.`))});
   kkMap.forEach((members,kk)=>{
     const heads=members.filter(isHead);
     if(heads.length===0)members.forEach(r=>add(r,'KK','SHDRT','KK tidak memiliki tepat 1 Kepala Keluarga.'));
     else if(heads.length>1)members.forEach(r=>add(r,'KK','SHDRT',`KK memiliki ${heads.length} Kepala Keluarga.`));
-    if(heads.length===1){
-      const h=heads[0];members.forEach(r=>{
-        const dif=[];if(String(r.ALAMAT||'').trim()!==String(h.ALAMAT||'').trim())dif.push('Alamat');if(String(r.RT||'').trim()!==String(h.RT||'').trim())dif.push('RT');if(String(r.RW||'').trim()!==String(h.RW||'').trim())dif.push('RW');
-        if(dif.length)add(r,'ALAMAT','ALAMAT/RT/RW',`${dif.join(', ')} berbeda dari Kepala Keluarga.`,'warning');
-      });
-    }
+    if(heads.length===1){const h=heads[0];members.forEach(r=>{const dif=[];if(String(r.ALAMAT||'').trim()!==String(h.ALAMAT||'').trim())dif.push('Alamat');if(String(r.RT||'').trim()!==String(h.RT||'').trim())dif.push('RT');if(String(r.RW||'').trim()!==String(h.RW||'').trim())dif.push('RW');if(dif.length)add(r,'ALAMAT','ALAMAT/RT/RW',`${dif.join(', ')} berbeda dari Kepala Keluarga.`,'warning')})}
   });
-  // Deduplicate identical issues for the same resident/category/field/message.
   const seen=new Set();return issues.filter(x=>{const k=[x.index,x.category,x.field,x.message].join('|');if(seen.has(k))return false;seen.add(k);return true});
 }
 function openPopulationValidation(){
@@ -1757,45 +1742,52 @@ function openPopulationValidation(){
 function renderPopulationValidation(){
   const activeData=data.filter(isActiveResident);
   const issues=validatePopulationData();
-  // Gabungkan seluruh temuan untuk biodata yang sama menjadi satu baris.
-  // Keterangan/masalah dipisahkan dengan koma agar satu biodata tidak tampil berulang.
   const grouped=new Map();
   issues.forEach(x=>{
     const key=String(x.index);
-    if(!grouped.has(key))grouped.set(key,{index:x.index,nik:x.nik,name:x.name,kk:x.kk,categories:[],fields:[],messages:[],levels:[]});
+    if(!grouped.has(key))grouped.set(key,{index:x.index,nik:x.nik,name:x.name,kk:x.kk,categories:[],fields:[],messages:[],levels:[],kinds:[]});
     const g=grouped.get(key);
     if(x.category&&!g.categories.includes(x.category))g.categories.push(x.category);
     if(x.field&&!g.fields.includes(x.field))g.fields.push(x.field);
     if(x.message&&!g.messages.includes(x.message))g.messages.push(x.message);
-    g.levels.push(x.level||'error');
+    if(x.level)g.levels.push(x.level);
+    if(x.kind)g.kinds.push(x.kind);
   });
-  const groupedIssues=[...grouped.values()].map(g=>({
-    ...g,
-    category:g.categories.join(', '),
-    field:g.fields.join(', '),
-    message:g.messages.join(', '),
-    level:g.levels.includes('error')?'error':'warning'
-  }));
+  const groupedIssues=[...grouped.values()].map(g=>({...g,category:g.categories.join(', '),field:g.fields.join(', '),message:g.messages.join(', '),level:g.levels.includes('error')?'error':'warning'}));
   window._populationValidationIssues=groupedIssues;
-  const errors=groupedIssues.filter(x=>x.level==='error').length,warnings=groupedIssues.filter(x=>x.level==='warning').length;
-  const uniqueResidents=groupedIssues.length;
-  const autoNikCount=activeData.filter(r=>isAutoSystemNik(r.NIK)).length;
-  const autoKkCount=new Set(activeData.map(r=>String(r['NO KK']||'').trim()).filter(isAutoSystemKK)).size;
-  const categories={};issues.forEach(x=>categories[x.category]=(categories[x.category]||0)+1);
-  $('validationSummary').innerHTML=`<div class="stat"><span>Data Bermasalah</span><b>${uniqueResidents}</b></div><div class="stat"><span>Kesalahan</span><b>${errors}</b></div><div class="stat"><span>Perlu Diperiksa</span><b>${warnings}</b></div><div class="stat"><span>NIK Perlu Diperbaharui</span><b>${autoNikCount}</b><small>Awalan 9999992011</small></div><div class="stat"><span>KK Perlu Diperbaharui</span><b>${autoKkCount}</b><small>Awalan 6666662011</small></div><div class="stat"><span>Total Temuan</span><b>${groupedIssues.length}</b></div>`;
-  const q=String($('validationSearch').value||'').toLowerCase().trim(),cat=$('validationCategory').value;
-  const rows=groupedIssues.filter(x=>!cat||x.categories.includes(cat)).filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
-  const counts=Object.entries(categories).map(([k,v])=>`${k}: ${v}`).join(' • ');
-  const countNote=counts?('Temuan: '+esc(counts)+'.'):'';
-  const tableRows=rows.map((x,i)=>'<tr><td>'+String(i+1)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.nik||'-')+'</td><td>'+esc(x.name||'-')+'</td><td>'+esc(x.kk||'-')+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.message)+'</td><td><button class="btn btn-sm" data-validation-edit="'+x.index+'">✎ Edit</button></td></tr>').join('');
-  const intro='<div class="hint" style="margin-bottom:8px"><b>Validasi nomor otomatis:</b> NIK yang dibuat sistem untuk kelahiran harus berpola <b>9999992011 + 6 digit</b> (16 digit), sedangkan No. KK otomatis untuk KK baru harus berpola <b>6666662011 + 6 digit</b> (16 digit). Pemeriksaan juga mencakup format NIK/KK, duplikasi NIK, struktur KK, alamat anggota terhadap Kepala Keluarga, serta kolom data wajib. Jika satu biodata memiliki beberapa masalah, semuanya digabung dalam satu keterangan dan dipisahkan dengan koma. '+countNote+'</div>';
-  const table=rows.length?'<div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>No</th><th>Kategori</th><th>NIK</th><th>Nama</th><th>No. KK</th><th>Kolom</th><th>Masalah</th><th>Aksi</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><div class="hint" style="margin-top:8px">Menampilkan '+rows.length+' dari '+issues.length+' temuan.</div>':'<div class="empty">Tidak ditemukan masalah sesuai filter.</div>';
+
+  const problemRows=groupedIssues.filter(x=>x.kinds.some(k=>k==='problem'));
+  const autoNikRows=groupedIssues.filter(x=>x.kinds.includes('autoNik'));
+  const autoKkRows=activeData.filter(r=>isAutoSystemKK(String(r['NO KK']||'').trim()));
+  const autoNikCount=new Set(autoNikRows.map(x=>x.nik).filter(Boolean)).size;
+  const autoKkCount=new Set(autoKkRows.map(r=>String(r['NO KK']||'').trim()).filter(Boolean)).size;
+  const totalTemuan=problemRows.length+autoNikCount+autoKkCount;
+
+  $('validationSummary').innerHTML=
+    `<div class="stat"><span>Data Bermasalah</span><b>${problemRows.length}</b></div>`+
+    `<div class="stat"><span>NIK Perlu Diperbaharui</span><b>${autoNikCount}</b></div>`+
+    `<div class="stat"><span>KK Perlu Diperbaharui</span><b>${autoKkCount}</b></div>`+
+    `<div class="stat"><span>Total Temuan</span><b>${totalTemuan}</b></div>`;
+
+  const q=String($('validationSearch').value||'').toLowerCase().trim();
+  const cat=$('validationCategory').value;
+  const rows=groupedIssues
+    .filter(x=>!cat||x.categories.includes(cat))
+    .filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
+
+  const tableRows=rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.category)}</td><td>${esc(x.nik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(x.field)}</td><td>${esc(x.message)}</td><td><button class="btn btn-sm" data-validation-edit="${x.index}">✎ Edit</button></td></tr>`).join('');
+  const table=rows.length
+    ? `<div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>No</th><th>Kategori</th><th>NIK</th><th>Nama</th><th>No. KK</th><th>Kolom</th><th>Masalah</th><th>Aksi</th></tr></thead><tbody>${tableRows}</tbody></table></div><div class="hint" style="margin-top:8px">Menampilkan ${rows.length} data temuan.</div>`
+    : `<div class="empty">Tidak ditemukan masalah sesuai filter.</div>`;
+
+  const intro=`<div class="hint" style="margin-bottom:8px">Validasi memeriksa format NIK/KK, data wajib, duplikasi NIK, struktur KK, serta kesesuaian alamat anggota dengan Kepala Keluarga. NIK dan No. KK dengan nomor otomatis sistem ditampilkan sebagai data yang perlu diperbaharui.</div>`;
   $('validationBody').innerHTML=intro+table;
-  document.querySelectorAll('[data-validation-edit]').forEach(btn=>btn.addEventListener('click',()=>{const idx=Number(btn.dataset.validationEdit);if(idx<0||!data[idx])return;openEdit(idx);$('populationValidationOverlay').classList.remove('open');}));
+  document.querySelectorAll('[data-validation-edit]').forEach(btn=>btn.addEventListener('click',()=>{
+    const idx=Number(btn.dataset.validationEdit);
+    if(idx<0||!data[idx])return;
+    openEdit(idx);$('populationValidationOverlay').classList.remove('open');
+  }));
 }
-$('btnRunValidation')?.addEventListener('click',renderPopulationValidation);
-$('validationSearch')?.addEventListener('input',renderPopulationValidation);
-$('validationCategory')?.addEventListener('change',renderPopulationValidation);
 
 function showInvalidKKList(items){
   const body=$('invalidKKBody'),search=$('invalidKKSearch');
