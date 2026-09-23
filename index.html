@@ -1648,45 +1648,82 @@ function enforceFamilyCardAddresses(){
   return {changed,problems};
 }
 async function syncAllFamilyAddresses(){
-  if(!hasPerm('edit_data')){toast('Anda tidak memiliki hak akses Edit Data');return}
+  // Hak akses khusus Sinkronkan Alamat KK. Tidak bergantung pada hak Edit Data.
+  if(!hasPerm('sync_address')){toast('Anda tidak memiliki hak akses Sinkronkan Alamat KK');return}
+
+  // Sinkronisasi hanya untuk penduduk AKTIF. Data TIDAK AKTIF tetap menjadi data historis
+  // dan tidak ikut diubah alamatnya.
   const groups=new Map();
-  data.forEach(r=>{
-    const kk=String(r['NO KK']||'').trim();
+  data.filter(isActiveResident).forEach(r=>{
+    const kk=String(r?.['NO KK']||'').trim();
     if(!kk)return;
     if(!groups.has(kk))groups.set(kk,[]);
     groups.get(kk).push(r);
   });
-  if(!groups.size){toast('Belum ada data KK yang dapat disinkronkan');return}
+  if(!groups.size){toast('Belum ada data KK aktif yang dapat disinkronkan');return}
+
   const invalid=[],changedKK=[];let changedMembers=0;
   groups.forEach((members,kk)=>{
     const heads=members.filter(isHead);
     if(heads.length!==1){
-      invalid.push({kk,reason:heads.length===0?'Kepala Keluarga tidak ditemukan.':'Terdapat '+heads.length+' Kepala Keluarga.',count:members.length,names:members.map(x=>x['NAMA LENGKAP']||'-')});
+      invalid.push({
+        kk,
+        reason:heads.length===0?'Kepala Keluarga tidak ditemukan.':'Terdapat '+heads.length+' Kepala Keluarga.',
+        count:members.length,
+        names:members.map(x=>x['NAMA LENGKAP']||'-')
+      });
       return;
     }
-    const head=heads[0];let count=0;
-    members.forEach(r=>{
-      const oldA=String(r.ALAMAT||'').trim(),oldRt=String(r.RT||'').trim(),oldRw=String(r.RW||'').trim();
-      const newA=String(head.ALAMAT||'').trim(),newRt=String(head.RT||'').trim(),newRw=String(head.RW||'').trim();
-      if(oldA!==newA||oldRt!==newRt||oldRw!==newRw)count++;
-    });
-    if(count){changedMembers+=count;changedKK.push({kk,count,head:head['NAMA LENGKAP']||'-'});}
+
+    const head=heads[0];
+    const newA=String(head.ALAMAT??'').trim();
+    const newRt=String(head.RT??'').trim();
+    const newRw=String(head.RW??'').trim();
+    const different=members.filter(r=>
+      String(r.ALAMAT??'').trim()!==newA ||
+      String(r.RT??'').trim()!==newRt ||
+      String(r.RW??'').trim()!==newRw
+    );
+    if(different.length){
+      changedMembers+=different.length;
+      changedKK.push({kk,count:different.length,head:head['NAMA LENGKAP']||'-'});
+    }
   });
-  if(invalid.length) showInvalidKKList(invalid);
+
+  if(invalid.length)showInvalidKKList(invalid);
   if(!changedMembers){
-    const msg=invalid.length?`Tidak ada alamat yang berubah. ${invalid.length} KK perlu diperbaiki karena struktur Kepala Keluarga belum valid.`:'Semua alamat anggota keluarga sudah sesuai dengan Kepala Keluarga.';
+    const msg=invalid.length
+      ? `Tidak ada alamat anggota yang berbeda. ${invalid.length} KK perlu diperbaiki karena struktur Kepala Keluarga belum valid.`
+      : 'Semua alamat, RT dan RW anggota keluarga sudah sesuai dengan Kepala Keluarga.';
     toast(msg);return;
   }
-  let text=`Ditemukan ${changedMembers} anggota dari ${changedKK.length} KK yang alamat/RT/RW-nya berbeda dari Kepala Keluarga.\n\nAlamat anggota akan disamakan dengan Kepala Keluarga dan disimpan ke database bersama.`;
+
+  let text=`Ditemukan ${changedMembers} anggota dari ${changedKK.length} KK yang alamat/RT/RW-nya berbeda dari Kepala Keluarga.\n\nAlamat, RT dan RW anggota akan disamakan dengan Kepala Keluarga dan disimpan ke database.`;
   if(invalid.length)text+=`\n\n${invalid.length} KK tidak diproses karena Kepala Keluarganya tidak tepat 1. Daftarnya sudah ditampilkan.`;
   if(!confirm(text+'\n\nLanjutkan?'))return;
+
   try{
     changedKK.forEach(({kk})=>{
-      const members=groups.get(kk),head=members.find(isHead);
-      members.forEach(r=>{r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();});
+      const members=groups.get(kk);
+      const head=members.find(isHead);
+      if(!head)return;
+      const newA=String(head.ALAMAT??'').trim();
+      const newRt=String(head.RT??'').trim();
+      const newRw=String(head.RW??'').trim();
+      members.forEach(r=>{
+        r.ALAMAT=newA;
+        r.RT=newRt;
+        r.RW=newRw;
+      });
     });
+
     await persist();
-    addHistory('Sinkronisasi Alamat KK',null,`Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.` ,{kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid.map(x=>x.kk)});
+    addHistory(
+      'Sinkronisasi Alamat KK',
+      null,
+      `Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.`,
+      {kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid.map(x=>x.kk)}
+    );
     fillFilters();render();
     let done=`Sinkronisasi selesai: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.`;
     if(invalid.length)done+=` ${invalid.length} KK belum valid; buka daftar KK belum valid untuk memperbaikinya.`;
