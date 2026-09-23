@@ -1770,10 +1770,20 @@ function renderPopulationValidation(){
     `<div class="stat"><span>Total Temuan</span><b>${totalTemuan}</b></div>`;
 
   const q=String($('validationSearch').value||'').toLowerCase().trim();
-  const cat=$('validationCategory').value;
-  const rows=groupedIssues
-    .filter(x=>!cat||x.categories.includes(cat))
-    .filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
+  const cat=String($('validationCategory').value||'').trim().toUpperCase();
+  const autoNikIssues=issues.filter(x=>x.kind==='autoNik');
+  const autoKkIssues=issues.filter(x=>x.kind==='autoKk');
+  let categoryRows;
+  if(cat==='NIK PERLU DIPERBAHARUI'){
+    const seenNik=new Set();
+    categoryRows=autoNikIssues.filter(x=>{if(seenNik.has(x.nik))return false;seenNik.add(x.nik);return true});
+  }else if(cat==='KK PERLU DIPERBAHARUI'){
+    const seenKk=new Set();
+    categoryRows=autoKkIssues.filter(x=>{if(seenKk.has(x.kk))return false;seenKk.add(x.kk);return true});
+  }else{
+    categoryRows=groupedIssues.filter(x=>!cat||x.categories.some(c=>String(c||'').trim().toUpperCase()===cat));
+  }
+  const rows=categoryRows.filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
 
   const tableRows=rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.category)}</td><td>${esc(x.nik||'-')}</td><td>${esc(x.name||'-')}</td><td>${esc(x.kk||'-')}</td><td>${esc(x.field)}</td><td>${esc(x.message)}</td><td><button class="btn btn-sm" data-validation-edit="${x.index}">✎ Edit</button></td></tr>`).join('');
   const table=rows.length
