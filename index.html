@@ -1771,17 +1771,16 @@ function renderPopulationValidation(){
 
   const q=String($('validationSearch').value||'').toLowerCase().trim();
   const cat=String($('validationCategory').value||'').trim().toUpperCase();
-  const autoNikIssues=issues.filter(x=>x.kind==='autoNik');
-  const autoKkIssues=issues.filter(x=>x.kind==='autoKk');
-  let categoryRows;
+  const normalizeCat=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,' ');
+  let categoryRows=[];
   if(cat==='NIK PERLU DIPERBAHARUI'){
     const seenNik=new Set();
-    categoryRows=autoNikIssues.filter(x=>{if(seenNik.has(x.nik))return false;seenNik.add(x.nik);return true});
+    categoryRows=activeData.filter(r=>isAutoSystemNik(String(r.NIK||'').trim())).map(r=>({index:data.indexOf(r),nik:String(r.NIK||'').trim(),name:String(r['NAMA LENGKAP']||'').trim(),kk:String(r['NO KK']||'').trim(),category:'NIK PERLU DIPERBAHARUI',field:'NIK',message:'NIK menggunakan nomor otomatis sistem dan perlu diperbaharui.',level:'warning',categories:['NIK PERLU DIPERBAHARUI'],kinds:['autoNik']})).filter(x=>{if(seenNik.has(x.nik))return false;seenNik.add(x.nik);return true});
   }else if(cat==='KK PERLU DIPERBAHARUI'){
     const seenKk=new Set();
-    categoryRows=autoKkIssues.filter(x=>{if(seenKk.has(x.kk))return false;seenKk.add(x.kk);return true});
+    categoryRows=activeData.filter(r=>isAutoSystemKK(String(r['NO KK']||'').trim())).map(r=>({index:data.indexOf(r),nik:String(r.NIK||'').trim(),name:String(r['NAMA LENGKAP']||'').trim(),kk:String(r['NO KK']||'').trim(),category:'KK PERLU DIPERBAHARUI',field:'NO KK',message:'Nomor KK menggunakan nomor otomatis sistem dan perlu diperbaharui.',level:'warning',categories:['KK PERLU DIPERBAHARUI'],kinds:['autoKk']})).filter(x=>{if(seenKk.has(x.kk))return false;seenKk.add(x.kk);return true});
   }else{
-    categoryRows=groupedIssues.filter(x=>!cat||x.categories.some(c=>String(c||'').trim().toUpperCase()===cat));
+    categoryRows=groupedIssues.filter(x=>{if(!cat)return true;const cats=Array.isArray(x.categories)?x.categories:[x.category];return cats.some(c=>normalizeCat(c)===cat)});
   }
   const rows=categoryRows.filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
 
