@@ -1725,18 +1725,9 @@ function validatePopulationData(){
     if(nik){if(!nikMap.has(nik))nikMap.set(nik,[]);nikMap.get(nik).push(r)}
     if(kk){if(!kkMap.has(kk))kkMap.set(kk,[]);kkMap.get(kk).push(r)}
     if(!isValidNik(nik))add(r,'IDENTITAS','NIK','NIK harus terdiri dari 16 digit angka.');
+    else if(nik.startsWith(BIRTH_NIK_PREFIX) && !isAutoSystemNik(nik))add(r,'NOMOR OTOMATIS','NIK','NIK otomatis sistem harus diawali 9999992011 dan diikuti 6 digit nomor urut.');
     if(!isValidKK(kk))add(r,'KK','NO KK','No. KK harus terdiri dari 16 digit angka.');
-
-    // Nomor otomatis yang dibuat sistem juga wajib masuk pemeriksaan validasi.
-    // NIK otomatis kelahiran: 9999992011 + 6 digit urutan (mulai 000001).
-    // No. KK otomatis: 6666662011 + 6 digit urutan (mulai 000001).
-    if(/^9999992011\d{6}$/.test(nik) && Number(nik.slice(10))<1){
-      add(r,'IDENTITAS','NIK','NIK otomatis sistem tidak memiliki nomor urut yang valid.');
-    }
-    if(/^6666662011\d{6}$/.test(kk) && Number(kk.slice(10))<1){
-      add(r,'KK','NO KK','No. KK otomatis sistem tidak memiliki nomor urut yang valid.');
-    }
-
+    else if(kk.startsWith(AUTO_KK_PREFIX) && !isAutoSystemKK(kk))add(r,'NOMOR OTOMATIS','NO KK','No. KK otomatis sistem harus diawali 6666662011 dan diikuti 6 digit nomor urut.');
     required.forEach(([f,label])=>{
       if(!String(r[f]??'').trim())add(r,'DATA WAJIB',f,`${label} belum diisi.`);
     });
@@ -1764,6 +1755,7 @@ function openPopulationValidation(){
   renderPopulationValidation();$('populationValidationOverlay').classList.add('open');
 }
 function renderPopulationValidation(){
+  const activeData=data.filter(isActiveResident);
   const issues=validatePopulationData();
   // Gabungkan seluruh temuan untuk biodata yang sama menjadi satu baris.
   // Keterangan/masalah dipisahkan dengan koma agar satu biodata tidak tampil berulang.
@@ -1787,14 +1779,16 @@ function renderPopulationValidation(){
   window._populationValidationIssues=groupedIssues;
   const errors=groupedIssues.filter(x=>x.level==='error').length,warnings=groupedIssues.filter(x=>x.level==='warning').length;
   const uniqueResidents=groupedIssues.length;
+  const autoNikCount=activeData.filter(r=>isAutoSystemNik(r.NIK)).length;
+  const autoKkCount=new Set(activeData.map(r=>String(r['NO KK']||'').trim()).filter(isAutoSystemKK)).size;
   const categories={};issues.forEach(x=>categories[x.category]=(categories[x.category]||0)+1);
-  $('validationSummary').innerHTML=`<div class="stat"><span>Data Bermasalah</span><b>${uniqueResidents}</b></div><div class="stat"><span>Kesalahan</span><b>${errors}</b></div><div class="stat"><span>Perlu Diperiksa</span><b>${warnings}</b></div><div class="stat"><span>Total Temuan</span><b>${groupedIssues.length}</b></div>`;
+  $('validationSummary').innerHTML=`<div class="stat"><span>Data Bermasalah</span><b>${uniqueResidents}</b></div><div class="stat"><span>Kesalahan</span><b>${errors}</b></div><div class="stat"><span>Perlu Diperiksa</span><b>${warnings}</b></div><div class="stat"><span>NIK Perlu Diperbaharui</span><b>${autoNikCount}</b><small>Awalan 9999992011</small></div><div class="stat"><span>KK Perlu Diperbaharui</span><b>${autoKkCount}</b><small>Awalan 6666662011</small></div><div class="stat"><span>Total Temuan</span><b>${groupedIssues.length}</b></div>`;
   const q=String($('validationSearch').value||'').toLowerCase().trim(),cat=$('validationCategory').value;
   const rows=groupedIssues.filter(x=>!cat||x.categories.includes(cat)).filter(x=>!q||`${x.nik} ${x.name} ${x.kk} ${x.category} ${x.field} ${x.message}`.toLowerCase().includes(q));
   const counts=Object.entries(categories).map(([k,v])=>`${k}: ${v}`).join(' • ');
   const countNote=counts?('Temuan: '+esc(counts)+'.'):'';
   const tableRows=rows.map((x,i)=>'<tr><td>'+String(i+1)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.nik||'-')+'</td><td>'+esc(x.name||'-')+'</td><td>'+esc(x.kk||'-')+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.message)+'</td><td><button class="btn btn-sm" data-validation-edit="'+x.index+'">✎ Edit</button></td></tr>').join('');
-  const intro='<div class="hint" style="margin-bottom:8px">Pemeriksaan mencakup format NIK/KK, duplikasi NIK, struktur KK, alamat anggota terhadap Kepala Keluarga, serta kolom data wajib. Jika satu biodata memiliki beberapa masalah, semuanya digabung dalam satu keterangan dan dipisahkan dengan koma. '+countNote+'</div>';
+  const intro='<div class="hint" style="margin-bottom:8px"><b>Validasi nomor otomatis:</b> NIK yang dibuat sistem untuk kelahiran harus berpola <b>9999992011 + 6 digit</b> (16 digit), sedangkan No. KK otomatis untuk KK baru harus berpola <b>6666662011 + 6 digit</b> (16 digit). Pemeriksaan juga mencakup format NIK/KK, duplikasi NIK, struktur KK, alamat anggota terhadap Kepala Keluarga, serta kolom data wajib. Jika satu biodata memiliki beberapa masalah, semuanya digabung dalam satu keterangan dan dipisahkan dengan koma. '+countNote+'</div>';
   const table=rows.length?'<div style="overflow:auto"><table class="data-table" style="width:100%"><thead><tr><th>No</th><th>Kategori</th><th>NIK</th><th>Nama</th><th>No. KK</th><th>Kolom</th><th>Masalah</th><th>Aksi</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><div class="hint" style="margin-top:8px">Menampilkan '+rows.length+' dari '+issues.length+' temuan.</div>':'<div class="empty">Tidak ditemukan masalah sesuai filter.</div>';
   $('validationBody').innerHTML=intro+table;
   document.querySelectorAll('[data-validation-edit]').forEach(btn=>btn.addEventListener('click',()=>{const idx=Number(btn.dataset.validationEdit);if(idx<0||!data[idx])return;openEdit(idx);$('populationValidationOverlay').classList.remove('open');}));
@@ -2788,6 +2782,12 @@ $('btnPrintDeathApplication').addEventListener('click',printDeathApplication);
 $('btnPrintSuket').addEventListener('click',printSuket);
 
 const BIRTH_NIK_PREFIX='9999992011';
+// NIK otomatis sistem: prefix 9999992011 + 6 digit nomor urut (total 16 digit).
+const AUTO_NIK_REGEX=/^9999992011\d{6}$/;
+const AUTO_KK_PREFIX='6666662011';
+const AUTO_KK_REGEX=/^6666662011\d{6}$/;
+function isAutoSystemNik(v){return AUTO_NIK_REGEX.test(String(v||'').trim())}
+function isAutoSystemKK(v){return AUTO_KK_REGEX.test(String(v||'').trim())}
 function generateBirthNik(){
   let max=0;
   for(const r of data){
@@ -2798,8 +2798,8 @@ function generateBirthNik(){
     }
   }
   let next=max+1;
-  while(next<=999999){
-    const nik=BIRTH_NIK_PREFIX+String(next).padStart(6,'0');
+  while(next<=9999999){
+    const nik=BIRTH_NIK_PREFIX+String(next).padStart(7,'0');
     if(!data.some(r=>String(r?.NIK||'').trim()===nik)) return nik;
     next++;
   }
@@ -3634,7 +3634,7 @@ function splitKKNextAutoNumber(){
   let max=0;
   data.forEach(r=>{
     const kk=String(r['NO KK']||'').trim();
-    if(kk.startsWith(prefix)&&/^6666662011\d{6}$/.test(kk)){
+    if(kk.startsWith(prefix)&&AUTO_KK_REGEX.test(kk)){
       const n=parseInt(kk.slice(prefix.length),10); if(Number.isFinite(n))max=Math.max(max,n);
     }
   });
