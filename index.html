@@ -1726,6 +1726,17 @@ function validatePopulationData(){
     if(kk){if(!kkMap.has(kk))kkMap.set(kk,[]);kkMap.get(kk).push(r)}
     if(!isValidNik(nik))add(r,'IDENTITAS','NIK','NIK harus terdiri dari 16 digit angka.');
     if(!isValidKK(kk))add(r,'KK','NO KK','No. KK harus terdiri dari 16 digit angka.');
+
+    // Nomor otomatis yang dibuat sistem juga wajib masuk pemeriksaan validasi.
+    // NIK otomatis kelahiran: 9999992011 + 6 digit urutan (mulai 000001).
+    // No. KK otomatis: 6666662011 + 6 digit urutan (mulai 000001).
+    if(/^9999992011\d{6}$/.test(nik) && Number(nik.slice(10))<1){
+      add(r,'IDENTITAS','NIK','NIK otomatis sistem tidak memiliki nomor urut yang valid.');
+    }
+    if(/^6666662011\d{6}$/.test(kk) && Number(kk.slice(10))<1){
+      add(r,'KK','NO KK','No. KK otomatis sistem tidak memiliki nomor urut yang valid.');
+    }
+
     required.forEach(([f,label])=>{
       if(!String(r[f]??'').trim())add(r,'DATA WAJIB',f,`${label} belum diisi.`);
     });
