@@ -1681,15 +1681,22 @@ async function syncAllFamilyAddresses(){
   if(invalid.length)text+=`\n\n${invalid.length} KK tidak diproses karena Kepala Keluarganya tidak tepat 1. Daftarnya sudah ditampilkan.`;
   if(!confirm(text+'\n\nLanjutkan?'))return;
   try{
+    const unsaved=[];
     changedKK.forEach(({kk})=>{
       const members=groups.get(kk),head=members.find(isHead);
-      members.forEach(r=>{r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();});
+      members.forEach(r=>{
+        r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
+        if(!isValidNik(r.NIK))unsaved.push({kk,name:r['NAMA LENGKAP']||'-',nik:r.NIK||'(kosong)'});
+      });
     });
     await persist();
     addHistory('Sinkronisasi Alamat KK',null,`Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.` ,{kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid.map(x=>x.kk)});
     fillFilters();render();
     let done=`Sinkronisasi selesai: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.`;
     if(invalid.length)done+=` ${invalid.length} KK belum valid; buka daftar KK belum valid untuk memperbaikinya.`;
+    if(unsaved.length){
+      done+=` ⚠️ PERHATIAN: ${unsaved.length} data TIDAK tersimpan ke database bersama karena NIK belum valid (harus 16 digit angka), sehingga alamatnya akan kembali berbeda setelah refresh: `+unsaved.map(u=>`${u.name} — NIK ${u.nik} (KK ${u.kk})`).join(', ')+'. Perbaiki NIK anggota tersebut terlebih dahulu, lalu jalankan Sinkronkan Alamat KK sekali lagi.';
+    }
     toast(done);
   }catch(err){
     toast('Sinkronisasi gagal disimpan ke database: '+(err.message||err));
