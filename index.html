@@ -3633,8 +3633,12 @@ function renderSplitKKReplacement(){
   const person=splitKKSelected(); const wrap=$('splitKKReplacementWrap'); const sel=$('splitKKReplacement');
   if(!person||!isHead(person)){wrap.style.display='none';sel.innerHTML='';return}
   const oldKK=String(person['NO KK']||'').trim();
-  const choices=data.filter(r=>String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim());
+  // Hanya anggota AKTIF yang dihitung sebagai calon pengganti Kepala Keluarga.
+  // Anggota yang sudah TIDAK AKTIF (pindah/meninggal) tidak relevan dan tidak boleh ditawarkan.
+  const choices=data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim());
   sel.innerHTML='<option value="">-- Pilih pengganti Kepala Keluarga --</option>'+choices.map(r=>`<option value="${esc(r.NIK)}">${esc(r['NAMA LENGKAP'])} — ${esc(r.SHDRT||'Anggota Keluarga')}</option>`).join('');
+  // Jika tidak ada anggota aktif lain, KK lama otomatis kosong setelah orang ini dipisah,
+  // sehingga tidak perlu (dan tidak mungkin) memilih pengganti Kepala Keluarga.
   wrap.style.display=choices.length?'block':'none';
 }
 function openSplitKK(nik){
@@ -3722,18 +3726,22 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
     }else newKK=splitKKNextAutoNumber();
   }
   const replacementNik=String($('splitKKReplacement').value||'').trim();
-  if(isHead(person)&&destination==='new'&&!replacementNik)return toast('Pilih pengganti Kepala Keluarga untuk KK lama.');
-  if(isHead(person)&&destination==='existing'&&!replacementNik)return toast('Pilih pengganti Kepala Keluarga untuk KK lama.');
-  if(replacementNik===String(person.NIK||'').trim())return toast('Pengganti Kepala Keluarga tidak boleh orang yang dipisahkan.');
-  const replacement=data.find(r=>String(r.NIK||'').trim()===replacementNik);
-  if(isHead(person)&&!replacement)return toast('Data pengganti Kepala Keluarga tidak ditemukan.');
+  // Pengganti Kepala Keluarga hanya diwajibkan jika masih ada anggota AKTIF lain
+  // yang tertinggal di KK lama. Jika orang yang dipisah adalah satu-satunya anggota
+  // aktif, KK lama otomatis kosong/selesai sehingga tidak perlu pengganti.
+  const remainingActiveMembers=data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim());
+  const needsReplacement=isHead(person)&&remainingActiveMembers.length>0;
+  if(needsReplacement&&!replacementNik)return toast('Pilih pengganti Kepala Keluarga untuk KK lama.');
+  if(replacementNik&&replacementNik===String(person.NIK||'').trim())return toast('Pengganti Kepala Keluarga tidak boleh orang yang dipisahkan.');
+  const replacement=replacementNik?data.find(r=>String(r.NIK||'').trim()===replacementNik):null;
+  if(needsReplacement&&!replacement)return toast('Data pengganti Kepala Keluarga tidak ditemukan.');
   if(!confirm(`Pisahkan ${person['NAMA LENGKAP']||person.NIK} dari KK ${oldKK} ke KK ${newKK}?`))return;
   if(!(await requirePin('Memproses Pisah KK')))return;
   try{
     const oldSnapshot={...person};
     const idx=data.findIndex(r=>String(r.NIK||'').trim()===String(person.NIK||'').trim());
     if(idx<0)throw new Error('Data penduduk tidak ditemukan');
-    if(isHead(person)){
+    if(isHead(person)&&replacement){
       replacement.SHDRT='Kepala Keluarga';
     }
     person['NO KK']=newKK;
