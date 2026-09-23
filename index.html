@@ -1647,11 +1647,20 @@ function enforceFamilyCardAddresses(){
   });
   return {changed,problems};
 }
+function syncKKKey(v){
+  const s=String(v??'').trim();
+  const digits=s.replace(/\D/g,'');
+  return digits.length===16?digits:s;
+}
+function syncAddressValue(v){
+  return String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim().toUpperCase();
+}
 async function syncAllFamilyAddresses(){
   if(!hasPerm('sync_address')){toast('Anda tidak memiliki hak akses Sinkronkan Alamat KK');return}
   const groups=new Map();
   data.forEach(r=>{
-    const kk=String(r['NO KK']||'').trim();
+    const rawKK=String(r['NO KK']??'').trim();
+    const kk=syncKKKey(rawKK);
     if(!kk)return;
     if(!groups.has(kk))groups.set(kk,[]);
     groups.get(kk).push(r);
@@ -1666,8 +1675,8 @@ async function syncAllFamilyAddresses(){
     }
     const head=heads[0];let count=0;
     members.forEach(r=>{
-      const oldA=String(r.ALAMAT||'').trim(),oldRt=String(r.RT||'').trim(),oldRw=String(r.RW||'').trim();
-      const newA=String(head.ALAMAT||'').trim(),newRt=String(head.RT||'').trim(),newRw=String(head.RW||'').trim();
+      const oldA=syncAddressValue(r.ALAMAT),oldRt=syncAddressValue(r.RT),oldRw=syncAddressValue(r.RW);
+      const newA=syncAddressValue(head.ALAMAT),newRt=syncAddressValue(head.RT),newRw=syncAddressValue(head.RW);
       if(oldA!==newA||oldRt!==newRt||oldRw!==newRw)count++;
     });
     if(count){changedMembers+=count;changedKK.push({kk,count,head:head['NAMA LENGKAP']||'-'});}
