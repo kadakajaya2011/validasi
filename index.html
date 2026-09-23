@@ -5028,9 +5028,11 @@ function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clea
 async function initApp(){
   updateAppTitle();
   data=await loadResidents();
-  const kkRepair=enforceFamilyCardAddresses();
-  if(kkRepair.changed) { try{ await persist(); }catch(e){ console.warn('Sinkronisasi alamat KK gagal',e); } }
-  if(kkRepair.problems.length) console.warn('Validasi Kartu Keluarga:',kkRepair.problems);
+  // Jangan otomatis menyamakan alamat saat aplikasi dibuka.
+  // Perbedaan alamat/RT/RW harus tetap terlihat agar menu Sinkronkan Alamat KK
+  // dapat mendeteksi dan menampilkan KK yang perlu disinkronkan.
+  const kkProblems=validateFamilyCardIntegrity();
+  if(kkProblems.length) console.warn('Validasi Kartu Keluarga:',kkProblems);
   await syncCloudLetterRegister();
   // Pulihkan status tidak aktif untuk perpindahan lama yang sudah tercatat
   // di Register Mutasi/Riwayat tetapi belum memiliki STATUS_AKTIF.
