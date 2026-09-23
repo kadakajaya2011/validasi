@@ -1651,7 +1651,10 @@ async function syncAllFamilyAddresses(){
   if(!hasPerm('sync_address')){toast('Anda tidak memiliki hak akses Sinkronkan Alamat KK');return}
   const groups=new Map();
   data.forEach(r=>{
-    const kk=String(r['NO KK']||'').trim();
+    // Kunci pengelompokan dibersihkan dari karakter non-angka (spasi/strip/titik/karakter tersembunyi
+    // yang mungkin ikut terbawa saat input atau copy-paste) agar anggota dari No. KK yang sama
+    // tetap terdeteksi sebagai satu keluarga meskipun format penulisannya sedikit berbeda.
+    const kk=String(r['NO KK']||'').replace(/\D/g,'');
     if(!kk)return;
     if(!groups.has(kk))groups.set(kk,[]);
     groups.get(kk).push(r);
@@ -2923,8 +2926,8 @@ $('addReason').addEventListener('change',()=>{
   syncBirthFamilyFromKK();
   syncArrivalKKMode();
 });
-$('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
-$('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK')syncBirthFamilyFromKK()});
+$('formBody').addEventListener('input',e=>{if(e.target&&e.target.id==='in_NO_KK'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,16);syncBirthFamilyFromKK()}});
+$('formBody').addEventListener('change',e=>{if(e.target&&e.target.id==='in_NO_KK'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,16);syncBirthFamilyFromKK()}});
 $('arrivalKKMode')?.addEventListener('change',syncArrivalKKMode);
 document.querySelector('[data-close="addOverlay"]')?.addEventListener('click',()=>{
   if($('arrivalKKMode'))$('arrivalKKMode').value='';
