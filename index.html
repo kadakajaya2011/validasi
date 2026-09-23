@@ -2086,7 +2086,7 @@ $('btnOpenKtp').addEventListener('click',openKtpFromF101);
 $('btnPrintKtpSelected').addEventListener('click',printKtpSelected);
 $('btnPrintKtpAll').addEventListener('click',printKtpAll);
 
-$('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():''});if(!validateRequiredResidentFields(r,'edit_'))return;if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];
+$('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'')});if(!validateRequiredResidentFields(r,'edit_'))return;if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];
   r.STATUS_AKTIF=String(before.STATUS_AKTIF||'AKTIF').trim().toUpperCase()||'AKTIF';
   r.ALASAN_NONAKTIF=String(before.ALASAN_NONAKTIF||'').trim();
   r.TGL_NONAKTIF=String(before.TGL_NONAKTIF||'').trim();
@@ -2951,7 +2951,18 @@ function bindResidentUppercase(containerId){
 bindResidentUppercase('formBody');
 bindResidentUppercase('editFormBody');
 bindResidentUppercase('entryBioFormBody');
-$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}
+// RT/RW: otomatis menghilangkan angka 0 di bagian depan saat diinput.
+// Contoh: 01 -> 1, 002 -> 2, 0003 -> 3.
+function normalizeRTRWInput(el){
+  if(!el || el.tagName!=='INPUT')return;
+  if(!/(^|_)(RT|RW)$/i.test(String(el.id||'')))return;
+  const value=String(el.value||'');
+  const normalized=value.replace(/^0+(?=\d)/,'');
+  if(value!==normalized)el.value=normalized;
+}
+document.addEventListener('input',e=>normalizeRTRWInput(e.target));
+document.addEventListener('change',e=>normalizeRTRWInput(e.target));
+$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'');if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}
 if(reason==='Kedatangan'){const mode=$('arrivalKKMode')?.value||'';if(!mode){toast('Status KK Kedatangan wajib dipilih');$('arrivalKKMode').focus();return}if(mode==='new'){const kk=String($('in_NO_KK')?.value||'').trim();if(!kk){toast('Nomor KK baru gagal dibuat');return}r['NO KK']=kk;r.SHDRT='Kepala Keluarga';r.ALAMAT=r.ALAMAT||'';r.RT=r.RT||'';r.RW=r.RW||'';}else if(mode==='existing'){const kk=String(r['NO KK']||'').trim();if(!isValidKK(kk)){toast('No KK tujuan harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga pada No KK tujuan tidak ditemukan');$('in_NO_KK').focus();return}r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();if(!r.SHDRT){toast('Hubungan Keluarga wajib dipilih untuk Numpang KK');$('in_SHDRT').focus();return}}}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI');r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';if(!r.SHDRT)r.SHDRT='Anak';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}
 if(!validateRequiredResidentFields(r,'in_'))return;if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka');return}
 const kkCheck=validateFamilyCardRecord(r,-1);if(!kkCheck.ok){toast(kkCheck.message);$('in_NO_KK')?.focus();return}
