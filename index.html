@@ -5373,6 +5373,11 @@ document.addEventListener('click',async e=>{
 $('btnSaveOperatorEdit').addEventListener('click',async()=>{try{await saveOperatorEdit()}catch(e){toast('Gagal memperbarui operator: '+(e.message||e))}});
 $('btnCancelOperatorEdit').addEventListener('click',closeOperatorEdit);$('btnCloseOperatorEdit').addEventListener('click',closeOperatorEdit);
 
+// Filter Validasi Data Kependudukan: perubahan kategori/pencarian harus langsung merender ulang tabel.
+$('validationCategory').addEventListener('change',()=>renderPopulationValidation());
+$('validationSearch').addEventListener('input',()=>renderPopulationValidation());
+$('btnRunValidation').addEventListener('click',()=>renderPopulationValidation());
+
 bootAuth();
 })();
 
