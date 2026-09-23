@@ -1650,7 +1650,10 @@ function enforceFamilyCardAddresses(){
 async function syncAllFamilyAddresses(){
   if(!hasPerm('sync_address')){toast('Anda tidak memiliki hak akses Sinkronkan Alamat KK');return}
   const groups=new Map();
-  data.forEach(r=>{
+  // Hanya penduduk berstatus AKTIF yang diikutsertakan. Penduduk TIDAK AKTIF (pindah/meninggal/dsb)
+  // tidak dihitung sebagai anggota keluarga, agar jumlah anggota dan pengecekan Kepala Keluarga
+  // tidak salah akibat data lama yang sudah tidak aktif.
+  data.filter(isActiveResident).forEach(r=>{
     // Kunci pengelompokan dibersihkan dari karakter non-angka (spasi/strip/titik/karakter tersembunyi
     // yang mungkin ikut terbawa saat input atau copy-paste) agar anggota dari No. KK yang sama
     // tetap terdeteksi sebagai satu keluarga meskipun format penulisannya sedikit berbeda.
