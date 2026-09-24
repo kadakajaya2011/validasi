@@ -1498,7 +1498,39 @@ window.addEventListener('resize',updatePopulationStickyColumns);
 function render(){const rows=sortRows(getFiltered()),pages=Math.max(1,Math.ceil(rows.length/50));if(page>pages)page=pages;const start=(page-1)*50,slice=rows.slice(start,start+50);$('tbody').innerHTML=slice.length?slice.map((r,i)=>{const idx=data.indexOf(r);return `<tr><td class="num">${start+i+1}</td><td><button type="button" class="name-link" data-nik="${esc(r.NIK||'')}" title="Klik NIK untuk membuat/memuat Surat Desa">${esc(r.NIK||'')}</button></td><td><button type="button" class="name-link" data-biodata-nik="${esc(r.NIK||'')}" title="Klik untuk cetak biodata">${esc(r['NAMA LENGKAP']||'')}</button></td><td><button type="button" class="kk-link" data-kk="${esc(r['NO KK']||'')}">${esc(r['NO KK']||'-')}</button></td><td>${esc(r.TMPT_LHR||'')}</td><td>${esc(fmtDate(r.TGL_LHR))}</td><td class="num">${age(r.TGL_LHR)}</td><td>${esc(r.JK||'')}</td>${fields.slice(6).filter(f=>!HIDDEN_IN_RESIDENT_LIST.includes(f)).map(f=>`<td>${esc(DATE_FIELDS.includes(f)?fmtDate(r[f]):(r[f]??''))}</td>`).join('')}<td><div class="row-actions"><button class="btn-mini edit ${hasPerm('edit_data')?'':'auth-hidden'}" data-edit="${idx}">✎ Edit</button>${isHead(r)?`<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-entry-bio="${esc(r.NIK||'')}">➕ Entry Bio</button>`:''}<button class="btn-mini ${hasPerm('edit_data')?'':'auth-hidden'}" data-split-kk="${esc(r.NIK||'')}">↗ Pisah KK</button><button class="btn-mini delete ${hasPerm('delete_data')?'':'auth-hidden'}" data-delete="${idx}">🗑 Hapus</button></div></td></tr>`}).join(''):`<tr><td colspan="${fields.length+3}" class="empty">Belum ada data penduduk</td></tr>`;$('info').textContent=`Menampilkan ${rows.length?start+1:0}–${Math.min(start+50,rows.length)} dari ${rows.length} data`;$('pageInfo').textContent=`Halaman ${page} / ${pages}`;$('prev').disabled=page<=1;$('next').disabled=page>=pages;updateSortIndicators();applyPermissions();requestAnimationFrame(updatePopulationStickyColumns)}
 function renderInactiveResidents(){const q=String($('inactiveSearch')?.value||'').toLowerCase().trim(),reason=String($('inactiveReasonFilter')?.value||'');const rows=data.filter(r=>!isActiveResident(r)&&(!reason||r.ALASAN_NONAKTIF===reason)&&(!q||[r.NIK,r['NAMA LENGKAP'],r['NO KK'],r.ALASAN_NONAKTIF].join(' ').toLowerCase().includes(q)));$('inactiveBody').innerHTML=rows.length?rows.map(r=>`<tr><td>${rows.indexOf(r)+1}</td><td>${esc(r.NIK||'')}</td><td>${esc(r['NAMA LENGKAP']||'')}</td><td>${esc(r['NO KK']||'')}</td><td>${esc(r.ALASAN_NONAKTIF||'-')}</td><td>${esc(fmtDate(r.TGL_NONAKTIF)||'-')}</td><td><button class="btn-mini" data-reactivate-nik="${esc(r.NIK||'')}">↩ Aktifkan Kembali</button> <button class="btn-mini delete" data-permanent-delete-nik="${esc(r.NIK||'')}">🗑 Hapus Permanen</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Tidak ada penduduk tidak aktif</td></tr>'}
 function openInactiveResidents(){if(!hasPerm('inactive_population'))return toast('Anda tidak memiliki hak akses Penduduk Tidak Aktif');closeMenu();$('inactiveSearch').value='';$('inactiveReasonFilter').value='';renderInactiveResidents();$('inactiveOverlay').classList.add('open')}
-$('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('inactiveSearch')?.addEventListener('input',renderInactiveResidents);$('inactiveReasonFilter')?.addEventListener('change',renderInactiveResidents);$('inactiveBody')?.addEventListener('click',async e=>{const react=e.target.closest('[data-reactivate-nik]');if(react){const r=data.find(x=>String(x.NIK)===String(react.dataset.reactivateNik));if(!r)return;if(!confirm('Aktifkan kembali '+(r['NAMA LENGKAP']||r.NIK)+'?'))return;reactivateResident(r);addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});try{await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){toast('Gagal menyimpan: '+(err.message||err))}}return;const del=e.target.closest('[data-permanent-delete-nik]');if(!del)return;const r=data.find(x=>String(x.NIK)===String(del.dataset.permanentDeleteNik));if(!r)return;if(!(await requirePin('Menghapus permanen data penduduk')))return;if(!confirm('HAPUS PERMANEN data '+(r['NAMA LENGKAP']||r.NIK)+' (NIK '+r.NIK+')? Data biodata tidak dapat dikembalikan dari menu Penduduk Tidak Aktif. Riwayat perubahan tetap disimpan.'))return;const old={...r};try{if(window.sb&&window.currentUser){const {error}=await window.sb.from('residents').delete().eq('nik',String(r.NIK));if(error)throw error}addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});const idx=data.indexOf(r);if(idx>=0)data.splice(idx,1);if(!(window.sb&&window.currentUser))await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Biodata berhasil dihapus permanen')}catch(err){toast('Gagal menghapus permanen: '+(err.message||err))}});
+$('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('inactiveSearch')?.addEventListener('input',renderInactiveResidents);$('inactiveReasonFilter')?.addEventListener('change',renderInactiveResidents);$('inactiveBody')?.addEventListener('click',async e=>{
+  const react=e.target.closest('[data-reactivate-nik]');
+  if(react){
+    const r=data.find(x=>String(x.NIK)===String(react.dataset.reactivateNik));
+    if(!r)return;
+    if(!confirm('Aktifkan kembali '+(r['NAMA LENGKAP']||r.NIK)+'?'))return;
+    reactivateResident(r);
+    addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});
+    try{await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){toast('Gagal menyimpan: '+(err.message||err))}
+    return;
+  }
+  const del=e.target.closest('[data-permanent-delete-nik]');
+  if(!del)return;
+  if(!hasPerm('delete_data'))return toast('Anda tidak memiliki hak akses untuk menghapus data');
+  if(!(await requirePin('Menghapus permanen data penduduk')))return;
+  const r=data.find(x=>String(x.NIK)===String(del.dataset.permanentDeleteNik));
+  if(!r)return;
+  if(!confirm('HAPUS PERMANEN data '+(r['NAMA LENGKAP']||r.NIK)+' (NIK '+r.NIK+')? Data biodata tidak dapat dikembalikan dari menu Penduduk Tidak Aktif. Riwayat perubahan tetap disimpan.'))return;
+  const old={...r};
+  try{
+    if(window.sb&&window.currentUser){
+      const {data:deletedRows,error}=await window.sb.from('residents').delete().eq('nik',String(r.NIK)).select('nik');
+      if(error)throw error;
+      if(!deletedRows||deletedRows.length===0)throw new Error('Data tidak terhapus di database. Periksa izin DELETE pada tabel residents di Supabase.');
+    }
+    addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});
+    const idx=data.indexOf(r);
+    if(idx>=0)data.splice(idx,1);
+    if(!(window.sb&&window.currentUser))await persist();
+    fillFilters();page=1;render();renderInactiveResidents();
+    toast('Biodata berhasil dihapus permanen');
+  }catch(err){toast('Gagal menghapus permanen: '+(err.message||err))}
+});
 function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.top=(r.bottom+6)+'px';menuPanel.style.right=(window.innerWidth-r.right)+'px'}
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
@@ -2795,15 +2827,17 @@ function generateBirthNik(){
   let max=0;
   for(const r of data){
     const n=String(r?.NIK||'').trim();
-    if(n.startsWith(BIRTH_NIK_PREFIX) && /^\d{16}$/.test(n)){
+    if(AUTO_NIK_REGEX.test(n)){
       const seq=Number(n.slice(BIRTH_NIK_PREFIX.length));
       if(Number.isInteger(seq) && seq>max) max=seq;
     }
   }
+  // Prefix 9999992011 = 10 digit, sehingga nomor urut harus tepat 6 digit.
+  // Total NIK otomatis selalu tepat 16 digit.
   let next=max+1;
-  while(next<=9999999){
-    const nik=BIRTH_NIK_PREFIX+String(next).padStart(7,'0');
-    if(!data.some(r=>String(r?.NIK||'').trim()===nik)) return nik;
+  while(next<=999999){
+    const nik=BIRTH_NIK_PREFIX+String(next).padStart(6,'0');
+    if(isValidNik(nik) && !data.some(r=>String(r?.NIK||'').trim()===nik)) return nik;
     next++;
   }
   return '';
