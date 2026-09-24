@@ -1033,7 +1033,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
         <div class="birth-app-preview-wrap"><div id="birthApplicationPreview"></div></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
+    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn" id="btnPrintAnakKandung">📄 Pernyataan Anak Kandung</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
   </div>
 </div>
 <div class="overlay" id="deathApplicationOverlay">
@@ -2541,6 +2541,59 @@ $('btnPreviewBirthApplication').addEventListener('click',()=>{
 });
 $('btnPrintBirthApplication').addEventListener('click',printBirthApplication);
 $('btnPrintSPTJM').addEventListener('click',printSPTJM);
+$('btnPrintAnakKandung').addEventListener('click',printPernyataanAnakKandung);
+
+function printPernyataanAnakKandung(){
+  const r=getBirthResident();
+  if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
+  const fatherName=birthValue('birthAppFatherName')||'';
+  const fatherPlace=birthValue('birthAppFatherPlace')||'';
+  const fatherDate=birthValue('birthAppFatherDate')||'';
+  const fatherJob=birthValue('birthAppFatherJob')||'';
+  const fatherAddress=birthParentAddressLines('Father');
+  const motherName=birthValue('birthAppMotherName')||'';
+  const motherPlace=birthValue('birthAppMotherPlace')||'';
+  const motherDate=birthValue('birthAppMotherDate')||'';
+  const motherJob=birthValue('birthAppMotherJob')||'';
+  const motherAddress=birthParentAddressLines('Mother');
+  const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
+  const village=desaSettings?.village||'';
+  const district=desaSettings?.district||'';
+  const regency=desaSettings?.regency||'';
+  const val=(x,blank='.................................................')=>esc(String(x||blank));
+  const addr=(lines,blank='Lingk/Dsn/Jl ............................Rt.......................Rw...................')=>{
+    const a=(lines||[]).filter(Boolean).map(x=>String(x).trim());
+    return a.length?a.map(x=>`<span class="ak-al">${esc(x)}</span>`).join(''):esc(blank);
+  };
+  const h=`<div class="anak-kandung-paper">
+    <h1>SURAT PERNYATAAN</h1>
+    <p>Saya yang bertanda tangan di bawah ini :</p>
+    <div class="person"><div>1. Nama : ${val(fatherName)}</div>
+      <div>Tempat/Tgl/Lahir : ${val(fatherPlace&&fatherDate?fatherPlace+', '+fmtDate(fatherDate):fatherPlace||fmtDate(fatherDate))}</div>
+      <div>Pekerjaan : ${val(fatherJob)}</div>
+      <div>Alamat : ${addr(fatherAddress)}</div>
+      <div>Desa ${val(village)}</div>
+      <div>Kecamatan ${val(district)}</div>
+      <div>Kabupaten ${val(regency)}</div>
+    </div>
+    <div class="person"><div>2. Nama : ${val(motherName)}</div>
+      <div>Tempat/Tgl/Lahir : ${val(motherPlace&&motherDate?motherPlace+', '+fmtDate(motherDate):motherPlace||fmtDate(motherDate))}</div>
+      <div>Pekerjaan : ${val(motherJob)}</div>
+      <div>Alamat : ${addr(motherAddress)}</div>
+      <div>Desa ${val(village)}</div>
+      <div>Kecamatan ${val(district)}</div>
+      <div>Kabupaten ${val(regency)}</div>
+    </div>
+    <p>Menyatakan dengan sebenarnya bahwa anak yang<br>bernama ${val(childName)} adalah anak kandung saya<br>dari pernikahan yang syah sesuai dengan Surat Nikah Nomor ${val()}<br>tanggal ${val()} yang dikeluarkan KUA<br>Kecamatan ${val()}</p>
+    <p>Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila<br>dikemudian hari ternyata pernyataan saya tidak benar, maka saya berserdia diproses secara<br>hukum sesuai dengan Peraturan Perundang-undangan dan dokumen yang diterbitkan akibat<br>dari pernyataan ini menjadi tidak sah.</p>
+    <div class="ak-date">${esc(village)}, ................................2022</div>
+    <table class="ak-sign"><tr><td>Saksi I :............. (......................)</td><td>I. ...................... (.........................)</td></tr>
+      <tr><td class="ak-materai">Materai<br>10.000</td><td></td></tr>
+      <tr><td>Saksi II :............. (......................)</td><td>II. ..................... (.........................)</td></tr>
+      <tr><td></td><td>Kepala Desa/Kelurahan</td></tr></table>
+  </div>`;
+  printSupportDocument('Surat Pernyataan Anak Kandung - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:10mm}html,body{margin:0!important;padding:0!important;background:#fff;color:#111;font-family:Arial,sans-serif}.anak-kandung-paper{width:190mm;box-sizing:border-box;margin:0 auto;font-size:12pt;line-height:1.45}.anak-kandung-paper h1{text-align:center;font-size:14pt;margin:0 0 10mm;font-weight:700}.anak-kandung-paper p{margin:0 0 7mm;text-align:left}.anak-kandung-paper .person{margin-bottom:6mm}.anak-kandung-paper .person>div{margin:1mm 0}.anak-kandung-paper .ak-al{display:block}.anak-kandung-paper .ak-date{text-align:right;margin-top:5mm;margin-bottom:3mm}.anak-kandung-paper .ak-sign{width:100%;border-collapse:collapse;table-layout:fixed}.anak-kandung-paper .ak-sign td{vertical-align:top;height:8mm}.anak-kandung-paper .ak-materai{padding-top:3mm;height:20mm!important;text-align:center}.anak-kandung-paper *{box-sizing:border-box}`);
+}
 
 
 /* ===== Dokumen pendukung Akta Kelahiran / Kematian ===== */
