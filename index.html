@@ -5130,7 +5130,17 @@ function renderHistory(){
   document.querySelectorAll('[data-print-move-group]').forEach(btn=>btn.addEventListener('click',()=>openMoveApplication(btn.dataset.printMoveGroup)));
 }
 $('btnHistory').addEventListener('click',async()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();await syncCloudHistory();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
-$('btnClearHistory').addEventListener('click',()=>{if(confirm('Bersihkan seluruh riwayat perubahan?')){localStorage.removeItem(HISTORY_KEY);renderHistory();toast('Riwayat dibersihkan')}});
+$('btnClearHistory').addEventListener('click',async()=>{
+  if(!confirm('Bersihkan seluruh riwayat perubahan?'))return;
+  if(window.sb&&window.currentUser){
+    const {error}=await window.sb.from('mutation_history').delete().not('id','is',null);
+    if(error){console.error('Gagal menghapus riwayat cloud:',error);toast('Riwayat cloud gagal dibersihkan: '+(error.message||error));return}
+  }
+  localStorage.removeItem(HISTORY_KEY);
+  localStorage.removeItem(MUTATION_REGISTER_KEY);
+  renderHistory();
+  toast('Seluruh riwayat perubahan berhasil dibersihkan');
+});
 
 function renderReport(){
   const rows=getFiltered();
