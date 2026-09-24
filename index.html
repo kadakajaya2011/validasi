@@ -996,7 +996,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           </div>
           <div style="margin-top:9px">
             <div style="font-weight:700;margin-bottom:5px">Data Orang Tua</div>
-            <div class="hint">Pekerjaan dan alamat terisi otomatis dari data penduduk (bila orang tua tidak ada di data, alamat mengikuti alamat anak). Ubah manual bila orang tua tinggal di luar desa; isian ini dipakai pada cetakan SPTJM.</div>
+            <div class="hint">Pekerjaan dan alamat terisi otomatis dari data penduduk (bila orang tua tidak ada di data, alamat mengikuti alamat anak). Ubah manual bila orang tua tinggal di luar desa; isian ini dipakai pada cetakan SPTJM dan Surat Pernyataan Anak Kandung.</div>
             <div style="font-weight:600;margin:8px 0 4px">Ayah</div>
             <div class="birth-app-grid">
               <label><b>Nama Ayah</b><input class="input" id="birthAppFatherName"></label>
@@ -1027,6 +1027,23 @@ body{font-family:Arial,Helvetica,sans-serif!important}
               <label><b>Kecamatan</b><input class="input" id="birthAppMotherDistrict"></label>
               <label class="full"><b>Kabupaten/Kota</b><input class="input" id="birthAppMotherRegency"></label>
             </div>
+          </div>
+          <div style="margin-top:12px;border:1px solid #d9e1ea;border-radius:10px;padding:10px;background:#f8fafc">
+            <div style="font-weight:700;margin-bottom:5px">Surat Pernyataan Anak Kandung <span class="hint">(kertas F4)</span></div>
+            <div class="hint">Data ayah dan ibu diambil dari <b>Data Orang Tua</b> di atas. Kolom di bawah hanya dipakai pada cetakan Surat Pernyataan Anak Kandung. Kolom nama yang dikosongkan terisi otomatis sesuai petunjuk pada kolomnya; bila datanya juga kosong, dicetak titik-titik untuk diisi tulis tangan.</div>
+            <div class="birth-app-grid" style="margin-top:8px">
+              <label><b>Nomor Surat Nikah</b><input class="input" id="akMarriageNo"></label>
+              <label><b>Tanggal Surat Nikah</b><input class="input" id="akMarriageDate" type="date"></label>
+              <label class="full"><b>Dikeluarkan KUA Kecamatan</b><input class="input" id="akKua" placeholder="Kosong = kecamatan desa"></label>
+              <label><b>Tempat Surat</b><input class="input" id="akPlace" placeholder="Kosong = kabupaten desa"></label>
+              <label><b>Tanggal Surat</b><input class="input" id="akDate" type="date"></label>
+              <label><b>Penandatangan I</b><input class="input" id="akSigner1" placeholder="Kosong = nama ayah"></label>
+              <label><b>Penandatangan II</b><input class="input" id="akSigner2" placeholder="Kosong = nama ibu"></label>
+              <label><b>Nama Saksi I</b><input class="input" id="akWitness1" placeholder="Kosong = Saksi I pada F-2.01"></label>
+              <label><b>Nama Saksi II</b><input class="input" id="akWitness2" placeholder="Kosong = Saksi II pada F-2.01"></label>
+              <label class="full"><b>Nama Kepala Desa/Kelurahan</b><input class="input" id="akHead" placeholder="Kosong = kepala desa pada pengaturan"></label>
+            </div>
+            <div class="hint" style="margin-top:4px">Tanggal Surat dikosongkan = tanggal dicetak titik-titik untuk diisi tangan.</div>
           </div>
           <div class="hint" style="margin-top:9px">Saksi I dan Saksi II wajib dipilih dari penduduk selain anak, ayah, dan ibu. Pelapor boleh ayah/ibu.</div>
         </div>
@@ -2322,8 +2339,10 @@ function birthAddressLines(base,rt,rw,village,district,regency){
 }
 function birthParentAddressLines(who){const g=k=>birthValue('birthApp'+who+k);return birthAddressLines(g('Address'),g('RT'),g('RW'),g('Village'),g('District'),g('Regency'))}
 function birthParentNikFromRecord(r,which){return String(r?.[which==='ayah'?'NIK_AYAH':'NIK_IBU']||'').trim()}
+function resetAnakKandungFields(){['akMarriageNo','akMarriageDate','akKua','akPlace','akDate','akSigner1','akSigner2','akWitness1','akWitness2','akHead'].forEach(id=>{if($(id))$(id).value=''})}
 function clearBirthChildFields(){
   ['birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppBirthDay','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppFatherName','birthAppFatherNik','birthAppFatherPlace','birthAppFatherDate','birthAppMotherName','birthAppMotherNik','birthAppMotherPlace','birthAppMotherDate','birthAppFatherJob','birthAppFatherAddress','birthAppFatherRT','birthAppFatherRW','birthAppFatherVillage','birthAppFatherDistrict','birthAppFatherRegency','birthAppMotherJob','birthAppMotherAddress','birthAppMotherRT','birthAppMotherRW','birthAppMotherVillage','birthAppMotherDistrict','birthAppMotherRegency'].forEach(id=>{if($(id))$(id).value=''});
+  resetAnakKandungFields();
   $('birthAppFatherNation').value='WNI';$('birthAppMotherNation').value='WNI';
   ['birthAppWitness1Nik','birthAppWitness1Name','birthAppWitness1KK','birthAppWitness2Nik','birthAppWitness2Name','birthAppWitness2KK'].forEach(id=>{if($(id))$(id).value=''});
   $('birthAppWitness1Nation').value='WNI';$('birthAppWitness2Nation').value='WNI';
@@ -2399,6 +2418,7 @@ function openBirthApplicationFromKK(kk,preferredNik){
   const members=familyMembersByKK(kk);
   if(!members.length){toast('Anggota keluarga untuk KK tersebut tidak ditemukan');return}
   closeMenu();
+  resetAnakKandungFields();
   $('birthAppKK').value=kk;
   $('birthAppSelect').innerHTML=birthOptionHtml(members,'-- pilih anggota keluarga / anak --');
   const preferred=String(preferredNik||'').trim();
@@ -2551,53 +2571,98 @@ $('btnPrintAnakKandung').addEventListener('click',printPernyataanAnakKandung);
 function printPernyataanAnakKandung(){
   const r=getBirthResident();
   if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
-  const fatherName=birthValue('birthAppFatherName')||'';
-  const fatherPlace=birthValue('birthAppFatherPlace')||'';
-  const fatherDate=birthValue('birthAppFatherDate')||'';
-  const fatherJob=birthValue('birthAppFatherJob')||'';
-  const fatherAddress=birthParentAddressLines('Father');
-  const motherName=birthValue('birthAppMotherName')||'';
-  const motherPlace=birthValue('birthAppMotherPlace')||'';
-  const motherDate=birthValue('birthAppMotherDate')||'';
-  const motherJob=birthValue('birthAppMotherJob')||'';
-  const motherAddress=birthParentAddressLines('Mother');
-  const childName=birthValue('birthAppName')||r['NAMA LENGKAP']||'';
-  const village=desaSettings?.village||'';
-  const district=desaSettings?.district||'';
-  const regency=desaSettings?.regency||'';
-  const val=(x,blank='.................................................')=>esc(String(x||blank));
-  const addr=(lines,blank='Lingk/Dsn/Jl ............................Rt.......................Rw...................')=>{
-    const a=(lines||[]).filter(Boolean).map(x=>String(x).trim());
-    return a.length?a.map(x=>`<span class="ak-al">${esc(x)}</span>`).join(''):esc(blank);
+  const g=id=>birthValue(id);
+  const childName=g('birthAppName')||r['NAMA LENGKAP']||'';
+  const village=String(desaSettings?.village||'').trim();
+  const district=String(desaSettings?.district||'').trim();
+  const regency=String(desaSettings?.regency||'').trim();
+  const head=String(desaSettings?.head||'').trim();
+  const dots=n=>'.'.repeat(n);
+  const val=(x,n)=>{x=String(x||'').trim();return x?esc(x):dots(n)};
+  const strip=(x,re)=>String(x||'').trim().replace(re,'').trim();
+  const reVillage=/^(desa\/kel(?:urahan)?\.?|desa|des\.|kelurahan|kel\.)\s+/i;
+  const reDistrict=/^(kecamatan|kec\.?)\s+/i;
+  const reRegency=/^(kabupaten|kab\.?|kota)\s+/i;
+  const parent=who=>{
+    const p=g('birthApp'+who+'Place'),d=g('birthApp'+who+'Date'),reg=g('birthApp'+who+'Regency');
+    return {
+      name:g('birthApp'+who+'Name'),
+      ttl:p&&d?p+', '+fmtDate(d):(p||fmtDate(d)),
+      job:g('birthApp'+who+'Job'),
+      addr:g('birthApp'+who+'Address'),rt:g('birthApp'+who+'RT'),rw:g('birthApp'+who+'RW'),
+      village:strip(g('birthApp'+who+'Village'),reVillage),
+      district:strip(g('birthApp'+who+'District'),reDistrict),
+      regency:strip(reg,reRegency),
+      regLabel:/^kota\s+/i.test(reg)?'Kota':'Kabupaten'
+    };
   };
-  const h=`<div class="anak-kandung-paper">
+  const person=(no,p)=>`<table class="ak-person">
+    <tr><td class="n">${no}.</td><td class="l">Nama</td><td class="c">:</td><td>${val(p.name,49)}</td></tr>
+    <tr><td></td><td class="l">Tempat/Tgl/Lahir</td><td class="c">:</td><td>${val(p.ttl,49)}</td></tr>
+    <tr><td></td><td class="l">Pekerjaan</td><td class="c">:</td><td>${val(p.job,49)}</td></tr>
+    <tr><td></td><td class="l">Alamat</td><td class="c">:</td><td>Lingk/Dsn/Jl ${val(p.addr,28)} Rt. ${val(p.rt,21)} Rw. ${val(p.rw,17)}</td></tr>
+    <tr><td></td><td></td><td></td><td>Desa ${val(p.village,36)}</td></tr>
+    <tr><td></td><td></td><td></td><td>Kecamatan ${val(p.district,30)}</td></tr>
+    <tr><td></td><td></td><td></td><td>${p.regLabel} ${val(p.regency,30)}</td></tr></table>`;
+
+  const marriageNo=g('akMarriageNo');
+  const marriageDate=g('akMarriageDate');
+  const kua=strip(g('akKua')||district,reDistrict);
+  const para1=`Menyatakan dengan sebenarnya bahwa anak yang bernama ${val(childName,75)} adalah anak kandung saya dari pernikahan yang syah sesuai dengan Surat Nikah Nomor ${val(marriageNo,37)} tanggal ${marriageDate?esc(letterIndoDate(marriageDate)):dots(30)} yang dikeluarkan KUA Kecamatan ${kua?esc(kua)+'.':dots(45)}`;
+  const para2='Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila dikemudian hari ternyata pernyataan saya tidak benar, maka saya bersedia diproses secara hukum sesuai dengan Peraturan Perundang-undangan dan dokumen yang diterbitkan akibat dari pernyataan ini menjadi tidak sah.';
+
+  const w1=getBirthWitness(1),w2=getBirthWitness(2);
+  const signer1=g('akSigner1')||g('birthAppFatherName');
+  const signer2=g('akSigner2')||g('birthAppMotherName');
+  const witness1=g('akWitness1')||w1.name;
+  const witness2=g('akWitness2')||w2.name;
+  const nm=(x,n)=>'('+val(x,n)+')';
+  const place=g('akPlace')||strip(regency,reRegency)||village;
+  const dateTxt=g('akDate')?esc(letterIndoDate(g('akDate'))):dots(32)+new Date().getFullYear();
+  const headName=g('akHead')||head;
+  const headTitle=village?'Kepala Desa '+esc(village):'Kepala Desa/Kelurahan';
+
+  const h=`<div class="ak-paper">
     <h1>SURAT PERNYATAAN</h1>
-    <p>Saya yang bertanda tangan di bawah ini :</p>
-    <div class="person"><div>1. Nama : ${val(fatherName)}</div>
-      <div>Tempat/Tgl/Lahir : ${val(fatherPlace&&fatherDate?fatherPlace+', '+fmtDate(fatherDate):fatherPlace||fmtDate(fatherDate))}</div>
-      <div>Pekerjaan : ${val(fatherJob)}</div>
-      <div>Alamat : ${addr(fatherAddress)}</div>
-      <div>Desa ${val(village)}</div>
-      <div>Kecamatan ${val(district)}</div>
-      <div>Kabupaten ${val(regency)}</div>
-    </div>
-    <div class="person"><div>2. Nama : ${val(motherName)}</div>
-      <div>Tempat/Tgl/Lahir : ${val(motherPlace&&motherDate?motherPlace+', '+fmtDate(motherDate):motherPlace||fmtDate(motherDate))}</div>
-      <div>Pekerjaan : ${val(motherJob)}</div>
-      <div>Alamat : ${addr(motherAddress)}</div>
-      <div>Desa ${val(village)}</div>
-      <div>Kecamatan ${val(district)}</div>
-      <div>Kabupaten ${val(regency)}</div>
-    </div>
-    <p>Menyatakan dengan sebenarnya bahwa anak yang<br>bernama ${val(childName)} adalah anak kandung saya<br>dari pernikahan yang syah sesuai dengan Surat Nikah Nomor ${val()}<br>tanggal ${val()} yang dikeluarkan KUA<br>Kecamatan ${val()}</p>
-    <p>Demikian surat pernyataan ini saya buat dengan sebenar-benarnya dan apabila<br>dikemudian hari ternyata pernyataan saya tidak benar, maka saya berserdia diproses secara<br>hukum sesuai dengan Peraturan Perundang-undangan dan dokumen yang diterbitkan akibat<br>dari pernyataan ini menjadi tidak sah.</p>
-    <div class="ak-date">${esc(village)}, ................................2022</div>
-    <table class="ak-sign"><tr><td>Saksi I :............. (......................)</td><td>I. ...................... (.........................)</td></tr>
-      <tr><td class="ak-materai">Materai<br>10.000</td><td></td></tr>
-      <tr><td>Saksi II :............. (......................)</td><td>II. ..................... (.........................)</td></tr>
-      <tr><td></td><td>Kepala Desa/Kelurahan</td></tr></table>
+    <p class="intro">Saya yang bertanda tangan di bawah ini :</p>
+    ${person(1,parent('Father'))}
+    ${person(2,parent('Mother'))}
+    <p class="body first">${para1}</p>
+    <p class="body">${para2}</p>
+    <div class="ak-date">${place?esc(place):dots(14)}, ${dateTxt}<br>Saya yang menyatakan</div>
+    <table class="ak-sign">
+      <colgroup><col style="width:15mm"><col style="width:16mm"><col style="width:45mm"><col style="width:26mm"><col style="width:12mm"><col style="width:42mm"></colgroup>
+      <tr><td class="nw">Saksi I</td><td class="nw">:${dots(10)}</td><td>${nm(witness1,22)}</td><td class="nw">I. ${dots(20)}</td><td class="mat" rowspan="2">Materai<br>10.000</td><td>${nm(signer1,25)}</td></tr>
+      <tr><td class="nw">Saksi II</td><td class="nw">:${dots(10)}</td><td>${nm(witness2,22)}</td><td class="nw">II. ${dots(19)}</td><td>${nm(signer2,25)}</td></tr>
+    </table>
+    <div class="ak-head">${headTitle}<div class="ak-headsp"></div>${headName?'<b><u>'+esc(headName.toUpperCase())+'</u></b>':'<div class="ak-line"></div>'}</div>
   </div>`;
-  printSupportDocument('Surat Pernyataan Anak Kandung - '+safePrintName(childName),h,`@page{size:A4 portrait;margin:10mm}html,body{margin:0!important;padding:0!important;background:#fff;color:#111;font-family:Arial,sans-serif}.anak-kandung-paper{width:190mm;box-sizing:border-box;margin:0 auto;font-size:12pt;line-height:1.45}.anak-kandung-paper h1{text-align:center;font-size:14pt;margin:0 0 10mm;font-weight:700}.anak-kandung-paper p{margin:0 0 7mm;text-align:left}.anak-kandung-paper .person{margin-bottom:6mm}.anak-kandung-paper .person>div{margin:1mm 0}.anak-kandung-paper .ak-al{display:block}.anak-kandung-paper .ak-date{text-align:right;margin-top:5mm;margin-bottom:3mm}.anak-kandung-paper .ak-sign{width:100%;border-collapse:collapse;table-layout:fixed}.anak-kandung-paper .ak-sign td{vertical-align:top;height:8mm}.anak-kandung-paper .ak-materai{padding-top:3mm;height:20mm!important;text-align:center}.anak-kandung-paper *{box-sizing:border-box}`);
+
+  const css=`@page{size:215.9mm 330.2mm;margin:0!important}
+html,body{margin:0!important;padding:0!important;background:#fff!important;color:#000;height:auto!important;overflow:visible!important}
+.ak-paper{width:215.9mm;box-sizing:border-box;margin:0 auto;padding:19mm 30mm 12mm;font-family:"Times New Roman","Liberation Serif",Times,serif;font-size:12pt;line-height:16.2pt;color:#000;page-break-inside:avoid;break-inside:avoid}
+.ak-paper *{box-sizing:border-box}
+.ak-paper h1{text-align:center;font-size:12pt;font-weight:700;text-decoration:underline;margin:0 0 11mm;line-height:16.2pt}
+.ak-paper p{margin:0}
+.ak-paper .intro{margin:0 0 2mm}
+.ak-paper table{border-collapse:collapse;table-layout:fixed;width:100%}
+.ak-paper td{padding:0;vertical-align:top;line-height:16.2pt;font-size:12pt}
+.ak-paper .ak-person{margin:0 0 5mm}
+.ak-paper .ak-person .n{width:8mm}
+.ak-paper .ak-person .l{width:35mm}
+.ak-paper .ak-person .c{width:5mm}
+.ak-paper .ak-person td{word-break:break-word}
+.ak-paper .body{text-align:justify;text-indent:12mm;line-height:20.7pt}
+.ak-paper .body.first{margin-top:7.5mm}
+.ak-paper .ak-date{width:80mm;margin:8mm 0 9mm auto;text-align:center;line-height:16.2pt}
+.ak-paper .ak-sign td{height:15mm;line-height:16.2pt}
+.ak-paper .ak-sign .nw{white-space:nowrap}
+.ak-paper .ak-sign td:nth-child(3){padding-right:3mm}
+.ak-paper .ak-sign .mat{text-align:center;vertical-align:middle;font-size:8pt;line-height:11pt}
+.ak-paper .ak-head{text-align:center;margin-top:2.5mm}
+.ak-paper .ak-headsp{height:28mm}
+.ak-paper .ak-line{width:40mm;border-top:1px solid #000;margin:0 auto}`;
+  printSupportDocument('Surat Pernyataan Anak Kandung - '+safePrintName(childName),h,css);
 }
 
 
