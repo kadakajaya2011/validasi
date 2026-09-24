@@ -2265,12 +2265,17 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
   }
   const isDouble=reason==='Hapus Double';
   const removeByKK=reason==='Hapus KK'||(isDouble&&$('doubleScope').value==='KK');
-  const removed=removeByKK?familyMembersByKK(base['NO KK']):[base];
-  if(removeByKK&&!base['NO KK']){toast('No KK kosong. Penghapusan berdasarkan KK tidak dapat diproses.');return}
+  const targetKK=String(base['NO KK']||'').trim();
+  if(removeByKK&&!targetKK){toast('No KK kosong. Penghapusan berdasarkan KK tidak dapat diproses.');return}
+  // Hapus KK harus selalu mengambil seluruh penduduk aktif dengan No. KK yang sama.
+  // Jangan bergantung pada struktur Kepala Keluarga/pengganti kepala, karena seluruh KK memang dikeluarkan.
+  const removed=removeByKK
+    ? data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===targetKK)
+    : [base];
   if(!removed.length){toast('Anggota KK tidak ditemukan');return}
   const removedNiks=new Set(removed.map(r=>r.NIK));
   const affectedKKs=[...new Set(removed.map(r=>String(r['NO KK']||'').trim()).filter(Boolean))];
-  const prep=prepareHeadReplacementForRemoval(removedNiks,affectedKKs);
+  const prep=removeByKK?{ok:true,replacements:new Map()}:prepareHeadReplacementForRemoval(removedNiks,affectedKKs);
   if(!prep.ok){toast(prep.message);return}
   let confirmText='Hapus data '+(base['NAMA LENGKAP']||'penduduk')+' dari data aktif?';
   if(reason==='Hapus KK')confirmText='Hapus seluruh '+removed.length+' anggota pada KK '+base['NO KK']+' dari data aktif?';
