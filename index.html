@@ -1402,10 +1402,25 @@ async function loadResidents(){
     return [];
   }catch(e){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x.map(normalize):[]}catch(_){return []}}
 }
-async function persist(){
+async function persist(previousNik=null){
   if(window.sb&&window.currentUser){
+    const oldNik=String(previousNik||'').trim();
     const clean=data.filter(r=>isValidNik(r.NIK)).map(r=>({nik:r.NIK,data:r,updated_by:window.currentUser.id}));
-    if(clean.length){const {error}=await window.sb.from('residents').upsert(clean,{onConflict:'nik'});if(error)throw error}
+    if(clean.length){
+      const {error}=await window.sb.from('residents').upsert(clean,{onConflict:'nik'});
+      if(error)throw error;
+    }
+    // Jika NIK diubah saat edit, upsert dengan NIK baru membuat baris baru
+    // di Supabase karena NIK adalah conflict key. Hapus baris NIK lama
+    // setelah data baru berhasil di-upsert agar tidak terjadi data ganda.
+    if(oldNik){
+      const stillExists=data.some(r=>String(r?.NIK||'').trim()===oldNik);
+      const newNikForEdited=clean.find(x=>String(x.data?.NIK||'').trim()!==oldNik);
+      if(!stillExists && newNikForEdited && String(newNikForEdited.data?.NIK||'').trim()!==oldNik){
+        const {error}=await window.sb.from('residents').delete().eq('nik',oldNik);
+        if(error)throw error;
+      }
+    }
     return;
   }
   try{await idbSet('residents',data)}catch(e){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e2){toast('⚠️ Gagal menyimpan data')}}
@@ -2126,7 +2141,7 @@ $('btnOpenKtp').addEventListener('click',openKtpFromF101);
 $('btnPrintKtpSelected').addEventListener('click',printKtpSelected);
 $('btnPrintKtpAll').addEventListener('click',printKtpAll);
 
-$('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'')});if(!validateRequiredResidentFields(r,'edit_'))return;if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];
+$('btnSaveEdit').addEventListener('click',async()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'')});if(!validateRequiredResidentFields(r,'edit_'))return;if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];
   r.STATUS_AKTIF=String(before.STATUS_AKTIF||'AKTIF').trim().toUpperCase()||'AKTIF';
   r.ALASAN_NONAKTIF=String(before.ALASAN_NONAKTIF||'').trim();
   r.TGL_NONAKTIF=String(before.TGL_NONAKTIF||'').trim();
@@ -2151,7 +2166,16 @@ $('btnSaveEdit').addEventListener('click',()=>{if(editingIndex<0||!data[editingI
   if(isHead(r)){applyHeadAddressToMembers(r['NO KK'],r)}else if(r['NO KK']){const card=familyCardIntegrity(r['NO KK'],editingIndex);if(card.head)applyHeadAddressToMembers(r['NO KK'],card.head)}
   if(before['NO KK']&&before['NO KK']!==r['NO KK']){const oldCard=familyCardIntegrity(before['NO KK']);if(oldCard.head)applyHeadAddressToMembers(before['NO KK'],oldCard.head)}
   const perubahanBiodata=describeResidentChanges(beforeSnapshot||{},r);
-  if(perubahanBiodata.length)addHistory('Perubahan Biodata',r,perubahanBiodata.join('; '),{kategori:'PERUBAHAN_BIODATA',perubahan:perubahanBiodata});if(replacementHead){const wasHeadSwap=beforeHead&&oldKK===newKK&&!afterHead;if(wasHeadSwap)addHistory('Perubahan Kepala Keluarga',replacementHead,`Menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} tidak lagi menjadi Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});else addHistory('Perubahan Kepala Keluarga',replacementHead,`Tidak lagi menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} ditetapkan sebagai Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});}persist();fillFilters();render();$('editOverlay').classList.remove('open');editingIndex=-1;toast((afterHead&&oldHead)||(beforeHead&&oldKK===newKK&&!afterHead&&replacementHead)?'Perubahan Kepala Keluarga berhasil dan struktur KK tetap valid':'Data penduduk berhasil diperbarui dan aturan KK diterapkan')});
+  if(perubahanBiodata.length)addHistory('Perubahan Biodata',r,perubahanBiodata.join('; '),{kategori:'PERUBAHAN_BIODATA',perubahan:perubahanBiodata});if(replacementHead){const wasHeadSwap=beforeHead&&oldKK===newKK&&!afterHead;if(wasHeadSwap)addHistory('Perubahan Kepala Keluarga',replacementHead,`Menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} tidak lagi menjadi Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});else addHistory('Perubahan Kepala Keluarga',replacementHead,`Tidak lagi menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} ditetapkan sebagai Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});}
+  try{
+    await persist(String(beforeSnapshot.NIK||'').trim());
+  }catch(err){
+    // Kembalikan data di memori jika sinkronisasi cloud gagal.
+    data[editingIndex]=beforeSnapshot;
+    toast('Gagal menyimpan perubahan NIK: '+(err.message||err));
+    return;
+  }
+  fillFilters();render();$('editOverlay').classList.remove('open');editingIndex=-1;toast((afterHead&&oldHead)||(beforeHead&&oldKK===newKK&&!afterHead&&replacementHead)?'Perubahan Kepala Keluarga berhasil dan struktur KK tetap valid':'Data penduduk berhasil diperbarui dan aturan KK diterapkan')});
 function renderDoubleMembers(){if(deletingIndex<0||!data[deletingIndex])return;const r=data[deletingIndex],members=familyMembersByKK(r['NO KK']);if($('doubleScope').value!=='KK'){$('doubleMembers').innerHTML='';return;}$('doubleMembers').innerHTML=members.length?'<b>Anggota yang akan dihapus:</b>'+members.map(m=>'<div class="move-member"><span><b>'+esc(m['NAMA LENGKAP'])+'</b> — '+esc(m.NIK)+' • '+esc(m.SHDRT||'-')+'</span></div>').join(''):'<div class="hint">No KK tidak memiliki anggota lain yang terdaftar.</div>';}
 $('doubleScope').addEventListener('change',renderDoubleMembers);
 $('delReason').addEventListener('change',()=>{const reason=$('delReason').value;const isMove=reason==='Hapus Pindah',isDeath=reason==='Hapus Meninggal',isDouble=reason==='Hapus Double';$('moveDeleteForm').style.display=isMove?'block':'none';$('deathDeleteForm').style.display=isDeath?'block':'none';$('doubleDeleteForm').style.display=isDouble?'block':'none';$('deleteStandardInfo').style.display=(isMove||isDeath||isDouble)?'none':'block';$('deleteHeadReplacementWrap').style.display='none';if(isMove){resetMoveForm();renderMoveMembers();renderDeleteHeadReplacement();}if(isDeath){resetDeathForm();renderDeleteHeadReplacement();}if(isDouble){$('doubleScope').value='NIK';renderDoubleMembers();renderDeleteHeadReplacement();}if(reason==='Hapus KK'||reason==='Hapus Tidak Dikenal'){renderDeleteHeadReplacement();}});
