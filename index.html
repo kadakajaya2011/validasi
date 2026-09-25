@@ -744,7 +744,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
       <button class="auth-submit" id="loginSubmit" type="submit">Masuk</button>
       <div class="auth-error" id="loginError"></div>
     </form>
-    <div class="auth-footer">• Aplikasi Kependudukan Desa •<br><strong>Created By:</strong> &copy; 2026 <a href="https://wa.me/6282218687778" target="_blank">Yusuf Kadakajaya.</a> All rights reserved.</div>
+    <div class="auth-footer">Aplikasi Kependudukan Desa • Sistem berbasis akun</div>
   </div>
 </div>
 <div class="overlay" id="accountOverlay">
@@ -3387,7 +3387,9 @@ function dp4TniPolri(r){
 }
 function renderDp4(){
   const date=$('dp4ElectionDate').value;
-  const rows=getFiltered();
+  // DP4 hanya dihitung dari penduduk AKTIF. Penduduk TIDAK AKTIF tidak menjadi
+  // bagian dari Data Penduduk Potensial Pemilih maupun rekapnya.
+  const rows=getFiltered().filter(isActiveResident);
   if(!date){$('dp4Body').innerHTML='<div class="hint">Silakan tentukan tanggal pemungutan suara untuk menghitung umur DP4.</div>';return;}
   const result=rows.map(r=>{
     const umur=dp4AgeOnDate(r.TGL_LHR,date);
@@ -3428,7 +3430,7 @@ function renderDp4(){
 function getDp4Eligible(){
   const date=$('dp4ElectionDate').value;
   if(!date)return [];
-  return getFiltered().map(r=>{
+  return getFiltered().filter(isActiveResident).map(r=>{
     const umur=dp4AgeOnDate(r.TGL_LHR,date);
     const menikah=dp4IsEverMarried(r.STATUS);
     const memenuhiUmurKawin=(umur!==null&&umur>=17);
@@ -3633,8 +3635,11 @@ $('btnPrintDp4').addEventListener('click',printDp4);$('btnPrintDp4Rekap').addEve
 
 let familyHeadsOnly=false;
 function fillFamilyFilters(){
-  const rts=[...new Set(data.map(r=>String(r.RT||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
-  const rws=[...new Set(data.map(r=>String(r.RW||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
+  // Data Keluarga hanya menggunakan penduduk AKTIF. Penduduk TIDAK AKTIF
+  // (pindah/meninggal/dll.) tetap tersimpan di database tetapi tidak ditampilkan di sini.
+  const activeFamilyData=data.filter(isActiveResident);
+  const rts=[...new Set(activeFamilyData.map(r=>String(r.RT||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
+  const rws=[...new Set(activeFamilyData.map(r=>String(r.RW||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
   const rt=$('familyRT'),rw=$('familyRW');
   const oldRT=rt.value,oldRW=rw.value;
   rt.innerHTML='<option value="">RT: Semua</option>'+rts.map(v=>`<option value="${esc(v)}">RT: ${esc(v)}</option>`).join('');
@@ -3646,7 +3651,8 @@ function renderFamily(){
   familyHeadsOnly=$('familyView').value==='heads';
   const fRT=($('familyRT').value||'').trim(), fRW=($('familyRW').value||'').trim();
   const groups={};
-  data.forEach(r=>{
+  // Jangan sertakan penduduk TIDAK AKTIF dalam Data Keluarga.
+  data.filter(isActiveResident).forEach(r=>{
     const kk=r['NO KK']||'(NO KK kosong)';
     if(!groups[kk])groups[kk]={kk,head:null,members:[]};
     groups[kk].members.push(r);
