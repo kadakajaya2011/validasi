@@ -962,7 +962,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 <div class="overlay" id="birthApplicationOverlay">
   <div class="modal birth-app-modal">
     <div class="modal-head"><div class="modal-title">Permohonan Akta Kelahiran — F-2.01</div><button class="close" data-close="birthApplicationOverlay">✕</button></div>
-    <div class="modal-print-toolbar"><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn" id="btnPrintAnakKandung">📄 Pernyataan Anak Kandung</button><button class="btn" id="btnPrintASIAnak">📄 ASI Anak</button><button class="btn" id="btnPrintASIDewasa">📄 ASI Dewasa</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
+    <div class="modal-print-toolbar"><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn" id="btnPrintAnakKandung">📄 Anak Kandung (&lt; 9 Bln Nikah)</button><button class="btn" id="btnPrintAnakKandungJarakUsia">📄 Anak Kandung (Jarak Usia &gt; 10 Th)</button><button class="btn" id="btnPrintASIAnak">📄 ASI Anak</button><button class="btn" id="btnPrintASIDewasa">📄 ASI Dewasa</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
     <div class="modal-body">
       <div class="birth-app-layout">
         <div class="birth-app-panel">
@@ -1044,7 +1044,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           </div>
           <div style="margin-top:12px;border:1px solid #d9e1ea;border-radius:10px;padding:10px;background:#f8fafc">
             <div style="font-weight:700;margin-bottom:5px">Surat Pernyataan Anak Kandung <span class="hint">(kertas F4)</span></div>
-            <div class="hint">Data ayah dan ibu diambil dari <b>Data Orang Tua</b> di atas. Kolom di bawah hanya dipakai pada cetakan Surat Pernyataan Anak Kandung. Kolom nama yang dikosongkan terisi otomatis sesuai petunjuk pada kolomnya; bila datanya juga kosong, dicetak titik-titik untuk diisi tulis tangan.</div>
+            <div class="hint">Data ayah dan ibu diambil dari <b>Data Orang Tua</b> di atas. Kolom di bawah dipakai pada cetakan <b>Anak Kandung (&lt; 9 Bln Nikah)</b> maupun <b>Anak Kandung (Jarak Usia &gt; 10 Th)</b> — isinya sama, hanya versi Jarak Usia yang dicetak tanpa tanda tangan Kepala Desa. Kolom nama yang dikosongkan terisi otomatis sesuai petunjuk pada kolomnya; bila datanya juga kosong, dicetak titik-titik untuk diisi tulis tangan.</div>
             <div class="birth-app-grid" style="margin-top:8px">
               <label><b>Nomor Surat Nikah</b><input class="input" id="akMarriageNo"></label>
               <label><b>Tanggal Surat Nikah</b><input class="input" id="akMarriageDate" type="date"></label>
@@ -1057,7 +1057,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
               <label><b>Nama Saksi II</b><input class="input" id="akWitness2" placeholder="Kosong = Saksi II pada F-2.01"></label>
               <label class="full"><b>Nama Kepala Desa/Kelurahan</b><input class="input" id="akHead" placeholder="Kosong = kepala desa pada pengaturan"></label>
             </div>
-            <div class="hint" style="margin-top:4px">Tanggal Surat dikosongkan = tanggal dicetak titik-titik untuk diisi tangan.</div>
+            <div class="hint" style="margin-top:4px">Tanggal Surat dikosongkan = tanggal dicetak titik-titik untuk diisi tangan. Kolom Nama Kepala Desa/Kelurahan tidak berpengaruh pada cetakan Anak Kandung (Jarak Usia &gt; 10 Th) karena versi ini tidak menampilkan tanda tangan Kepala Desa.</div>
           </div>
           <div class="hint" style="margin-top:9px">Saksi I dan Saksi II wajib dipilih dari penduduk selain anak, ayah, dan ibu. Pelapor boleh ayah/ibu.</div>
           <div class="hint" style="margin-top:4px"><b>ASI Anak</b>: Surat Pernyataan dari Ibu bahwa anak adalah anak kandungnya (belum ada surat nikah). <b>ASI Dewasa</b>: Surat Pernyataan dari yang bersangkutan (dewasa) tidak keberatan aktanya terbit tanpa nama Ayah. Keduanya memakai data pada formulir di atas serta Tempat/Tanggal Surat pada kolom Anak Kandung.</div>
@@ -1533,6 +1533,8 @@ function describeResidentChanges(before,after){
 }
 function normalize(r){let x={}; fields.forEach(f=>x[f]=String(r[f]??r[f.toLowerCase()]??'').trim()); x['NO_AKTA_KAWIN']=x['NO_AKTA_KAWIN']||String(r.NO_AKTA_NIKAH??r.NO_AKTA_LAHIR_KAWIN??'').trim(); x['NO_AKTA_CERAI']=x['NO_AKTA_CERAI']||String(r.NO_AKTA_PERCERAIAN??'').trim(); x['TGL_LHR']=x['TGL_LHR']||''; x.STATUS_AKTIF=String(r.STATUS_AKTIF??r.status_aktif??'AKTIF').trim().toUpperCase()||'AKTIF'; x.ALASAN_NONAKTIF=String(r.ALASAN_NONAKTIF??r.alasan_nonaktif??'').trim(); x.TGL_NONAKTIF=String(r.TGL_NONAKTIF??r.tgl_nonaktif??'').trim(); x.KETERANGAN_NONAKTIF=String(r.KETERANGAN_NONAKTIF??r.keterangan_nonaktif??'').trim(); return x}
 function age(d){if(!d)return '';const t=new Date(d),n=new Date();if(isNaN(t))return '';let a=n.getFullYear()-t.getFullYear();if(n.getMonth()<t.getMonth()||(n.getMonth()==t.getMonth()&&n.getDate()<t.getDate()))a--;return a<0?'':a}
+const MIN_HEAD_AGE=17;
+function isUnderageForHead(r){const a=age(r&&r.TGL_LHR);return a!==''&&Number(a)<MIN_HEAD_AGE}
 function fmtDate(v){if(!v)return '';const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;m=s.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;const d=new Date(v);if(!isNaN(d))return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();return s}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function getFiltered(){const q=$('search').value.toLowerCase().trim();return data.filter(r=>{if(!isActiveResident(r))return false;if(q&&!Object.values(r).join(' ').toLowerCase().includes(q))return false;return [['RT','fRT'],['RW','fRW'],['JK','fJK'],['SHDRT','fSH'],['STATUS','fStatus'],['AGAMA','fAgama'],['PENDIDIKAN','fPendidikan'],['PEKERJAAN','fPekerjaan']].every(([f,id])=>!$(id).value||r[f]===$(id).value)})}
@@ -1654,7 +1656,7 @@ function openEdit(index){
   const kk=String(current['NO KK']||'').trim();
   const currentIsHead=isHead(current);
   if(kk&&currentIsHead){
-    const members=familyMembersByKK(kk).filter(x=>String(x.NIK||'')!==String(current.NIK||''));
+    const members=familyMembersByKK(kk).filter(x=>String(x.NIK||'')!==String(current.NIK||'')&&!isUnderageForHead(x));
     let h='<div id="editHeadReplacementWrap" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Kepala Keluarga Pengganti</b><select class="select" id="editHeadReplacement" style="margin-top:6px"><option value="">-- Pilih anggota keluarga yang menjadi Kepala Keluarga --</option>';
     h+=members.map(m=>`<option value="${esc(m.NIK||'')}">${esc(m['NAMA LENGKAP']||'-')} — ${esc(m.SHDRT||'Anggota Keluarga')} — NIK ${esc(m.NIK||'-')}</option>`).join('');
     h+='</select></label><div class="hint" style="margin-top:6px">Muncul hanya jika Kepala Keluarga ini diubah menjadi hubungan keluarga lain. Pilih anggota yang akan menjadi Kepala Keluarga pengganti.</div></div>';
@@ -1686,6 +1688,7 @@ function validateFamilyCardRecord(r,ignoreIndex=-1){
   if(!isValidKK(kk))return {ok:false,message:'No KK harus terdiri dari 16 digit angka.'};
   const card=familyCardIntegrity(kk,ignoreIndex);
   if(isHead(r)){
+    if(isUnderageForHead(r))return {ok:false,message:'Penduduk berusia di bawah '+MIN_HEAD_AGE+' tahun tidak bisa dan tidak boleh menjadi Kepala Keluarga. Pisahkan/masukkan penduduk ini sebagai anggota pada KK yang sudah ada.'};
     if(card.heads.length) return {ok:false,message:'Nomor KK ini sudah memiliki Kepala Keluarga: '+(card.heads[0]['NAMA LENGKAP']||'-')+'. Satu Nomor KK hanya boleh memiliki 1 Kepala Keluarga.'};
     return {ok:true,head:r,members:card.members};
   }
@@ -2184,7 +2187,7 @@ $('btnSaveEdit').addEventListener('click',async()=>{if(editingIndex<0||!data[edi
   const oldKK=String(before['NO KK']||'').trim(),newKK=String(r['NO KK']||'').trim();const beforeHead=isHead(before),afterHead=isHead(r);let replacementHead=null;let oldHead=null;
   // Jika Kepala Keluarga lama diturunkan menjadi anggota, penggantinya dipilih melalui dropdown.
   let selectedHeadReplacementNik='';
-  if(beforeHead&&oldKK&&oldKK===newKK&&!afterHead){selectedHeadReplacementNik=String($('editHeadReplacement')?.value||'').trim();if(!selectedHeadReplacementNik){toast('Pilih Kepala Keluarga pengganti terlebih dahulu.');return;}if(selectedHeadReplacementNik===String(before.NIK||'')){toast('Kepala Keluarga pengganti tidak boleh orang yang sedang diubah.');return;}const replacement=data.find(x=>String(x.NIK||'')===selectedHeadReplacementNik&&String(x['NO KK']||'').trim()===oldKK);if(!replacement){toast('Kepala Keluarga pengganti tidak ditemukan dalam KK yang sama.');return;}replacementHead=replacement;}
+  if(beforeHead&&oldKK&&oldKK===newKK&&!afterHead){selectedHeadReplacementNik=String($('editHeadReplacement')?.value||'').trim();if(!selectedHeadReplacementNik){toast('Pilih Kepala Keluarga pengganti terlebih dahulu.');return;}if(selectedHeadReplacementNik===String(before.NIK||'')){toast('Kepala Keluarga pengganti tidak boleh orang yang sedang diubah.');return;}const replacement=data.find(x=>String(x.NIK||'')===selectedHeadReplacementNik&&String(x['NO KK']||'').trim()===oldKK);if(!replacement){toast('Kepala Keluarga pengganti tidak ditemukan dalam KK yang sama.');return;}if(isUnderageForHead(replacement)){toast('Kepala Keluarga pengganti tidak boleh berusia di bawah '+MIN_HEAD_AGE+' tahun.');return;}replacementHead=replacement;}
   // Pergantian Kepala Keluarga dilakukan sebagai satu perubahan utuh: anggota baru menjadi Kepala Keluarga dan kepala lama otomatis turun menjadi hubungan lama anggota baru.
   if(newKK&&afterHead){const kkMembers=data.filter((x,i)=>i!==editingIndex&&String(x['NO KK']||'').trim()===newKK);oldHead=kkMembers.find(isHead)||null;if(oldHead){if(oldHead.NIK===r.NIK){toast('Data Kepala Keluarga tidak valid.');return}if(oldKK===newKK){const oldRelation=String(before.SHDRT||'').trim();const rel=oldRelation.toUpperCase();const newOldRelation=rel==='ISTRI'?'Suami':rel==='SUAMI'?'Istri':rel==='ANAK'?'Ayah':(oldRelation&&rel!=='KEPALA KELUARGA'?oldRelation:'Anggota Keluarga');if(!confirm(`Jadikan ${r['NAMA LENGKAP']||r.NIK} sebagai Kepala Keluarga dan ubah ${oldHead['NAMA LENGKAP']||oldHead.NIK} dari Kepala Keluarga menjadi ${newOldRelation}?`))return;oldHead.__previousSHDRT=oldHead.SHDRT;oldHead.SHDRT=newOldRelation;replacementHead=oldHead;}}}
   // Promosikan anggota yang dipilih menjadi Kepala Keluarga dalam perubahan yang sama.
@@ -2227,7 +2230,7 @@ function renderDeleteHeadReplacement(){
     const affected=[...new Set(checks.map(nik=>String(data.find(r=>String(r.NIK||'').trim()===nik)?.['NO KK']||'').trim()).filter(Boolean))];
     const headKKs=affected.filter(kk=>{const ms=familyMembersByKK(kk);return ms.some(r=>checks.includes(String(r.NIK||'').trim())&&isHead(r));});
     if(headKKs.length===1){
-      const kk=headKKs[0],choices=familyMembersByKK(kk).filter(r=>!checks.includes(String(r.NIK||'').trim()));
+      const kk=headKKs[0],choices=familyMembersByKK(kk).filter(r=>!checks.includes(String(r.NIK||'').trim())&&!isUnderageForHead(r));
       if(choices.length){sel.innerHTML='<option value="">-- Pilih Kepala Keluarga pengganti --</option>'+choices.map(r=>`<option value="${esc(r.NIK)}">${esc(r['NAMA LENGKAP'])} — ${esc(r.SHDRT||'Anggota Keluarga')} — NIK ${esc(r.NIK)}</option>`).join('');wrap.style.display='block';return;}
     }
     wrap.style.display='none';sel.innerHTML='';return;
@@ -2236,7 +2239,7 @@ function renderDeleteHeadReplacement(){
   const base=data[deletingIndex];
   if(!isHead(base)){wrap.style.display='none';sel.innerHTML='';return}
   const kk=String(base['NO KK']||'').trim();
-  const choices=familyMembersByKK(kk).filter(r=>String(r.NIK||'').trim()!==String(base.NIK||'').trim());
+  const choices=familyMembersByKK(kk).filter(r=>String(r.NIK||'').trim()!==String(base.NIK||'').trim()&&!isUnderageForHead(r));
   if(!choices.length){wrap.style.display='none';sel.innerHTML='';return}
   sel.innerHTML='<option value="">-- Pilih Kepala Keluarga pengganti --</option>'+choices.map(r=>`<option value="${esc(r.NIK)}">${esc(r['NAMA LENGKAP'])} — ${esc(r.SHDRT||'Anggota Keluarga')} — NIK ${esc(r.NIK)}</option>`).join('');
   wrap.style.display='block';
@@ -2253,16 +2256,18 @@ function prepareHeadReplacementForRemoval(removedNiks,affectedKKs){
     if(heads.length===1){replacements.set(kk,heads[0]);continue}
     if(heads.length>1)return {ok:false,message:'KK '+kk+' memiliki lebih dari satu Kepala Keluarga setelah penghapusan.'};
     const choices=remaining.filter(r=>!removedNiks.has(r.NIK));
-    if(choices.length===1){replacements.set(kk,choices[0]);continue}
+    const eligibleChoices=choices.filter(r=>!isUnderageForHead(r));
+    if(choices.length&&!eligibleChoices.length)return {ok:false,message:'KK '+kk+' tidak memiliki anggota berusia '+MIN_HEAD_AGE+' tahun ke atas untuk dijadikan Kepala Keluarga pengganti. Pisahkan/gabungkan anggota yang tersisa ke KK yang sudah ada.'};
+    if(eligibleChoices.length===1){replacements.set(kk,eligibleChoices[0]);continue}
     const selectedNik=String($('deleteHeadReplacement')?.value||'').trim();
-    const replacement=choices.find(r=>String(r.NIK||'').trim()===selectedNik);
+    const replacement=eligibleChoices.find(r=>String(r.NIK||'').trim()===selectedNik);
     if(!replacement)return {ok:false,message:'Pilih Kepala Keluarga pengganti dari dropdown terlebih dahulu.'};
     replacements.set(kk,replacement);
   }
   return {ok:true,replacements};
 }
 function applyHeadReplacements(replacements){
-  replacements.forEach((replacement,kk)=>{if(replacement&&!isHead(replacement)){const old=String(replacement.SHDRT||'').trim()||'Anggota Keluarga';replacement.SHDRT='Kepala Keluarga';applyHeadAddressToMembers(kk,replacement);addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:kk,hubunganSebelumnya:old});}});
+  replacements.forEach((replacement,kk)=>{if(replacement&&!isHead(replacement)&&!isUnderageForHead(replacement)){const old=String(replacement.SHDRT||'').trim()||'Anggota Keluarga';replacement.SHDRT='Kepala Keluarga';applyHeadAddressToMembers(kk,replacement);addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:kk,hubunganSebelumnya:old});}});
 }
 
 $('btnConfirmDelete').addEventListener('click',async()=>{
@@ -2592,11 +2597,12 @@ $('btnPreviewBirthApplication').addEventListener('click',()=>{
 });
 $('btnPrintBirthApplication').addEventListener('click',printBirthApplication);
 $('btnPrintSPTJM').addEventListener('click',printSPTJM);
-$('btnPrintAnakKandung').addEventListener('click',printPernyataanAnakKandung);
+$('btnPrintAnakKandung').addEventListener('click',()=>printPernyataanAnakKandung(true));
+$('btnPrintAnakKandungJarakUsia').addEventListener('click',()=>printPernyataanAnakKandung(false));
 $('btnPrintASIAnak').addEventListener('click',printASIAnak);
 $('btnPrintASIDewasa').addEventListener('click',printASIDewasa);
 
-function printPernyataanAnakKandung(){
+function printPernyataanAnakKandung(withHeadSignature=true){
   const r=getBirthResident();
   if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
   const g=id=>birthValue(id);
@@ -2663,7 +2669,7 @@ function printPernyataanAnakKandung(){
       <tr><td class="nw">Saksi I</td><td class="nw">:${dots(10)}</td><td>${nm(witness1,22)}</td><td class="nw">I. ${dots(20)}</td><td class="mat" rowspan="2">Materai<br>10.000</td><td>${nm(signer1,25)}</td></tr>
       <tr><td class="nw">Saksi II</td><td class="nw">:${dots(10)}</td><td>${nm(witness2,22)}</td><td class="nw">II. ${dots(19)}</td><td>${nm(signer2,25)}</td></tr>
     </table>
-    <div class="ak-head">${headTitle}<div class="ak-headsp"></div>${headName?'<b><u>'+esc(headName.toUpperCase())+'</u></b>':'<div class="ak-line"></div>'}</div>
+    ${withHeadSignature?`<div class="ak-head">${headTitle}<div class="ak-headsp"></div>${headName?'<b><u>'+esc(headName.toUpperCase())+'</u></b>':'<div class="ak-line"></div>'}</div>`:''}
   </div>`;
 
   const css=`@page{size:215.9mm 330.2mm;margin:0!important}
@@ -2690,7 +2696,8 @@ html,body{margin:0!important;padding:0!important;background:#fff!important;color
 .ak-paper .ak-head{text-align:center;margin-top:2.5mm}
 .ak-paper .ak-headsp{height:28mm}
 .ak-paper .ak-line{width:40mm;border-top:1px solid #000;margin:0 auto}`;
-  printSupportDocument('Surat Pernyataan Anak Kandung - '+safePrintName(childName),h,css);
+  const docLabel=withHeadSignature?'Surat Pernyataan Anak Kandung':'Surat Pernyataan Anak Kandung (Jarak Usia)';
+  printSupportDocument(docLabel+' - '+safePrintName(childName),h,css);
 }
 
 function asiPaperCss(){
@@ -4005,7 +4012,7 @@ function renderSplitKKReplacement(){
   const oldKK=String(person['NO KK']||'').trim();
   // Hanya anggota AKTIF yang dihitung sebagai calon pengganti Kepala Keluarga.
   // Anggota yang sudah TIDAK AKTIF (pindah/meninggal) tidak relevan dan tidak boleh ditawarkan.
-  const choices=data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim());
+  const choices=data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===oldKK&&String(r.NIK||'').trim()!==String(person.NIK||'').trim()&&!isUnderageForHead(r));
   sel.innerHTML='<option value="">-- Pilih pengganti Kepala Keluarga --</option>'+choices.map(r=>`<option value="${esc(r.NIK)}">${esc(r['NAMA LENGKAP'])} — ${esc(r.SHDRT||'Anggota Keluarga')}</option>`).join('');
   // Jika tidak ada anggota aktif lain, KK lama otomatis kosong setelah orang ini dipisah,
   // sehingga tidak perlu (dan tidak mungkin) memilih pengganti Kepala Keluarga.
@@ -4020,10 +4027,15 @@ function openSplitKK(nik){
   const card=familyCardIntegrity(oldKK);
   if(!card.ok)return toast('KK lama belum valid. Pastikan tepat 1 Kepala Keluarga sebelum melakukan Pisah KK.');
   splitKKNik=String(r.NIK||'').trim();
-  $('splitKKPerson').innerHTML=`<b>${esc(r['NAMA LENGKAP']||'-')}</b><br><span class="hint">NIK: ${esc(r.NIK||'-')} • KK lama: ${esc(oldKK)} • Hubungan: ${esc(r.SHDRT||'-')}</span>`;
-  $('splitKKDestination').value='new';$('splitKKExisting').value='';$('splitKKRelation').value='';$('splitKKSiak').value='';
+  const underage=isUnderageForHead(r);
+  $('splitKKPerson').innerHTML=`<b>${esc(r['NAMA LENGKAP']||'-')}</b><br><span class="hint">NIK: ${esc(r.NIK||'-')} • KK lama: ${esc(oldKK)} • Hubungan: ${esc(r.SHDRT||'-')}</span>`+(underage?`<div class="hint" style="color:#dc2626;margin-top:6px"><b>Berusia di bawah ${MIN_HEAD_AGE} tahun.</b> Tidak bisa dan tidak boleh menjadi Kepala Keluarga — wajib dipisahkan ke No. KK yang sudah ada.</div>`:'');
+  const destSel=$('splitKKDestination');
+  destSel.querySelector('option[value="new"]').disabled=underage;
+  destSel.value=underage?'existing':'new';
+  $('splitKKExisting').value='';$('splitKKRelation').value='';$('splitKKSiak').value='';
   document.querySelector('input[name="splitKKStatus"][value="siak"]').checked=true;
-  $('splitKKExistingWrap').style.display='none';$('splitKKNewBox').style.display='block';
+  $('splitKKExistingWrap').style.display=underage?'block':'none';$('splitKKNewBox').style.display=underage?'none':'block';
+  if(underage)renderSplitKKRelationOptions();
   renderSplitKKAutoPreview();renderSplitKKReplacement();
   $('splitKKOverlay').classList.add('open');
 }
@@ -4076,6 +4088,7 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
   const person=splitKKSelected(); if(!person)return;
   const oldKK=String(person['NO KK']||'').trim();
   const destination=$('splitKKDestination').value;
+  if(destination!=='existing'&&isUnderageForHead(person))return toast('Penduduk berusia di bawah '+MIN_HEAD_AGE+' tahun tidak bisa dan tidak boleh menjadi Kepala Keluarga KK baru. Pilih "Pisahkan ke KK yang sudah ada" agar bergabung sebagai anggota keluarga.');
   let newKK='';
   let targetRelation='';
   if(destination==='existing'){
@@ -4105,6 +4118,7 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
   if(replacementNik&&replacementNik===String(person.NIK||'').trim())return toast('Pengganti Kepala Keluarga tidak boleh orang yang dipisahkan.');
   const replacement=replacementNik?data.find(r=>String(r.NIK||'').trim()===replacementNik):null;
   if(needsReplacement&&!replacement)return toast('Data pengganti Kepala Keluarga tidak ditemukan.');
+  if(replacement&&isUnderageForHead(replacement))return toast('Kepala Keluarga pengganti tidak boleh berusia di bawah '+MIN_HEAD_AGE+' tahun.');
   if(!confirm(`Pisahkan ${person['NAMA LENGKAP']||person.NIK} dari KK ${oldKK} ke KK ${newKK}?`))return;
   if(!(await requirePin('Memproses Pisah KK')))return;
   try{
