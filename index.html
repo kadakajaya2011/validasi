@@ -2686,14 +2686,14 @@ html,body{margin:0!important;padding:0!important;background:#fff!important;color
 .asi-paper .asi-intro{margin:0 0 2mm;text-align:left}
 .asi-paper .asi-list p{margin:0 0 1.5mm;padding-left:6mm;text-indent:-6mm;text-align:justify}
 .asi-paper .body{text-align:justify;margin-top:3mm;margin-bottom:6mm}
-.asi-paper .asi-date{width:80mm;margin:0 0 9mm auto;text-align:center;line-height:16.2pt}
-.asi-paper .asi-sign{text-align:center}
+.asi-paper .asi-sign{width:80mm;margin:8mm 0 0 auto;text-align:left;line-height:16.2pt}
 .asi-paper .asi-sigspace{height:20mm}
-.asi-paper .asi-line{width:45mm;border-top:1px solid #000;margin:0 auto}`;
+.asi-paper .asi-line{width:45mm;border-top:1px solid #000;margin:0}`;
 }
 function asiSignPlaceDate(regency,village){
   const place=birthValue('akPlace')||String(regency||'').replace(/^(kabupaten|kab\.?|kota)\s+/i,'').trim()||village;
-  const dateTxt=birthValue('akDate')?esc(letterIndoDate(birthValue('akDate'))):'.'.repeat(32)+new Date().getFullYear();
+  const dv=birthValue('akDate');
+  const dateTxt=dv?esc(letterIndoDate(dv)):esc(new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
   return {place,dateTxt};
 }
 function printASIAnak(){
@@ -2725,22 +2725,21 @@ function printASIAnak(){
     <h1>SURAT PERNYATAAN</h1>
     <p class="asi-intro">Yang bertanda tangan di bawah ini :</p>
     <table class="asi-person">
-      <tr><td class="l">Nama</td><td class="c">:</td><td>${val(motherName,50)}</td></tr>
+      <tr><td class="l">Nama</td><td class="c">:</td><td><b>${val(motherName,50)}</b></td></tr>
       <tr><td class="l">Tempat/Tanggal Lahir</td><td class="c">:</td><td>${val(motherTtl,50)}</td></tr>
       <tr><td class="l">Pekerjaan</td><td class="c">:</td><td>${val(motherJob,50)}</td></tr>
       <tr><td class="l">Alamat</td><td class="c">:</td><td>${val(motherAddr,30)} RT.${val(motherRT,3)} RW.${val(motherRW,3)}<br>Desa ${val(motherVillage,25)} Kecamatan ${val(motherDistrict,25)}</td></tr>
     </table>
     <p class="asi-intro">Menyatakan dengan sebenarnya bahwa</p>
     <div class="asi-list">
-      <p>1. Nama ${val(childName,60)} adalah benar anak kandung dari ibu ${val(motherName,40)} yang lahir pada tanggal ${childBirthDate?esc(fmtDate(childBirthDate)):dots(15)};</p>
+      <p>1. Nama <b>${val(childName,60)}</b> adalah benar anak kandung dari ibu <b>${val(motherName,40)}</b> yang lahir pada tanggal <b>${childBirthDate?esc(fmtDate(childBirthDate)):dots(15)}</b>;</p>
       <p>2. Sampai saat ini belum bisa membuktikan surat nikah dari KUA/Catatan Sipil;</p>
       <p>3. Tidak keberatan dibuatkan akta kelahirannya berupa akta kelahiran anak seorang ${genderText};</p>
       <p>4. Dengan diterbitkan akta tersebut saya tidak akan menuntut kepada siapapun dan pihak manapun juga;</p>
       <p>5. Bertanggung jawab sepenuhnya atas segala risiko yang diakibatkan terbitnya akta kelahiran anak tersebut.</p>
     </div>
     <p class="body">Demikian Pernyataan ini dibuat dengan tanpa paksaan dari pihak manapun dan agar yang berkepentingan menjadi maklum.</p>
-    <div class="asi-date">${place?esc(place):dots(14)}, ${dateTxt}</div>
-    <div class="asi-sign">Yang Membuat Pernyataan<div class="asi-sigspace"></div>${motherName?'<b><u>'+esc(motherName.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
+    <div class="asi-sign">${place?esc(place):dots(14)}, ${dateTxt}<br>Yang Membuat Pernyataan<div class="asi-sigspace"></div>${motherName?'<b><u>'+esc(motherName.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
   </div>`;
   printSupportDocument('ASI Anak - '+safePrintName(childName),h,asiPaperCss());
 }
@@ -2769,15 +2768,14 @@ function printASIDewasa(){
     <h1>SURAT PERNYATAAN</h1>
     <p class="asi-intro">Yang bertanda tangan di bawah ini :</p>
     <table class="asi-person">
-      <tr><td class="l">Nama</td><td class="c">:</td><td>${val(name,50)}</td></tr>
+      <tr><td class="l">Nama</td><td class="c">:</td><td><b>${val(name,50)}</b></td></tr>
       <tr><td class="l">Tempat/Tanggal Lahir</td><td class="c">:</td><td>${val(ttl,50)}</td></tr>
       <tr><td class="l">Pekerjaan</td><td class="c">:</td><td>${val(job,50)}</td></tr>
       <tr><td class="l">Alamat</td><td class="c">:</td><td>${val(addr,30)} RT.${val(rt,3)} RW.${val(rw,3)}<br>Desa ${val(village,25)} Kecamatan ${val(district,25)}</td></tr>
     </table>
-    <p class="body">Menyatakan dengan sesungguhnya bahwa saya tidak merasa keberatan dan tidak akan menuntut pihak manapun juga atas diterbitkannya kutipan Akta Kelahiran saya tanpa dicantumkan nama orang tua (Bapak) sehubungan saya tidak bisa melengkapi Surat Nikah Orang Tua sebagaimana yang telah ditetapkan Dinas Kependudukan dan Pencatatan Sipil ${regLabel} ${val(regClean,30)}.</p>
+    <p class="body">Menyatakan dengan sesungguhnya bahwa saya tidak merasa keberatan dan tidak akan menuntut pihak manapun juga atas diterbitkannya kutipan Akta Kelahiran saya tanpa dicantumkan nama <b>orang tua ( Bapak )</b> sehubungan saya tidak bisa melengkapi <b>Surat Nikah Orang Tua</b> sebagaimana yang telah ditetapkan Dinas Kependudukan dan Pencatatan Sipil ${regLabel} ${val(regClean,30)}.</p>
     <p class="body">Demikian Pernyataan ini dibuat dengan tanpa paksaan dari pihak manapun dan agar yang berkepentingan menjadi maklum.</p>
-    <div class="asi-date">${place?esc(place):dots(14)}, ${dateTxt}</div>
-    <div class="asi-sign">Yang Membuat Pernyataan<div class="asi-sigspace"></div>${name?'<b><u>'+esc(name.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
+    <div class="asi-sign">${place?esc(place):dots(14)}, ${dateTxt}<br>Yang Membuat Pernyataan<div class="asi-sigspace"></div>${name?'<b><u>'+esc(name.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
   </div>`;
   printSupportDocument('ASI Dewasa - '+safePrintName(name),h,asiPaperCss());
 }
