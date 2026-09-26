@@ -1046,11 +1046,12 @@ body{font-family:Arial,Helvetica,sans-serif!important}
             <div class="hint" style="margin-top:4px">Tanggal Surat dikosongkan = tanggal dicetak titik-titik untuk diisi tangan.</div>
           </div>
           <div class="hint" style="margin-top:9px">Saksi I dan Saksi II wajib dipilih dari penduduk selain anak, ayah, dan ibu. Pelapor boleh ayah/ibu.</div>
+          <div class="hint" style="margin-top:4px"><b>ASI Anak</b>: Surat Pernyataan dari Ibu bahwa anak adalah anak kandungnya (belum ada surat nikah). <b>ASI Dewasa</b>: Surat Pernyataan dari yang bersangkutan (dewasa) tidak keberatan aktanya terbit tanpa nama Ayah. Keduanya memakai data pada formulir di atas serta Tempat/Tanggal Surat pada kolom Anak Kandung.</div>
         </div>
         <div class="birth-app-preview-wrap"><div id="birthApplicationPreview"></div></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn" id="btnPrintAnakKandung">📄 Pernyataan Anak Kandung</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
+    <div class="modal-foot"><button class="btn" data-close="birthApplicationOverlay">Tutup</button><button class="btn btn-dark" id="btnPreviewBirthApplication">👁 Pratinjau</button><button class="btn" id="btnPrintSPTJM">📄 SPTJM</button><button class="btn" id="btnPrintAnakKandung">📄 Pernyataan Anak Kandung</button><button class="btn" id="btnPrintASIAnak">📄 ASI Anak</button><button class="btn" id="btnPrintASIDewasa">📄 ASI Dewasa</button><button class="btn btn-primary" id="btnPrintBirthApplication">🖨 Cetak F-2.01</button></div>
   </div>
 </div>
 <div class="overlay" id="deathApplicationOverlay">
@@ -2569,6 +2570,8 @@ $('btnPreviewBirthApplication').addEventListener('click',()=>{
 $('btnPrintBirthApplication').addEventListener('click',printBirthApplication);
 $('btnPrintSPTJM').addEventListener('click',printSPTJM);
 $('btnPrintAnakKandung').addEventListener('click',printPernyataanAnakKandung);
+$('btnPrintASIAnak').addEventListener('click',printASIAnak);
+$('btnPrintASIDewasa').addEventListener('click',printASIDewasa);
 
 function printPernyataanAnakKandung(){
   const r=getBirthResident();
@@ -2665,6 +2668,118 @@ html,body{margin:0!important;padding:0!important;background:#fff!important;color
 .ak-paper .ak-headsp{height:28mm}
 .ak-paper .ak-line{width:40mm;border-top:1px solid #000;margin:0 auto}`;
   printSupportDocument('Surat Pernyataan Anak Kandung - '+safePrintName(childName),h,css);
+}
+
+function asiPaperCss(){
+  return `@page{size:215.9mm 330.2mm;margin:0!important}
+html,body{margin:0!important;padding:0!important;background:#fff!important;color:#000;height:auto!important;overflow:visible!important}
+.asi-paper{width:215.9mm;box-sizing:border-box;margin:0 auto;padding:19mm 30mm 12mm;font-family:"Times New Roman","Liberation Serif",Times,serif;font-size:12pt;line-height:16.2pt;color:#000;page-break-inside:avoid;break-inside:avoid}
+.asi-paper *{box-sizing:border-box}
+.asi-paper h1{text-align:center;font-size:12pt;font-weight:700;text-decoration:underline;margin:0 0 8mm;line-height:16.2pt}
+.asi-paper p{margin:0}
+.asi-paper table{border-collapse:collapse;table-layout:fixed;width:100%}
+.asi-paper td{padding:0;vertical-align:top;line-height:16.2pt;font-size:12pt;text-align:left}
+.asi-paper .asi-person{margin:2mm 0 5mm}
+.asi-paper .asi-person .l{width:45mm}
+.asi-paper .asi-person .c{width:5mm}
+.asi-paper .asi-person td{word-break:break-word}
+.asi-paper .asi-intro{margin:0 0 2mm;text-align:left}
+.asi-paper .asi-list p{margin:0 0 1.5mm;padding-left:6mm;text-indent:-6mm;text-align:justify}
+.asi-paper .body{text-align:justify;margin-top:3mm;margin-bottom:6mm}
+.asi-paper .asi-date{width:80mm;margin:0 0 9mm auto;text-align:center;line-height:16.2pt}
+.asi-paper .asi-sign{text-align:center}
+.asi-paper .asi-sigspace{height:20mm}
+.asi-paper .asi-line{width:45mm;border-top:1px solid #000;margin:0 auto}`;
+}
+function asiSignPlaceDate(regency,village){
+  const place=birthValue('akPlace')||String(regency||'').replace(/^(kabupaten|kab\.?|kota)\s+/i,'').trim()||village;
+  const dateTxt=birthValue('akDate')?esc(letterIndoDate(birthValue('akDate'))):'.'.repeat(32)+new Date().getFullYear();
+  return {place,dateTxt};
+}
+function printASIAnak(){
+  const r=getBirthResident();
+  if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
+  const g=id=>birthValue(id);
+  const dots=n=>'.'.repeat(n);
+  const val=(x,n)=>{x=String(x||'').trim();return x?esc(x):dots(n)};
+  const childName=g('birthAppName')||r['NAMA LENGKAP']||'';
+  const childBirthDate=g('birthAppBirthDate');
+  const gender=g('birthAppGender')||r.JK||'';
+  const genderText=/perempuan/i.test(gender)?'Perempuan':'Laki-laki';
+  const village=String(desaSettings?.village||'').trim();
+  const district=String(desaSettings?.district||'').trim();
+  const regency=String(desaSettings?.regency||'').trim();
+  const motherName=g('birthAppMotherName');
+  const motherPlace=g('birthAppMotherPlace');
+  const motherDate=g('birthAppMotherDate');
+  const motherTtl=motherPlace&&motherDate?motherPlace+', '+fmtDate(motherDate):(motherPlace||(motherDate?fmtDate(motherDate):''));
+  const motherJob=g('birthAppMotherJob');
+  const motherAddr=g('birthAppMotherAddress');
+  const motherRT=g('birthAppMotherRT');
+  const motherRW=g('birthAppMotherRW');
+  const motherVillage=g('birthAppMotherVillage')||village;
+  const motherDistrict=g('birthAppMotherDistrict')||district;
+  const {place,dateTxt}=asiSignPlaceDate(regency,village);
+
+  const h=`<div class="asi-paper">
+    <h1>SURAT PERNYATAAN</h1>
+    <p class="asi-intro">Yang bertanda tangan di bawah ini :</p>
+    <table class="asi-person">
+      <tr><td class="l">Nama</td><td class="c">:</td><td>${val(motherName,50)}</td></tr>
+      <tr><td class="l">Tempat/Tanggal Lahir</td><td class="c">:</td><td>${val(motherTtl,50)}</td></tr>
+      <tr><td class="l">Pekerjaan</td><td class="c">:</td><td>${val(motherJob,50)}</td></tr>
+      <tr><td class="l">Alamat</td><td class="c">:</td><td>${val(motherAddr,30)} RT.${val(motherRT,3)} RW.${val(motherRW,3)}<br>Desa ${val(motherVillage,25)} Kecamatan ${val(motherDistrict,25)}</td></tr>
+    </table>
+    <p class="asi-intro">Menyatakan dengan sebenarnya bahwa</p>
+    <div class="asi-list">
+      <p>1. Nama ${val(childName,60)} adalah benar anak kandung dari ibu ${val(motherName,40)} yang lahir pada tanggal ${childBirthDate?esc(fmtDate(childBirthDate)):dots(15)};</p>
+      <p>2. Sampai saat ini belum bisa membuktikan surat nikah dari KUA/Catatan Sipil;</p>
+      <p>3. Tidak keberatan dibuatkan akta kelahirannya berupa akta kelahiran anak seorang ${genderText};</p>
+      <p>4. Dengan diterbitkan akta tersebut saya tidak akan menuntut kepada siapapun dan pihak manapun juga;</p>
+      <p>5. Bertanggung jawab sepenuhnya atas segala risiko yang diakibatkan terbitnya akta kelahiran anak tersebut.</p>
+    </div>
+    <p class="body">Demikian Pernyataan ini dibuat dengan tanpa paksaan dari pihak manapun dan agar yang berkepentingan menjadi maklum.</p>
+    <div class="asi-date">${place?esc(place):dots(14)}, ${dateTxt}</div>
+    <div class="asi-sign">Yang Membuat Pernyataan<div class="asi-sigspace"></div>${motherName?'<b><u>'+esc(motherName.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
+  </div>`;
+  printSupportDocument('ASI Anak - '+safePrintName(childName),h,asiPaperCss());
+}
+function printASIDewasa(){
+  const r=getBirthResident();
+  if(!r){toast('Pilih anggota keluarga / anak terlebih dahulu');return}
+  const g=id=>birthValue(id);
+  const dots=n=>'.'.repeat(n);
+  const val=(x,n)=>{x=String(x||'').trim();return x?esc(x):dots(n)};
+  const name=g('birthAppName')||r['NAMA LENGKAP']||'';
+  const birthPlace=g('birthAppBirthPlace')||r.TMPT_LHR||'';
+  const birthDate=g('birthAppBirthDate')||r.TGL_LHR||'';
+  const ttl=birthPlace&&birthDate?birthPlace+', '+fmtDate(birthDate):(birthPlace||(birthDate?fmtDate(birthDate):''));
+  const job=r.PEKERJAAN||'';
+  const addr=r.ALAMAT||'';
+  const rt=r.RT||'';
+  const rw=r.RW||'';
+  const village=String(desaSettings?.village||'').trim();
+  const district=String(desaSettings?.district||'').trim();
+  const regency=String(desaSettings?.regency||'').trim();
+  const regClean=regency.replace(/^(kabupaten|kab\.?|kota)\s+/i,'').trim();
+  const regLabel=/^kota\s+/i.test(regency)?'Kota':'Kabupaten';
+  const {place,dateTxt}=asiSignPlaceDate(regency,village);
+
+  const h=`<div class="asi-paper">
+    <h1>SURAT PERNYATAAN</h1>
+    <p class="asi-intro">Yang bertanda tangan di bawah ini :</p>
+    <table class="asi-person">
+      <tr><td class="l">Nama</td><td class="c">:</td><td>${val(name,50)}</td></tr>
+      <tr><td class="l">Tempat/Tanggal Lahir</td><td class="c">:</td><td>${val(ttl,50)}</td></tr>
+      <tr><td class="l">Pekerjaan</td><td class="c">:</td><td>${val(job,50)}</td></tr>
+      <tr><td class="l">Alamat</td><td class="c">:</td><td>${val(addr,30)} RT.${val(rt,3)} RW.${val(rw,3)}<br>Desa ${val(village,25)} Kecamatan ${val(district,25)}</td></tr>
+    </table>
+    <p class="body">Menyatakan dengan sesungguhnya bahwa saya tidak merasa keberatan dan tidak akan menuntut pihak manapun juga atas diterbitkannya kutipan Akta Kelahiran saya tanpa dicantumkan nama orang tua (Bapak) sehubungan saya tidak bisa melengkapi Surat Nikah Orang Tua sebagaimana yang telah ditetapkan Dinas Kependudukan dan Pencatatan Sipil ${regLabel} ${val(regClean,30)}.</p>
+    <p class="body">Demikian Pernyataan ini dibuat dengan tanpa paksaan dari pihak manapun dan agar yang berkepentingan menjadi maklum.</p>
+    <div class="asi-date">${place?esc(place):dots(14)}, ${dateTxt}</div>
+    <div class="asi-sign">Yang Membuat Pernyataan<div class="asi-sigspace"></div>${name?'<b><u>'+esc(name.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
+  </div>`;
+  printSupportDocument('ASI Dewasa - '+safePrintName(name),h,asiPaperCss());
 }
 
 
