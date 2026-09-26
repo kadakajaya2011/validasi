@@ -99,14 +99,20 @@
   body.print-family #familyOverlay,body.print-family #familyOverlay *{visibility:visible !important}
   body.print-family #familyOverlay{position:absolute !important;inset:0 !important;display:block !important;background:#fff !important;padding:0 !important;margin:0 !important;overflow:visible !important}
   body.print-family #familyOverlay .modal{position:relative !important;top:0 !important;left:0 !important;margin:0 !important;width:100% !important;max-width:none !important;max-height:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;overflow:visible !important}
-  body.print-family #familyOverlay .modal-head{padding:0 0 7px !important;margin:0 0 10px !important;border-bottom:2px solid #222}
-  body.print-family #familyOverlay .modal-head .close{display:none !important}
+  body.print-family #familyOverlay .modal-head{display:none !important}
   body.print-family #familyOverlay .modal-body{padding:0 !important}
   body.print-family #familyOverlay .modal-foot{display:none !important}
   body.print-family #familyOverlay .family-search{display:none !important}
-  body.print-family #familyOverlay .family-card{break-inside:avoid;page-break-inside:avoid}
+  body.print-family #familyOverlay .family-help{display:none !important}
+  body.print-family #familyOverlay .family-print-title{display:block !important;text-align:center;margin:0 0 3px !important;font-size:17px;font-weight:800;color:#111}
+  body.print-family #familyOverlay .family-print-subtitle{display:block !important;text-align:center;margin:0 0 14px !important;font-size:11px;color:#333}
+  body.print-family #familyOverlay .family-card{break-inside:avoid;page-break-inside:avoid;background:#fff !important;border:0 !important;border-radius:0 !important;padding:0 !important;margin:0 0 16px !important}
+  body.print-family #familyOverlay .family-card h4{border-bottom:1px solid #222 !important;padding-bottom:5px !important;margin:0 0 6px !important;background:transparent !important}
+  body.print-family #familyOverlay .family-card h4 button{display:none !important}
+  body.print-family #familyOverlay .family-card .hint{color:#333 !important}
+  body.print-family #familyOverlay .family-card details{display:none !important}
   body.print-family #familyOverlay .family-table{font-size:10px !important}
-  body.print-family #familyOverlay .family-table th,body.print-family #familyOverlay .family-table td{padding:5px !important}
+  body.print-family #familyOverlay .family-table th,body.print-family #familyOverlay .family-table td{padding:5px !important;border:1px solid #777 !important;color:#111 !important;background:#fff !important}
   /* Cetak laporan: keluarkan seluruh layout aplikasi dari flow agar tidak menghasilkan halaman kosong. */
   body.print-report > *{display:none !important}
   body.print-report{margin:0 !important;padding:0.7mm !important}
@@ -848,6 +854,8 @@ body{font-family:Arial,Helvetica,sans-serif!important}
   <div class="modal" style="width:min(1050px,97vw)">
     <div class="modal-head"><div class="modal-title">Data Keluarga / Kartu Keluarga</div><button class="close" data-close="familyOverlay">✕</button></div>
     <div class="modal-body">
+      <div class="family-print-title" id="familyPrintTitle" style="display:none"></div>
+      <div class="family-print-subtitle" id="familyPrintSubtitle" style="display:none"></div>
       <div class="family-search" style="flex-wrap:wrap">
         <input class="input" id="familySearch" placeholder="Cari No KK, NIK, nama kepala keluarga atau anggota..." style="flex:1;min-width:260px">
         <select class="select" id="familyView" style="width:210px">
@@ -861,7 +869,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
         <button class="btn btn-dark" id="btnPrintFamily">🖨 Cetak</button>
         <button class="btn" id="btnExportFamily">📊 Ekspor Excel</button>
       </div>
-      <div class="hint" style="margin:-3px 0 10px">Pilih tampilan Kepala Keluarga saja atau KK beserta seluruh anggota. Filter RT/RW dan pencarian akan ikut digunakan saat mencetak.</div>
+      <div class="hint family-help" style="margin:-3px 0 10px">Pilih tampilan Kepala Keluarga saja atau KK beserta seluruh anggota. Filter RT/RW dan pencarian akan ikut digunakan saat mencetak.</div>
       <div id="familyBody"></div>
     </div>
     <div class="modal-foot"><button class="btn" data-close="familyOverlay">Tutup</button></div>
@@ -3781,7 +3789,8 @@ function fillFamilyFilters(){
   rt.value=rts.includes(oldRT)?oldRT:''; rw.value=rws.includes(oldRW)?oldRW:'';
 }
 function renderFamily(){
-  const q=($('familySearch').value||'').toLowerCase().trim();
+  const rawQ=($('familySearch').value||'').trim();
+  const q=rawQ.toLowerCase();
   familyHeadsOnly=$('familyView').value==='heads';
   const fRT=($('familyRT').value||'').trim(), fRW=($('familyRW').value||'').trim();
   const groups={};
@@ -3812,6 +3821,17 @@ function renderFamily(){
     const members=familyHeadsOnly?(g.head?[g.head]:[]):sortFamilyMembers(g.members);
     return `<div class="family-card"><h4 style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>KK ${esc(g.kk)}</span><button class="btn-mini" data-change-kk="${esc(g.kk)}">✏️ Ubah No. KK</button></h4><div class="hint">Kepala Keluarga: <b>${esc(g.head?.['NAMA LENGKAP']||'Belum ditentukan')}</b> • ${g.members.length} anggota</div><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Hubungan</th><th>JK</th><th>Umur</th><th>Status</th><th>RT</th><th>RW</th></tr></thead><tbody>${members.map((r,j)=>`<tr><td>${j+1}</td><td>${esc(r.NIK)}</td><td>${esc(r['NAMA LENGKAP'])}</td><td>${esc(r.SHDRT)}</td><td>${esc(r.JK)}</td><td>${age(r.TGL_LHR)}</td><td>${esc(r.STATUS)}</td><td>${esc(r.RT)}</td><td>${esc(r.RW)}</td></tr>`).join('')}</tbody></table></div>${familyHeadsOnly?'':`<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Lihat satu KK secara lengkap</summary><div style="overflow:auto;margin-top:8px"><table class="family-table"><thead><tr>${detailFields.map(f=>`<th>${esc(f)}</th>`).join('')}</tr></thead><tbody>${sortFamilyMembers(g.members).map(r=>`<tr>${detailFields.map(f=>`<td>${esc(f==='TGL_LHR'?fmtDate(r[f]):r[f])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`}</div>`;
   }).join(''):'<div class="empty">Data keluarga tidak ditemukan sesuai filter.</div>';
+  // Judul & keterangan cetak menyesuaikan filter yang sedang aktif (tampilan, RT/RW, pencarian).
+  const totalKK=list.length;
+  const totalJiwa=list.reduce((s,g)=>s+(familyHeadsOnly?(g.head?1:0):g.members.length),0);
+  const title=familyHeadsOnly?'DAFTAR KEPALA KELUARGA':'DATA KELUARGA / KARTU KELUARGA';
+  const parts=[`${totalKK} KK`,`${totalJiwa} ${familyHeadsOnly?'kepala keluarga':'jiwa'}`];
+  if(fRT)parts.push(`RT ${fRT}`);
+  if(fRW)parts.push(`RW ${fRW}`);
+  if(rawQ)parts.push(`Pencarian: "${rawQ}"`);
+  parts.push(`Dicetak: ${new Date().toLocaleString('id-ID')}`);
+  $('familyPrintTitle').textContent=title;
+  $('familyPrintSubtitle').textContent=parts.join(' • ');
 }
 function openFamily(){closeMenu();$('familySearch').value='';fillFamilyFilters();$('familyView').value='all';$('familyRT').value='';$('familyRW').value='';renderFamily();$('familyOverlay').classList.add('open')}
 $('btnFamily').addEventListener('click',()=>{if(!hasPerm('family'))return toast('Anda tidak memiliki hak akses Data Keluarga/KK');openFamily()});
@@ -3820,7 +3840,7 @@ $('btnFamilyAll').addEventListener('click',()=>{$('familySearch').value='';$('fa
 $('familyView').addEventListener('change',renderFamily);
 $('familyRT').addEventListener('change',renderFamily);
 $('familyRW').addEventListener('change',renderFamily);
-function printFamily(){renderFamily();document.body.classList.add('print-family');applyPrintOrientation();const subject=$('familySearch').value.trim();printWithFilename('Data Keluarga'+(subject?' - '+subject:''),()=>window.print(),()=>document.body.classList.remove('print-family'))}
+function printFamily(){renderFamily();document.body.classList.add('print-family');applyPrintOrientation();const subject=$('familySearch').value.trim();const baseName=familyHeadsOnly?'Daftar Kepala Keluarga':'Data Keluarga - Kartu Keluarga';printWithFilename(baseName+(subject?' - '+subject:''),()=>window.print(),()=>document.body.classList.remove('print-family'))}
 $('btnPrintFamily').addEventListener('click',printFamily);
 function exportFamilyExcel(){
   if(typeof XLSX==='undefined'){toast('Library Excel belum tersedia. Periksa koneksi internet.');return}
@@ -3852,7 +3872,12 @@ function exportFamilyExcel(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Keluarga');
   const info=[['Keterangan'],['Urutan: RW ascending, kemudian RT ascending, lalu Nomor KK ascending. Contoh: 1/1, 2/1, 1/2, 2/2, 3/2, 4/2.'],['Header hanya dibuat satu kali pada baris pertama; tidak diulang pada setiap KK.'],['Isi ekspor mengikuti tampilan/filter yang sedang aktif.'],['Umur dihitung otomatis dari Tanggal Lahir.']];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');
-  XLSX.writeFile(wb,'Data_Keluarga_KK_Desa.xlsx');
+  const cetak=new Date();
+  const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
+  const hh=String(cetak.getHours()).padStart(2,'0'),mi=String(cetak.getMinutes()).padStart(2,'0');
+  // Titik dipakai sebagai pemisah jam:menit karena tanda titik dua (:) tidak diizinkan pada nama file.
+  const tanggalCetak=`${dd}-${mm}-${yyyy} ${hh}.${mi}`;
+  XLSX.writeFile(wb,`Data_Keluarga_KK_Desa_${tanggalCetak}.xlsx`);
   toast('Data Keluarga berhasil diekspor ke Excel');
 }
 $('btnExportFamily').addEventListener('click',exportFamilyExcel);
