@@ -997,7 +997,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           <div style="margin-top:9px">
             <div style="font-weight:700;margin-bottom:5px">Data Orang Tua</div>
             <div class="hint">Pekerjaan dan alamat terisi otomatis dari data penduduk (bila orang tua tidak ada di data, alamat mengikuti alamat anak). Ubah manual bila orang tua tinggal di luar desa; isian ini dipakai pada cetakan SPTJM dan Surat Pernyataan Anak Kandung.</div>
-            <div style="font-weight:600;margin:8px 0 4px">Ayah</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 4px"><span style="font-weight:600">Ayah</span><button type="button" class="btn" id="btnClearBirthFather" style="padding:3px 9px;font-size:12px">🧹 Kosongkan Data Ayah</button></div>
             <div class="birth-app-grid">
               <label><b>Nama Ayah</b><input class="input" id="birthAppFatherName"></label>
               <label><b>NIK Ayah</b><input class="input" id="birthAppFatherNik"></label>
@@ -2559,6 +2559,13 @@ $('btnFindBirthWitness2').addEventListener('click',()=>findBirthWitness(2));
 ['birthAppWitness1Nik','birthAppWitness1Name','birthAppWitness1KK','birthAppWitness1Nation','birthAppWitness2Nik','birthAppWitness2Name','birthAppWitness2KK','birthAppWitness2Nation'].forEach(id=>$(id).addEventListener('input',renderBirthApplication));
 ['birthAppFatherNik','birthAppMotherNik','birthAppName','birthAppGender','birthAppBornPlace','birthAppBirthPlace','birthAppBirthDate','birthAppTime','birthAppType','birthAppOrder','birthAppHelper','birthAppWeight','birthAppLength','birthAppReporter','birthAppFatherName','birthAppFatherPlace','birthAppFatherDate','birthAppFatherNation','birthAppMotherName','birthAppMotherPlace','birthAppMotherDate','birthAppMotherNation','birthAppFatherJob','birthAppFatherAddress','birthAppFatherRT','birthAppFatherRW','birthAppFatherVillage','birthAppFatherDistrict','birthAppFatherRegency','birthAppMotherJob','birthAppMotherAddress','birthAppMotherRT','birthAppMotherRW','birthAppMotherVillage','birthAppMotherDistrict','birthAppMotherRegency'].forEach(id=>$(id).addEventListener('input',renderBirthApplication));
 birthFillJobOptions();
+function clearBirthFatherData(){
+  ['birthAppFatherName','birthAppFatherNik','birthAppFatherPlace','birthAppFatherDate','birthAppFatherJob','birthAppFatherAddress','birthAppFatherRT','birthAppFatherRW','birthAppFatherVillage','birthAppFatherDistrict','birthAppFatherRegency'].forEach(id=>{if($(id))$(id).value=''});
+  if($('birthAppFatherNation'))$('birthAppFatherNation').value='WNI';
+  renderBirthApplication();
+  toast('Data Ayah dikosongkan — formulir anak seorang ibu');
+}
+$('btnClearBirthFather').addEventListener('click',()=>{if(confirm('Kosongkan seluruh Data Ayah? Formulir akan dicetak sebagai anak seorang ibu tanpa identitas ayah.'))clearBirthFatherData()});
 $('birthAppGender').addEventListener('change',renderBirthApplication);$('birthAppBornPlace').addEventListener('change',renderBirthApplication);$('birthAppType').addEventListener('change',renderBirthApplication);$('birthAppHelper').addEventListener('change',renderBirthApplication);$('birthAppReporter').addEventListener('change',renderBirthApplication);
 $('birthAppBirthDate').addEventListener('change',()=>{updateBirthDay();renderBirthApplication()});
 $('btnPreviewBirthApplication').addEventListener('click',()=>{
@@ -2684,7 +2691,8 @@ html,body{margin:0!important;padding:0!important;background:#fff!important;color
 .asi-paper .asi-person .c{width:5mm}
 .asi-paper .asi-person td{word-break:break-word}
 .asi-paper .asi-intro{margin:0 0 2mm;text-align:left}
-.asi-paper .asi-list p{margin:0 0 1.5mm;padding-left:6mm;text-indent:-6mm;text-align:justify}
+.asi-paper .asi-list{margin:0 0 1.5mm;padding-left:12mm;list-style-position:outside}
+.asi-paper .asi-list li{margin:0 0 1.5mm;padding-left:1mm;text-align:justify}
 .asi-paper .body{text-align:justify;margin-top:3mm;margin-bottom:6mm}
 .asi-paper .asi-sign{width:80mm;margin:8mm 0 0 auto;text-align:left;line-height:16.2pt}
 .asi-paper .asi-sigspace{height:20mm}
@@ -2731,13 +2739,13 @@ function printASIAnak(){
       <tr><td class="l">Alamat</td><td class="c">:</td><td>${val(motherAddr,30)} RT.${val(motherRT,3)} RW.${val(motherRW,3)}<br>Desa ${val(motherVillage,25)} Kecamatan ${val(motherDistrict,25)}</td></tr>
     </table>
     <p class="asi-intro">Menyatakan dengan sebenarnya bahwa</p>
-    <div class="asi-list">
-      <p>1. Nama <b>${val(childName,60)}</b> adalah benar anak kandung dari ibu <b>${val(motherName,40)}</b> yang lahir pada tanggal <b>${childBirthDate?esc(fmtDate(childBirthDate)):dots(15)}</b>;</p>
-      <p>2. Sampai saat ini belum bisa membuktikan surat nikah dari KUA/Catatan Sipil;</p>
-      <p>3. Tidak keberatan dibuatkan akta kelahirannya berupa akta kelahiran anak seorang ${genderText};</p>
-      <p>4. Dengan diterbitkan akta tersebut saya tidak akan menuntut kepada siapapun dan pihak manapun juga;</p>
-      <p>5. Bertanggung jawab sepenuhnya atas segala risiko yang diakibatkan terbitnya akta kelahiran anak tersebut.</p>
-    </div>
+    <ol class="asi-list">
+      <li>Nama <b>${val(childName,60)}</b> adalah benar anak kandung dari ibu <b>${val(motherName,40)}</b> yang lahir pada tanggal <b>${childBirthDate?esc(fmtDate(childBirthDate)):dots(15)}</b>;</li>
+      <li>Sampai saat ini belum bisa membuktikan surat nikah dari KUA/Catatan Sipil;</li>
+      <li>Tidak keberatan di buatkan akta kelahirannya berupa akta kelahiran anak seorang ${genderText};</li>
+      <li>Dengan diterbitkan akta tersebut saya tidak akan menuntut kepada siapapun dan pihak manapun juga;</li>
+      <li>Bertanggung jawab sepenuhnya atas segala risiko yang diakibatkan terbitnya akta kelahiran anak tersebut.</li>
+    </ol>
     <p class="body">Demikian Pernyataan ini dibuat dengan tanpa paksaan dari pihak manapun dan agar yang berkepentingan menjadi maklum.</p>
     <div class="asi-sign">${place?esc(place):dots(14)}, ${dateTxt}<br>Yang Membuat Pernyataan<div class="asi-sigspace"></div>${motherName?'<b><u>'+esc(motherName.toUpperCase())+'</u></b>':'<div class="asi-line"></div>'}</div>
   </div>`;
