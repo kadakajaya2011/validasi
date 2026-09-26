@@ -709,6 +709,8 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <div class="overlay" id="biodataOverlay">
   <div class="modal biodata-modal">
     <div class="modal-head"><div class="modal-title">Biodata Penduduk</div><button class="close" data-close="biodataOverlay">✕</button></div>
@@ -1204,7 +1206,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 <div class="overlay" id="populationValidationOverlay"><div class="modal" style="width:min(1180px,97vw)"><div class="modal-head"><div class="modal-title">🔍 Validasi Data Kependudukan</div><button class="close" data-close="populationValidationOverlay">✕</button></div><div class="modal-body"><div id="validationSummary" class="summary" style="margin-bottom:12px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input class="input" id="validationSearch" placeholder="Cari NIK, nama, No. KK, atau masalah..." style="flex:1;min-width:260px"><select class="select" id="validationCategory" style="min-width:220px"><option value="">Semua kategori</option><option value="IDENTITAS">Identitas</option><option value="KK">Kartu Keluarga</option><option value="ALAMAT">Alamat</option><option value="DATA WAJIB">Data Wajib</option><option value="DUPLIKASI">Duplikasi</option><option value="NIK PERLU DIPERBAHARUI">NIK Perlu Diperbaharui</option><option value="KK PERLU DIPERBAHARUI">KK Perlu Diperbaharui</option></select><button class="btn" id="btnRunValidation">🔄 Periksa Ulang</button></div><div id="validationBody"></div></div><div class="modal-foot"><button class="btn" data-close="populationValidationOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="invalidKKOverlay"><div class="modal" style="width:min(980px,97vw)"><div class="modal-head"><div class="modal-title">⚠️ KK Belum Valid</div><button class="close" data-close="invalidKKOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Daftar ini berisi No. KK yang belum dapat disinkronkan karena belum memiliki tepat 1 Kepala Keluarga. Gunakan pencarian untuk menemukan KK tertentu.</div><input class="input" id="invalidKKSearch" placeholder="Cari No. KK, nama, atau keterangan..." style="margin-bottom:10px"><div id="invalidKKBody"></div></div><div class="modal-foot"><button class="btn" data-close="invalidKKOverlay">Tutup</button></div></div></div><div class="overlay" id="reportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Data Kependudukan</div><button class="close" data-close="reportOverlay">✕</button></div><div class="modal-print-toolbar"><button class="btn" id="btnPrintReport">🖨 Cetak Rekap</button></div><div class="modal-body" id="reportBody"></div><div class="modal-foot"><button class="btn" data-close="reportOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="ageReportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Berdasarkan Rentang Umur</div><button class="close" data-close="ageReportOverlay">✕</button></div><div class="modal-print-toolbar"><button class="btn" id="btnPrintAgeReport">🖨 Cetak Rekap</button></div><div class="modal-body" id="ageReportBody"></div><div class="modal-foot"><button class="btn" data-close="ageReportOverlay">Tutup</button></div></div></div>
-<div class="overlay" id="dp4Overlay"><div class="modal" style="width:min(1100px,97vw)"><div class="modal-head"><div class="modal-title">Rekap DP4 — Data Penduduk Potensial Pemilih</div><button class="close" data-close="dp4Overlay">✕</button></div><div class="modal-foot" style="justify-content:flex-end;border-top:0;border-bottom:1px solid #e5e7eb"><button class="btn" id="btnExportDp4">📤 Ekspor XLSX</button><button class="btn" id="btnPrintDp4">🖨 Cetak Daftar Pemilih DP4</button><button class="btn btn-dark" id="btnPrintDp4Rekap">🖨 Cetak Rekap Pemilih</button><button class="btn" data-close="dp4Overlay">Tutup</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><label><b>Tanggal pemungutan suara</b><input class="input" type="date" id="dp4ElectionDate"></label><div class="hint" style="padding:8px 0">Kriteria umur dihitung pada tanggal pemungutan suara. Untuk laporan DP4 ini, <b>hanya penduduk yang sudah genap 17 tahun atau lebih pada tanggal pemungutan suara</b> yang ditampilkan. Penduduk yang masih di bawah 17 tahun dikecualikan. Kewarganegaraan, hak politik, domisili/KTP-el dan status aktif TNI/Polri perlu verifikasi bila belum tersedia pada database master.</div></div><div id="dp4Body"></div></div></div></div><div class="overlay" id="editOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Edit Data Penduduk</div><button class="close" data-close="editOverlay">✕</button></div><div class="modal-body" id="editFormBody"></div><div class="modal-foot"><button class="btn" data-close="editOverlay">Batal</button><button class="btn btn-dark" id="btnSaveEdit">Simpan Perubahan</button></div></div></div>
+<div class="overlay" id="dp4Overlay"><div class="modal" style="width:min(1100px,97vw)"><div class="modal-head"><div class="modal-title">Rekap DP4 — Data Penduduk Potensial Pemilih</div><button class="close" data-close="dp4Overlay">✕</button></div><div class="modal-foot" style="justify-content:flex-end;border-top:0;border-bottom:1px solid #e5e7eb"><button class="btn" id="btnExportDp4">📤 Ekspor XLSX</button><button class="btn" id="btnExportDp4Pdf">📄 Ekspor PDF Daftar Pemilih</button><button class="btn btn-dark" id="btnPrintDp4Rekap">🖨 Cetak Rekap Pemilih</button><button class="btn" data-close="dp4Overlay">Tutup</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><label><b>Tanggal pemungutan suara</b><input class="input" type="date" id="dp4ElectionDate"></label><div class="hint" style="padding:8px 0">Kriteria umur dihitung pada tanggal pemungutan suara. Untuk laporan DP4 ini, <b>hanya penduduk yang sudah genap 17 tahun atau lebih pada tanggal pemungutan suara</b> yang ditampilkan. Penduduk yang masih di bawah 17 tahun dikecualikan. Kewarganegaraan, hak politik, domisili/KTP-el dan status aktif TNI/Polri perlu verifikasi bila belum tersedia pada database master.</div></div><div id="dp4Body"></div></div></div></div><div class="overlay" id="editOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Edit Data Penduduk</div><button class="close" data-close="editOverlay">✕</button></div><div class="modal-body" id="editFormBody"></div><div class="modal-foot"><button class="btn" data-close="editOverlay">Batal</button><button class="btn btn-dark" id="btnSaveEdit">Simpan Perubahan</button></div></div></div>
 <div class="overlay" id="deleteOverlay"><div class="modal" style="width:min(900px,96vw)"><div class="modal-head"><div class="modal-title">Hapus Data Penduduk</div><button class="close" data-close="deleteOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Pilih kriteria penghapusan. Data yang dikeluarkan dari database aktif tetap dicatat lengkap dalam Riwayat Perubahan. Khusus <b>Hapus KK</b>, seluruh anggota pada No KK yang sama ikut dikeluarkan.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Nama</b><input class="input" id="delName" readonly></label><label><b>NIK</b><input class="input" id="delNik" readonly></label><label><b>No KK</b><input class="input" id="delKK" readonly></label><label><b>Kriteria Penghapusan</b><select class="select" id="delReason"><option value="Hapus KK">Hapus KK</option><option value="Hapus Double">Hapus Double</option><option value="Hapus Meninggal">Hapus Meninggal</option><option value="Hapus Pindah">Hapus Pindah</option><option value="Hapus Tidak Dikenal">Hapus Tidak Dikenal</option></select></label></div><div id="doubleDeleteForm" style="display:none;margin-top:12px"><b>Kriteria Hapus Double</b><div class="hint" style="margin:6px 0">Pilih lingkup penghapusan. Semua data tetap dicatat di Riwayat Perubahan.</div><select class="select" id="doubleScope"><option value="NIK">Hanya NIK yang dipilih</option><option value="KK">Semua anggota keluarga</option></select><div id="doubleMembers" style="margin-top:10px"></div></div><div id="deleteStandardInfo" class="hint" style="margin-top:10px"></div><div id="deleteHeadReplacementWrap" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Pilih Kepala Keluarga Pengganti</b><select class="select" id="deleteHeadReplacement" style="margin-top:6px"><option value="">-- Pilih Kepala Keluarga pengganti --</option></select></label><div class="hint" style="margin-top:6px">Pilih anggota keluarga yang akan menjadi Kepala Keluarga setelah data ini dikeluarkan.</div></div><div id="moveDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Perpindahan — mengacu contoh formulir F-1.36 Dukcapil</div><div class="hint" style="margin-bottom:10px">Data asal penduduk diambil dari database. Isi klasifikasi, alasan, jenis kepindahan, status KK dan alamat tujuan. Anggota yang dipilih akan dicatat sebagai riwayat pindah sebelum dikeluarkan dari data aktif.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Klasifikasi Kepindahan</b><select class="select" id="moveClass"><option value="">-- pilih --</option><option>Dalam satu desa/kelurahan</option><option>Antar desa/kelurahan dalam satu kecamatan</option><option>Antar kecamatan dalam satu kabupaten/kota</option><option>Antar kabupaten/kota dalam satu provinsi</option><option>Antar provinsi</option></select></label><label><b>Alasan Pindah</b><select class="select" id="moveReason"><option value="">-- pilih --</option><option>Pekerjaan</option><option>Pendidikan</option><option>Keamanan</option><option>Kesehatan</option><option>Perumahan</option><option>Keluarga</option><option>Lainnya</option></select></label><label id="moveOtherWrap" style="display:none"><b>Alasan Lainnya</b><input class="input" id="moveOther" placeholder="Tuliskan alasan"></label><label><b>Jenis Kepindahan</b><select class="select" id="moveType"><option value="">-- pilih --</option><option>Kepala Keluarga</option><option>Kepala Keluarga dan Sebagian Anggota Keluarga</option><option>Kepala Keluarga dan Seluruh Anggota Keluarga</option><option>Anggota Keluarga</option></select></label><label><b>Status KK bagi yang tidak pindah</b><select class="select" id="moveStayStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option><option>Tidak Pindah</option></select></label><label><b>Status KK bagi yang pindah</b><select class="select" id="moveGoStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option></select></label><label><b>Rencana/Tanggal Pindah</b><input class="input" id="moveDate" type="date"></label><label><b>Nomor SKP</b><input class="input" id="moveSkp" placeholder="Nomor Surat Keterangan Pindah (SKP)"></label><label><b>Alamat Tujuan (Dusun / Kampung / Jalan)</b><input class="input" id="moveAddress" placeholder="Contoh: KP. BABAKAN CIMARAGAS"></label><label><b>RT Tujuan</b><input class="input" id="moveRT" placeholder="RT"></label><label><b>RW Tujuan</b><input class="input" id="moveRW" placeholder="RW"></label><label><b>Kode Pos Tujuan</b><input class="input" id="movePostal" placeholder="Kode Pos"></label><label><b>Desa/Kelurahan Tujuan</b><input class="input" id="moveVillage" placeholder="Desa/Kelurahan"></label><label><b>Kecamatan Tujuan</b><input class="input" id="moveDistrict" placeholder="Kecamatan"></label><label><b>Kabupaten/Kota Tujuan</b><input class="input" id="moveRegency" placeholder="Kabupaten/Kota"></label><label><b>Provinsi Tujuan</b><input class="input" id="moveProvince" placeholder="Provinsi"></label></div><div style="margin-top:12px"><b>Daftar Anggota Keluarga yang Pindah</b><div id="moveMembers" style="margin-top:7px"></div></div></div></div><div id="deathDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Kematian — pencatatan kematian</div><div class="hint" style="margin-bottom:10px">Data penduduk diambil dari database. Lengkapi data kematian sebelum penduduk dikeluarkan dari data aktif. Seluruh informasi pencatatan tetap disimpan di Riwayat Perubahan untuk kebutuhan Register Kematian Desa.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Tanggal Kematian</b><input class="input" id="deathDate" type="date"></label><label><b>Jam Kematian</b><input class="input" id="deathTime" type="time"></label><label><b>Tempat Kematian</b><select class="select" id="deathPlaceType"><option value="">-- pilih --</option><option>Rumah Sakit</option><option>Puskesmas</option><option>Rumah</option><option>Tempat Lainnya</option></select></label><label><b>Penyebab Kematian</b><select class="select" id="deathCause"><option value="">-- pilih --</option><option>Sakit/Wajar</option><option>Kecelakaan</option><option>Bencana</option><option>Kriminalitas</option><option>Belum Diketahui</option><option>Lainnya</option></select></label><label id="deathCauseOtherWrap" style="display:none"><b>Penyebab Lainnya</b><input class="input" id="deathCauseOther" placeholder="Tuliskan penyebab"></label><label><b>Yang Menerangkan Kematian</b><select class="select" id="deathReporterType"><option value="">-- pilih --</option><option>Dokter</option><option>Tenaga Kesehatan</option><option>Kepala Desa/Lurah</option><option>Keluarga</option><option>Lainnya</option></select></label><label><b>Hubungan dengan Yang Meninggal</b><input class="input" id="deathReporterRelation" placeholder="Hubungan keluarga/pelapor"></label><label><b>Nomor Surat/Keterangan Kematian</b><input class="input" id="deathDocNo" placeholder="Nomor surat bila ada"></label><label><b>Tanggal Surat/Keterangan</b><input class="input" id="deathDocDate" type="date"></label><label><b>Keterangan</b><input class="input" id="deathNote" placeholder="Keterangan tambahan"></label></div></div><div class="modal-foot"><button class="btn" data-close="deleteOverlay">Batal</button><button class="btn btn-danger" id="btnConfirmDelete">Hapus Data</button></div></div></div>
 
 <div class="overlay" id="settingsOverlay">
@@ -3608,15 +3610,14 @@ function exportDp4Xlsx(){
   XLSX.writeFile(wb,fileName);
   toast('Rekap DP4 berhasil diekspor ke Excel (.xlsx)');
 }
-function printDp4(){
+function exportDp4Pdf(){
+  if(!(window.jspdf&&window.jspdf.jsPDF)){toast('Library PDF belum tersedia. Periksa koneksi internet.');return;}
   const date=$('dp4ElectionDate').value;
   if(!date){toast('Tentukan tanggal pemungutan suara terlebih dahulu');return;}
 
-  // Salin data terlebih dahulu agar proses cetak tidak membebani halaman utama.
+  // Salin data terlebih dahulu, urutan HARUS sama dengan tampilan preview tabel
+  // Daftar DP4: RW ascending → RT ascending → No. KK ascending → Nama.
   const eligible=getDp4Eligible().slice();
-  // Urutan cetak HARUS sama dengan tampilan Daftar DP4:
-  // RW ascending → RT ascending → No. KK ascending → Nama.
-  // Contoh: 1/1, 2/1, 1/2, 2/2, 3/2, 4/2, 1/3, dst.
   const sortNumDp4=(a,b)=>{
     const na=parseInt(String(a||'').replace(/\D/g,''),10), nb=parseInt(String(b||'').replace(/\D/g,''),10);
     if(Number.isNaN(na)&&Number.isNaN(nb))return 0;
@@ -3634,51 +3635,52 @@ function printDp4(){
     return String(a.r['NAMA LENGKAP']||'').localeCompare(String(b.r['NAMA LENGKAP']||''),'id',{numeric:true,sensitivity:'base'});
   });
 
-  const win=window.open('','_blank','width=1100,height=800');
-  if(!win){toast('Popup cetak diblokir browser. Izinkan popup untuk mencetak DP4.');return;}
-  const escPrint=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pageWidth=doc.internal.pageSize.getWidth();
+  const namaDesaFull=String(desaSettings?.village||'').trim();
 
-  // Buka preview terlebih dahulu dengan halaman ringan, lalu isi tabel secara bertahap.
-  win.document.open();
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Daftar Pemilih DP4</title><style>
-    @page{size:A4 landscape;margin:10mm 10mm 10mm 10mm}*{box-sizing:border-box}html,body{width:100%;height:auto;min-height:0}body{font-family:Arial,sans-serif;font-size:9px;color:#111;margin:0;padding:0}
-    h1{font-size:15px;text-align:center;margin:0 0 3px}p{text-align:center;margin:0 0 8px;font-size:9px}
-    table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #777;padding:3px 4px;vertical-align:top;word-break:break-word}th{background:#eee;text-align:center}
-    td.c{text-align:center}thead{display:table-header-group}tbody tr{page-break-inside:avoid;break-inside:avoid}table{margin:0}
-    th:nth-child(1){width:4%}th:nth-child(2){width:14%}th:nth-child(3){width:12%}th:nth-child(4){width:22%}th:nth-child(5){width:10%}th:nth-child(6){width:6%}th:nth-child(7){width:8%}th:nth-child(8){width:14%}th:nth-child(9),th:nth-child(10){width:5%}
-    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  </style></head><body>
-    <h1>DAFTAR PEMILIH DATA PENDUDUK POTENSIAL (DP4)</h1>
-    <p>Tanggal pemungutan suara: ${escPrint(date)}</p>
-    <table><thead><tr><th>No</th><th>NIK</th><th>No KK</th><th>Nama Lengkap</th><th>Tgl Lahir</th><th>Umur</th><th>JK</th><th>Status</th><th>RT</th><th>RW</th></tr></thead><tbody id="printDp4Rows"></tbody></table>
-  </body></html>`);
-  win.document.close();
-  win.title='Daftar Pemilih DP4';
-  win.focus();
+  // Judul & keterangan mengikuti isian yang sama seperti tampilan preview tabel pemilih.
+  doc.setFont('helvetica','bold');doc.setFontSize(13);
+  doc.text('DAFTAR PEMILIH DATA PENDUDUK POTENSIAL (DP4)',pageWidth/2,14,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);
+  const subtitle=[namaDesaFull,`Tanggal pemungutan suara: ${fmtDate(date)}`,`Jumlah pemilih: ${eligible.length}`].filter(Boolean).join('   •   ');
+  doc.text(subtitle,pageWidth/2,20,{align:'center'});
 
-  const tbody=win.document.getElementById('printDp4Rows');
-  const chunkSize=100;
-  let pos=0;
-  const renderChunk=()=>{
-    if(!win || win.closed)return;
-    const frag=win.document.createDocumentFragment();
-    const end=Math.min(pos+chunkSize,eligible.length);
-    for(let i=pos;i<end;i++){
-      const x=eligible[i];
-      const tr=win.document.createElement('tr');
-      tr.innerHTML=`<td class="c">${i+1}</td><td>${escPrint(x.r.NIK)}</td><td>${escPrint(x.r['NO KK'])}</td><td>${escPrint(x.r['NAMA LENGKAP'])}</td><td class="c">${escPrint(fmtDate(x.r.TGL_LHR))}</td><td class="c">${x.umur??'-'}</td><td>${escPrint(x.r.JK)}</td><td>${escPrint(x.r.STATUS)}</td><td class="c">${escPrint(x.r.RT)}</td><td class="c">${escPrint(x.r.RW)}</td>`;
-      frag.appendChild(tr);
+  const body=eligible.map((x,i)=>[i+1,x.r.NIK||'-',x.r['NO KK']||'-',x.r['NAMA LENGKAP']||'-',fmtDate(x.r.TGL_LHR)||'-',x.umur??'-',x.r.JK||'-',x.r.STATUS||'-',x.r.RT||'-',x.r.RW||'-']);
+
+  doc.autoTable({
+    startY:25,
+    head:[['No','NIK','No KK','Nama Lengkap','Tgl Lahir','Umur','JK','Status','RT','RW']],
+    body,
+    theme:'grid',
+    styles:{fontSize:8,cellPadding:1.6,valign:'middle',lineColor:[120,120,120],lineWidth:.1},
+    headStyles:{fillColor:[234,240,246],textColor:30,halign:'center',fontStyle:'bold'},
+    columnStyles:{
+      0:{halign:'center',cellWidth:9},
+      1:{cellWidth:30},
+      2:{cellWidth:26},
+      4:{halign:'center',cellWidth:22},
+      5:{halign:'center',cellWidth:13},
+      6:{halign:'center',cellWidth:16},
+      8:{halign:'center',cellWidth:12},
+      9:{halign:'center',cellWidth:12}
+    },
+    margin:{left:8,right:8,bottom:12},
+    didDrawPage:()=>{
+      doc.setFont('helvetica','normal');doc.setFontSize(8);
+      doc.text('Halaman '+doc.internal.getNumberOfPages(),pageWidth-8,doc.internal.pageSize.getHeight()-6,{align:'right'});
     }
-    tbody.appendChild(frag);
-    pos=end;
-    if(pos<eligible.length){
-      win.requestAnimationFrame(renderChunk);
-    }else{
-      // Beri browser kesempatan menyelesaikan layout sebelum dialog cetak dibuka.
-      win.requestAnimationFrame(()=>setTimeout(()=>{if(!win.closed)win.print();},100));
-    }
-  };
-  win.requestAnimationFrame(renderChunk);
+  });
+
+  const cetak=new Date();
+  const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
+  const tanggalCetak=`${dd}-${mm}-${yyyy}`;
+  const namaDesaFile=namaDesaFull.replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_')||'Desa';
+  const tanggalPemungutan=fmtDate(date);
+  const fileName=`Cetakan_${tanggalCetak}_Daftar_Pemilih_DP4_Desa_${namaDesaFile}_sd_${tanggalPemungutan}.pdf`;
+  doc.save(fileName);
+  toast('Daftar Pemilih DP4 berhasil diekspor ke PDF');
 }
 function printDp4Rekap(){
   const date=$('dp4ElectionDate').value;
@@ -3760,7 +3762,7 @@ function printDp4Rekap(){
 }
 $('btnDp4').addEventListener('click',()=>{if(!hasPerm('dp4'))return toast('Anda tidak memiliki hak akses Rekap DP4');closeMenu();if(!$('dp4ElectionDate').value){$('dp4ElectionDate').value=new Date().toISOString().slice(0,10)}renderDp4();$('dp4Overlay').classList.add('open')});
 $('dp4ElectionDate').addEventListener('change',renderDp4);
-$('btnPrintDp4').addEventListener('click',printDp4);$('btnPrintDp4Rekap').addEventListener('click',printDp4Rekap);$('btnExportDp4').addEventListener('click',exportDp4Xlsx);
+$('btnExportDp4Pdf').addEventListener('click',exportDp4Pdf);$('btnPrintDp4Rekap').addEventListener('click',printDp4Rekap);$('btnExportDp4').addEventListener('click',exportDp4Xlsx);
 
 
 let familyHeadsOnly=false;
