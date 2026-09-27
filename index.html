@@ -3553,7 +3553,8 @@ function renderDp4(){
   // Hanya penduduk yang memenuhi penyaringan dasar DP4 yang ditampilkan.
   // Semua penduduk yang belum genap 17 tahun pada tanggal pemungutan suara dikecualikan, serta indikasi TNI/Polri dikecualikan.
   const eligible=result.filter(x=>x.memenuhiUmurKawin && !x.indikasiTniPolri);
-  // Urutan daftar pemilih: RW ascending, lalu RT ascending, kemudian Nomor KK dan nama.
+  // Urutan daftar pemilih: RW ascending, lalu RT ascending, kemudian Nomor KK,
+  // lalu SHDK (Kepala Keluarga → Suami/Istri → Anak → dst mengikuti relationshipRank), lalu nama.
   // Contoh urutan wilayah: 1/1, 2/1, 1/2, 2/2, 3/2, 4/2, 1/3, 2/3, dst.
   eligible.sort((a,b)=>{
     const rwA=parseInt(a.r.RW,10)||0, rwB=parseInt(b.r.RW,10)||0;
@@ -3562,6 +3563,8 @@ function renderDp4(){
     if(rtA!==rtB) return rtA-rtB;
     const kk=String(a.r['NO KK']||'').localeCompare(String(b.r['NO KK']||''),'id',{numeric:true});
     if(kk!==0) return kk;
+    const rel=relationshipRank(a.r.SHDRT)-relationshipRank(b.r.SHDRT);
+    if(rel!==0) return rel;
     return String(a.r['NAMA LENGKAP']||'').localeCompare(String(b.r['NAMA LENGKAP']||''),'id');
   });
   const excluded=result.length-eligible.length;
@@ -3636,7 +3639,7 @@ function exportDp4Pdf(){
   if(!date){toast('Tentukan tanggal pemungutan suara terlebih dahulu');return;}
 
   // Salin data terlebih dahulu, urutan HARUS sama dengan tampilan preview tabel
-  // Daftar DP4: RW ascending → RT ascending → No. KK ascending → Nama.
+  // Daftar DP4: RW ascending → RT ascending → No. KK ascending → SHDK (relationshipRank) → Nama.
   const eligible=getDp4Eligible().slice();
   const sortNumDp4=(a,b)=>{
     const na=parseInt(String(a||'').replace(/\D/g,''),10), nb=parseInt(String(b||'').replace(/\D/g,''),10);
@@ -3652,6 +3655,8 @@ function exportDp4Pdf(){
     if(rt)return rt;
     const kk=String(a.r['NO KK']||'').localeCompare(String(b.r['NO KK']||''),'id',{numeric:true,sensitivity:'base'});
     if(kk)return kk;
+    const rel=relationshipRank(a.r.SHDRT)-relationshipRank(b.r.SHDRT);
+    if(rel)return rel;
     return String(a.r['NAMA LENGKAP']||'').localeCompare(String(b.r['NAMA LENGKAP']||''),'id',{numeric:true,sensitivity:'base'});
   });
 
