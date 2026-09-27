@@ -3457,7 +3457,114 @@ $('btnProcessImport').addEventListener('click',async()=>{
 });
 function download(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function safePrintName(v){return String(v||'').trim().replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').replace(/\.+$/,'').trim()||'Dokumen'}
-function printWithFilename(title,printFn,cleanupFn){const oldTitle=document.title;document.title=safePrintName(title);try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}}
+
+/* ===== Koneksi Layar 2 =====
+   File display.html berada pada origin yang sama. Setiap proses cetak mengirim
+   ringkasan pemohon + HTML pratinjau dokumen ke tab Layar 2 melalui BroadcastChannel.
+   localStorage dipakai sebagai fallback agar data terakhir tetap tersedia saat display
+   dibuka ulang. Tidak mengubah isi/format cetakan utama. */
+const DISPLAY_CHANNEL_NAME='dataKependudukanDesa_layar2_v1';
+const DISPLAY_STORAGE_KEY='dataKependudukanDesa_layar2_v1';
+let displayChannel=null;
+try{displayChannel=new BroadcastChannel(DISPLAY_CHANNEL_NAME)}catch(e){displayChannel=null}
+
+function displayVisibleText(){
+  const all=[...document.querySelectorAll('body *')].filter(el=>{
+    const cs=getComputedStyle(el);
+    return cs.display!=='none'&&cs.visibility!=='hidden'&&el.getClientRects().length;
+  });
+  return all.map(el=>el.innerText||'').join('\n');
+}
+function displayFindValue(re,text){
+  const m=String(text||'').match(re);
+  return m?m[1].trim():'';
+}
+function displayPersonInfo(title){
+  const text=displayVisibleText();
+  let nik=displayFindValue(/(?:^|\\n)\\s*NIK\\s*[:.]?\\s*(\\d{16})\\b/i,text);
+  let kk=displayFindValue(/(?:^|\\n)\\s*(?:NO\\.?\\s*KK|NOMOR\\s*KK)\\s*[:.]?\\s*(\\d{16})\\b/i,text);
+  const sixteen=[...text.matchAll(/\\b\\d{16}\\b/g)].map(x=>x[0]);
+  if(!nik&&sixteen.length)nik=sixteen[0];
+  if(!kk&&sixteen.length>1)kk=sixteen.find(x=>x!==nik)||'';
+  let name='';
+  const link=document.querySelector('.name-link, .nik-link');
+  if(link)name=(link.textContent||'').trim();
+  if(!name){
+    const previews=[...document.querySelectorAll('.person-preview-grid b')].map(x=>(x.textContent||'').trim()).filter(Boolean);
+    name=previews.find(x=>!/^\\d{16}$/.test(x))||'';
+  }
+  const cleanTitle=safePrintName(title);
+  if(!name){
+    const parts=cleanTitle.split(' - ');
+    if(parts.length>1&&!/^\\d{16}$/.test(parts[parts.length-1]))name=parts[parts.length-1].trim();
+  }
+  return {name,nik,kk};
+}
+function displayPrintRoot(){
+  const classes=document.body.className||'';
+  const map=[
+    ['print-letter','#letterOverlay .letter-paper'],
+    ['print-f102','#f102Overlay .f102-paper, #f102Overlay .f102-faithful'],
+    ['print-f101','#f101Overlay .f101-paper'],
+    ['print-ktp','#ktpOverlay .ktp-paper'],
+    ['print-biodata','#biodataOverlay .biodata-paper'],
+    ['print-family','#familyOverlay .modal'],
+    ['print-report','#reportOverlay .modal'],
+    ['print-age-report','#ageReportOverlay .modal'],
+    ['print-dp4','#dp4Overlay .modal'],
+    ['print-dashboard','#dashboardOverlay .modal']
+  ];
+  for(const [cls,sel] of map){
+    if(classes.split(/\s+/).includes(cls)){
+      const el=document.querySelector(sel);
+      if(el)return el;
+    }
+  }
+  return document.querySelector('.letter-paper,.f102-paper,.f101-paper,.ktp-paper,.biodata-paper');
+}
+function displayCleanHtml(root){
+  if(!root)return '';
+  const clone=root.cloneNode(true);
+  clone.querySelectorAll('script,button,input,textarea,select,.modal-head,.modal-foot,.modal-print-toolbar,.letter-panel,.f102-panel,.f102-toolbar,.ktp-toolbar,.ktp-select-list,.biodata-toolbar,.family-search,.family-help,.dashboard-actions,.close').forEach(x=>x.remove());
+  clone.querySelectorAll('[onclick],[onchange],[oninput],[onsubmit]').forEach(x=>{
+    x.removeAttribute('onclick');x.removeAttribute('onchange');x.removeAttribute('oninput');x.removeAttribute('onsubmit');
+  });
+  return clone.outerHTML;
+}
+function sendToDisplay(title){
+  try{
+    const root=displayPrintRoot();
+    const info=displayPersonInfo(title);
+    const payload={
+      type:'DISPLAY',
+      title:safePrintName(title),
+      nama:info.name||'',
+      nik:info.nik||'',
+      kk:info.kk||'',
+      pelayanan:safePrintName(title),
+      status:'DOKUMEN SIAP',
+      desa:(typeof village!=='undefined'?String(village||''):''),
+      html:displayCleanHtml(root),
+      css:[...document.querySelectorAll('style')].map(x=>x.textContent||'').join('\n'),
+      updatedAt:new Date().toISOString()
+    };
+    if(displayChannel)displayChannel.postMessage(payload);
+    try{
+      const fallback={...payload,css:''};
+      if(JSON.stringify(fallback).length<2500000)localStorage.setItem(DISPLAY_STORAGE_KEY,JSON.stringify(fallback));
+      else localStorage.setItem(DISPLAY_STORAGE_KEY,JSON.stringify({
+        type:'DISPLAY',title:payload.title,nama:payload.nama,nik:payload.nik,kk:payload.kk,
+        pelayanan:payload.pelayanan,status:payload.status,desa:payload.desa,updatedAt:payload.updatedAt
+      }));
+    }catch(e){}
+  }catch(e){}
+}
+function printWithFilename(title,printFn,cleanupFn){
+  const oldTitle=document.title;
+  document.title=safePrintName(title);
+  sendToDisplay(title);
+  try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}
+}
 function countRows(rows,f){const o={};rows.forEach(r=>{const k=r[f]||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>b[1]-a[1])}
 function countRWRows(rows){const o={};rows.forEach(r=>{const k=String(r.RW||'Tidak diisi').trim()||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>{const na=parseInt(a[0],10),nb=parseInt(b[0],10);if(Number.isFinite(na)&&Number.isFinite(nb))return na-nb;if(Number.isFinite(na))return -1;if(Number.isFinite(nb))return 1;return a[0].localeCompare(b[0],'id')})}
 function activeFilterLabels(){const map=[['search','Pencarian'],['fRT','RT'],['fRW','RW'],['fJK','Jenis Kelamin'],['fSH','Hubungan Keluarga'],['fStatus','Status'],['fAgama','Agama'],['fPendidikan','Pendidikan'],['fPekerjaan','Pekerjaan']];const out=[];map.forEach(([id,label])=>{const el=$(id);if(el&&el.value)out.push([label,el.value])});return out}

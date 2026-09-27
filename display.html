@@ -1,70 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Layar 2 - Pelayanan Desa</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Layar 2 - Data Kependudukan Desa</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#1f2937}
-.display{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px}
-.paper{width:min(900px,94vw);background:white;border:1px solid #d9dee5;border-radius:14px;padding:42px 48px;box-shadow:0 12px 40px rgba(0,0,0,.08)}
-.logo{width:76px;height:76px;object-fit:contain;display:block;margin:0 auto 18px}
-.village{text-align:center;font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:4px}
-.title{text-align:center;font-size:30px;margin:0 0 28px}.status{text-align:center;font-size:16px;color:#6b7280;margin-bottom:28px}
-.name{text-align:center;font-size:42px;font-weight:800;margin:14px 0;text-transform:uppercase;word-break:break-word}
-.service{text-align:center;font-size:25px;font-weight:600;margin:10px 0 30px}
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid #d9dee5;padding-top:20px}
-.meta div{padding:13px 15px;background:#f8fafc;border-radius:9px}.meta b{display:block;font-size:13px;color:#6b7280;margin-bottom:5px}
-.meta span{font-size:17px}.empty{text-align:center;color:#6b7280;font-size:20px;padding:80px 10px}
-.operator{max-width:900px;margin:30px auto;padding:25px;background:#fff;border:1px solid #d9dee5;border-radius:12px}
-.operator h2{margin-top:0}.buttons{display:flex;gap:10px;flex-wrap:wrap}
-button{border:0;border-radius:8px;padding:11px 16px;cursor:pointer;background:#0b57d0;color:white;font-weight:600}
-button.secondary{background:#6b7280}textarea{width:100%;min-height:150px;margin:12px 0;padding:12px;border:1px solid #d9dee5;border-radius:8px;font-family:monospace}
-.hint{color:#6b7280;font-size:14px;line-height:1.5}body.display-only .operator{display:none}
-@media(max-width:650px){.display{padding:15px}.paper{padding:28px 20px}.name{font-size:30px}.service{font-size:20px}.meta{grid-template-columns:1fr}}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#17212f}
+#summary{height:100%;display:flex;align-items:center;justify-content:center;padding:30px}
+.card{width:min(900px,94vw);background:#fff;border:1px solid #d9e1ea;border-radius:16px;padding:40px;box-shadow:0 15px 45px rgba(15,42,77,.15);text-align:center}
+.logo{width:75px;height:75px;object-fit:contain;margin-bottom:15px}
+.village{font-size:22px;font-weight:800;text-transform:uppercase}
+.caption{font-size:14px;color:#66758a;margin:8px 0 30px}
+.name{font-size:42px;font-weight:800;text-transform:uppercase;word-break:break-word;margin:15px 0}
+.service{font-size:25px;font-weight:700;margin:10px 0 28px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left;border-top:1px solid #d9e1ea;padding-top:20px}
+.grid>div{background:#f7f9fb;border-radius:9px;padding:12px 14px}
+.grid b{display:block;color:#66758a;font-size:12px;margin-bottom:5px}.grid span{font-size:16px}
+#document{display:none;width:100%;height:100%;overflow:auto;background:#dfe5eb;padding:22px}
+#documentFrame{width:100%;min-height:100%;border:0;background:#fff}
+#hint{position:fixed;right:12px;bottom:10px;background:#102a4c;color:#fff;border-radius:8px;padding:7px 10px;font-size:11px;opacity:.7}
+@media(max-width:650px){.card{padding:25px 18px}.name{font-size:30px}.service{font-size:20px}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="display"><section class="paper">
-<img id="logo" class="logo" style="display:none" alt="Logo Desa">
-<div id="village" class="village">PEMERINTAH DESA</div>
-<h1 class="title">LAYAR PELAYANAN</h1>
-<div id="status" class="status">Menunggu data dari aplikasi petugas...</div>
-<div id="empty" class="empty">Belum ada dokumen yang ditampilkan.</div>
-<div id="content" style="display:none">
-<div id="name" class="name">-</div><div id="service" class="service">-</div>
-<div class="meta">
-<div><b>NIK</b><span id="nik">-</span></div><div><b>NO. KK</b><span id="kk">-</span></div>
-<div><b>STATUS</b><span id="docStatus">-</span></div><div><b>WAKTU</b><span id="time">-</span></div>
-</div></div></section></div>
-
-<div class="operator" id="operatorPanel">
-<h2>Pengujian Layar 2</h2>
-<p class="hint">Panel ini hanya untuk pengujian Tahap 1. Nanti aplikasi kependudukan akan mengirim data secara otomatis.</p>
-<textarea id="jsonInput">{
-  "nama": "CONTOH NAMA PENDUDUK",
-  "nik": "3211000000000001",
-  "kk": "3211000000000002",
-  "pelayanan": "SURAT KETERANGAN DOMISILI",
-  "status": "SILAKAN MENUNGGU",
-  "desa": "DESA KADAKAJAYA"
-}</textarea>
-<div class="buttons">
-<button onclick="sendTest()">Tampilkan di Layar</button>
-<button class="secondary" onclick="clearDisplay()">Kosongkan Layar</button>
-<button class="secondary" onclick="openDisplayMode()">Buka Mode Layar 2</button>
-</div></div>
+<div id="summary">
+  <section class="card">
+    <div id="village" class="village">PEMERINTAH DESA</div>
+    <div class="caption">Menunggu hasil cetakan dari aplikasi petugas...</div>
+    <div id="name" class="name">BELUM ADA DOKUMEN</div>
+    <div id="service" class="service">Layar 2 Pelayanan Desa</div>
+    <div class="grid">
+      <div><b>NIK</b><span id="nik">-</span></div>
+      <div><b>NO. KK</b><span id="kk">-</span></div>
+      <div><b>STATUS</b><span id="status">Menunggu</span></div>
+      <div><b>WAKTU</b><span id="time">-</span></div>
+    </div>
+  </section>
+</div>
+<div id="document"><iframe id="documentFrame" title="Hasil cetakan"></iframe></div>
+<div id="hint">Layar 2 • terhubung</div>
 
 <script>
-const STORAGE_KEY='dataKependudukanDesa_layar2_v1'; let channel=null;
-try{channel=new BroadcastChannel('dataKependudukanDesa_layar2_v1');channel.onmessage=e=>{if(e.data?.type==='DISPLAY')render(e.data.payload||{});if(e.data?.type==='CLEAR')clearScreen()}}catch(e){}
-window.addEventListener('storage',e=>{if(e.key===STORAGE_KEY){try{render(e.newValue?JSON.parse(e.newValue):{})}catch(err){}}});
-function sendToDisplay(data){data.updatedAt=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(data));if(channel)channel.postMessage({type:'DISPLAY',payload:data});render(data)}
-function sendTest(){try{sendToDisplay(JSON.parse(document.getElementById('jsonInput').value))}catch(e){alert('Data pengujian tidak valid. Pastikan format JSON benar.')}}
-function clearDisplay(){localStorage.removeItem(STORAGE_KEY);if(channel)channel.postMessage({type:'CLEAR'});clearScreen()}
-function clearScreen(){content.style.display='none';empty.style.display='block';status.textContent='Menunggu data dari aplikasi petugas...'}
-function render(data){if(!data||(!data.nama&&!data.pelayanan)){clearScreen();return}empty.style.display='none';content.style.display='block';name.textContent=data.nama||'-';nik.textContent=data.nik||'-';kk.textContent=data.kk||'-';service.textContent=data.pelayanan||'PELAYANAN';docStatus.textContent=data.status||'DOKUMEN SIAP';village.textContent=data.desa||'PEMERINTAH DESA';time.textContent=data.updatedAt?new Date(data.updatedAt).toLocaleString('id-ID'):new Date().toLocaleString('id-ID');status.textContent='Data pelayanan diterima dari aplikasi petugas'}
-function openDisplayMode(){window.open(location.pathname+'?mode=display','Layar2Desa','width=1200,height=800')}
-(function(){if(new URLSearchParams(location.search).get('mode')==='display')document.body.classList.add('display-only');const s=localStorage.getItem(STORAGE_KEY);if(s)try{render(JSON.parse(s))}catch(e){}})();
+const CHANNEL='dataKependudukanDesa_layar2_v1';
+const STORAGE='dataKependudukanDesa_layar2_v1';
+let channel=null;
+try{
+  channel=new BroadcastChannel(CHANNEL);
+  channel.onmessage=e=>handlePayload(e.data||{});
+}catch(e){}
+
+window.addEventListener('storage',e=>{
+  if(e.key!==STORAGE||!e.newValue)return;
+  try{handlePayload(JSON.parse(e.newValue))}catch(err){}
+});
+
+function escText(v){return String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function cleanIncomingHtml(html){
+  let x=String(html||'');
+  x=x.replace(/<script[\\s\\S]*?<\\/script>/gi,'');
+  x=x.replace(/\\son[a-z]+\\s*=\\s*(".*?"|'.*?'|[^\\s>]+)/gi,'');
+  return x;
+}
+function renderSummary(p){
+  document.getElementById('name').textContent=p.nama||'DOKUMEN';
+  document.getElementById('nik').textContent=p.nik||'-';
+  document.getElementById('kk').textContent=p.kk||'-';
+  document.getElementById('service').textContent=p.pelayanan||p.title||'PELAYANAN';
+  document.getElementById('status').textContent=p.status||'DOKUMEN SIAP';
+  document.getElementById('village').textContent=p.desa||'PEMERINTAH DESA';
+  document.getElementById('time').textContent=p.updatedAt?new Date(p.updatedAt).toLocaleString('id-ID'):new Date().toLocaleString('id-ID');
+}
+function renderDocument(p){
+  const html=cleanIncomingHtml(p.html);
+  if(!html){document.getElementById('document').style.display='none';document.getElementById('summary').style.display='flex';return}
+  const css=String(p.css||'');
+  const frame=document.getElementById('documentFrame');
+  const doc='<!doctype html><html><head><meta charset="utf-8"><style>'+css+'\
+body{margin:0!important;padding:0!important;background:#fff!important;overflow:auto!important}\
+</style></head><body>'+html+'</body></html>';
+  frame.srcdoc=doc;
+  document.getElementById('summary').style.display='none';
+  document.getElementById('document').style.display='block';
+}
+function handlePayload(p){
+  if(!p||p.type!=='DISPLAY')return;
+  renderSummary(p);
+  renderDocument(p);
+  try{localStorage.setItem(STORAGE,JSON.stringify(p))}catch(e){}
+}
+(function(){
+  try{
+    const p=JSON.parse(localStorage.getItem(STORAGE)||'null');
+    if(p)handlePayload(p);
+  }catch(e){}
+})();
 </script>
-</body></html>
+</body>
+</html>
