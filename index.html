@@ -4397,7 +4397,7 @@ function buildLetterHtml(){
     extraBlock=`<table class="letter-table compact"><tr><td>Jenis/Status</td><td>:</td><td>${esc(ex.exLandType||'-')}</td></tr><tr><td>Lokasi</td><td>:</td><td>${esc(ex.exLandPlace||'-')}</td></tr></table>${ex.exDetail?`<p>Keterangan: ${esc(ex.exDetail)}</p>`:''}`;
   } else if(type==='Serba Guna'){
     statement=`Surat keterangan ini dibuat untuk menerangkan bahwa yang bersangkutan benar penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)}.`;
-    extraBlock=`${ex.exDetail?`<p>Keterangan / Isi Surat: ${esc(ex.exDetail)}</p>`:''}<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||'-')}</b>.</p>`;
+    extraBlock=`${ex.exDetail?`<p>${esc(ex.exDetail)}</p>`:''}<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||'-')}</b>.</p>`;
   } else if(type==='Penghasilan'){
     statement=`Berdasarkan keterangan dari RT/RW setempat dan data yang ada, benar bahwa yang bersangkutan Penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)} dan :`;
     extraBlock=`<p class="center-strong">==benar mempunyai penghasilan rata-rata ${esc(ex.exIncome||'Rp. ........................')} per bulan==</p><p>Surat Keterangan ini dipergunakan untuk : <b>${esc($('letterPurpose').value||'-')}</b></p>${ex.exDetail?`<p>${esc(ex.exDetail)}</p>`:''}`;
