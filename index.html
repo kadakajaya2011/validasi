@@ -829,7 +829,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
     <div class="modal-foot"><button class="btn" data-close="accountOverlay">Tutup</button></div>
   </div>
 </div>
-<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnOpenDisplay" title="Buka / fokus jendela layar pelayanan">📺 Layar 2</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><button class="btn btn-ghost" id="btnCopyDisplayLink" title="Salin tautan layar pelayanan untuk dibuka di perangkat lain">🔗</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
+<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnOpenDisplay" title="Buka / fokus jendela layar pelayanan">📺 Layar 2</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><button class="btn btn-ghost" id="btnCopyDisplayLink" title="Salin tautan layar pelayanan untuk dibuka di perangkat lain">🔗</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label><label class="svc-auto" title="Layar 2 kembali ke antrian otomatis setelah jendela cetak ditutup"><input type="checkbox" id="chkAutoHide"> Tutup otomatis</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
 <button class="menu-item menu-dashboard-item" id="btnDashboard">🏠 Dashboard</button>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">👥 <span style="flex:1">PENDAFTARAN PENDUDUK</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnInactivePopulation">♻️ Penduduk Tidak Aktif</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📜 <span style="flex:1">PENCATATAN SIPIL</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnBirthApplicationMenu">👶 Permohonan Akta Kelahiran</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button></div></div>
@@ -4682,6 +4682,16 @@ const SERVICE_DISPLAY_URL='./pelayanan.html';
 const SERVICE_STATE_KEY='DESA_SERVICE_DISPLAY_STATE';
 const SERVICE_LETTER_KEY='DESA_SERVICE_DISPLAY_LETTER';
 const SERVICE_AUTO_KEY='DESA_SERVICE_AUTO_MIRROR';
+const SERVICE_HIDE_KEY='DESA_SERVICE_AUTO_HIDE';
+let serviceHidePending=false;
+function autoHideOn(){try{return localStorage.getItem(SERVICE_HIDE_KEY)!=='0'}catch(e){return true}}
+// Dipanggil saat jendela cetak ditutup (dicetak maupun dibatalkan): layar kembali ke antrian
+function serviceAutoHide(){
+  if(!serviceHidePending)return;
+  serviceHidePending=false;
+  setTimeout(()=>{try{closeServiceDocument()}catch(e){console.warn(e)}},300);
+}
+window.addEventListener('afterprint',serviceAutoHide);
 let serviceWin=null,lastServiceInfo=null;
 function autoDisplayOn(){try{return localStorage.getItem(SERVICE_AUTO_KEY)!=='0'}catch(e){return true}}
 function serviceWinAlive(){try{return !!(serviceWin&&!serviceWin.closed)}catch(e){return false}}
@@ -4830,12 +4840,17 @@ function mirrorDocToDisplay(info,opts){
   try{
     lastServiceInfo={...info,docHtml:undefined};
     sendToServiceDisplay(mkServicePayload(info,'doc'),info.docHtml,{open:!!opts.open});
+    serviceHidePending=!opts.force&&autoHideOn();   // tombol manual (force) tidak ditutup otomatis
     return true;
   }catch(e){console.warn('Gagal menampilkan dokumen di layar pelayanan',e);return false}
 }
 // Untuk cetak berbasis iframe (akta kelahiran/kematian): salin dokumen yang persis akan dicetak
 function mirrorFrameToDisplay(doc,info){
-  try{mirrorDocToDisplay({...info,docHtml:'<!doctype html>'+doc.documentElement.outerHTML})}catch(e){console.warn(e)}
+  try{
+    if(mirrorDocToDisplay({...info,docHtml:'<!doctype html>'+doc.documentElement.outerHTML})){
+      try{doc.defaultView.addEventListener('afterprint',serviceAutoHide)}catch(e){}
+    }
+  }catch(e){console.warn(e)}
 }
 // Untuk cetak berbasis halaman (biodata, F-1.01, F-1.02/KTP, surat): salin area pratinjau + CSS layarnya
 function buildInPageDoc(el,page){
@@ -4897,6 +4912,8 @@ function closeLetterOnServiceDisplay(){closeServiceDocument()}
 (function(){
   const chk=$('chkAutoDisplay');chk.checked=autoDisplayOn();
   chk.addEventListener('change',()=>{try{localStorage.setItem(SERVICE_AUTO_KEY,chk.checked?'1':'0')}catch(e){}toast(chk.checked?'Layar 2 otomatis menampilkan dokumen saat cetak':'Tampil otomatis di layar 2 dimatikan')});
+  const chkH=$('chkAutoHide');chkH.checked=autoHideOn();
+  chkH.addEventListener('change',()=>{try{localStorage.setItem(SERVICE_HIDE_KEY,chkH.checked?'1':'0')}catch(e){}toast(chkH.checked?'Layar 2 kembali ke antrian otomatis setelah jendela cetak ditutup':'Dokumen tetap tampil di layar 2 sampai ditutup manual')});
   $('btnOpenDisplay').addEventListener('click',()=>{
     if(serviceWinAlive()){try{serviceWin.focus()}catch(e){}return}
     try{serviceWin=window.open(SERVICE_DISPLAY_URL+(getServiceCode()?'#kode='+getServiceCode():''),'desaServiceDisplay')}catch(e){}
