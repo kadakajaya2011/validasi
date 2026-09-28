@@ -5,55 +5,66 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Layar Pelayanan Desa</title>
 <style>
-:root{--bg:#eef3f8;--card:#fff;--ink:#10233b;--mute:#5d7188;--line:#d9e2ec;--accent:#1f5d91;--accent2:#e8f1fa}
+:root{--navy:#0b2e4f;--blue:#1f5d91;--sky:#e8f1fa;--gold:#f2b632;--ink:#10233b;--mute:#5d7188;--line:#d9e2ec;--card:#fff;--accent:#1f5d91}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
-.screen{width:100%;height:100%;display:flex;flex-direction:column;background:var(--card)}
-.sec{padding:0 4vw;border-bottom:1px solid var(--line)}
+html,body{margin:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--navy);color:var(--ink);overflow:hidden}
+.screen{width:100%;height:100%;display:flex;flex-direction:column;background:linear-gradient(160deg,#f6f9fd,#dfeaf6)}
+.sec{padding:0 4vw}
 
 /* 1. HEADER */
-.top{height:16%;display:flex;align-items:center;gap:2vw}
-.logo{height:70%;aspect-ratio:1;object-fit:contain;display:none}
-.village{font-size:clamp(22px,3vw,52px);font-weight:800;letter-spacing:1px}
-.sub{font-size:clamp(14px,1.6vw,28px);color:var(--mute);margin-top:.4vh;letter-spacing:2px}
+.top{height:17%;display:flex;align-items:center;gap:2vw;color:#fff;background:linear-gradient(100deg,var(--navy) 0%,#164a78 60%,var(--blue) 100%);border-bottom:.7vh solid var(--gold);box-shadow:0 .6vh 2vh #0b2e4f44;position:relative;z-index:2}
+.logo{height:74%;aspect-ratio:1;object-fit:contain;display:none;background:#fff;border-radius:50%;padding:.7vh;box-shadow:0 .4vh 1.4vh #0006}
+.village{font-size:clamp(22px,3vw,52px);font-weight:800;letter-spacing:1.5px;text-shadow:0 2px 8px #0005}
+.sub{font-size:clamp(13px,1.5vw,26px);color:#ffd980;margin-top:.5vh;letter-spacing:3px;font-weight:600}
+.top .clock{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:800;font-size:clamp(22px,3vw,52px);padding:.8vh 1.6vw;border-radius:16px;background:#ffffff1f;border:1px solid #ffffff33;letter-spacing:2px}
 
 /* 2. NOMOR ANTRIAN */
-.call{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--accent2)}
-.lbl{font-size:clamp(16px,2.2vw,38px);letter-spacing:4px;color:var(--mute);font-weight:700}
-.queue{font-size:clamp(70px,15vw,260px);font-weight:900;line-height:1;margin:1vh 0;color:var(--accent)}
-.queue.name{font-size:clamp(40px,7vw,120px);padding:0 2vw}
-.go{font-size:clamp(20px,2.6vw,46px);letter-spacing:3px;font-weight:700;margin-top:1vh}
-.loket{font-size:clamp(24px,3.4vw,60px);font-weight:900;margin-top:.5vh;line-height:1.1;overflow-wrap:anywhere}
+.call{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 35%,#fff 0%,#e8f1fa 55%,#d6e6f6 100%)}
+.call::before,.call::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.call::before{width:46vw;height:46vw;left:-14vw;top:-22vw;background:radial-gradient(circle,#1f5d9122,#1f5d9100 70%)}
+.call::after{width:40vw;height:40vw;right:-12vw;bottom:-20vw;background:radial-gradient(circle,#f2b63233,#f2b63200 70%)}
+.call>*{position:relative;z-index:1}
+.lbl{font-size:clamp(14px,1.8vw,30px);letter-spacing:5px;color:#fff;font-weight:700;background:var(--navy);padding:.8vh 2.4vw;border-radius:999px;box-shadow:0 .5vh 1.4vh #0b2e4f44}
+.queue{font-size:clamp(70px,15vw,260px);font-weight:900;line-height:1;margin:2vh 0;color:var(--blue);background:#fff;padding:1vh 5vw;border-radius:3vw;box-shadow:0 1.4vh 4vh #1f5d9133,inset 0 -.8vh 0 #e8f1fa;max-width:92vw;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.queue.name{font-size:clamp(36px,6.4vw,110px);padding:1.6vh 3vw;line-height:1.1}
+.go{font-size:clamp(18px,2.4vw,42px);letter-spacing:4px;font-weight:700;color:var(--mute)}
+.loket{font-size:clamp(22px,3.2vw,56px);font-weight:900;margin-top:1.4vh;line-height:1.15;overflow-wrap:anywhere;max-width:90vw;color:var(--navy);background:linear-gradient(180deg,#ffd15a,var(--gold));padding:.9vh 2.6vw;border-radius:999px;box-shadow:0 .6vh 1.8vh #f2b63266}
 
 /* 3. DETAIL */
-.detail{padding-top:1.6vh;padding-bottom:1.6vh;display:grid;grid-template-columns:max-content 1fr;gap:.7vh 2vw;font-size:clamp(16px,2vw,34px)}
-.detail .k{font-weight:700;color:var(--mute);letter-spacing:1px}
-.detail .v{font-weight:700}
+.detail{padding-top:2vh;padding-bottom:1.6vh;display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vw}
+.detail .card{background:var(--card);border-radius:1.2vw;padding:1.4vh 1.6vw;box-shadow:0 .6vh 2vh #10233b1a;border-top:.6vh solid var(--blue);min-width:0}
+.detail .card:nth-child(2){border-top-color:var(--gold)}
+.detail .card:nth-child(3){border-top-color:#12a594}
+.detail .k{font-size:clamp(11px,1.2vw,20px);font-weight:800;color:var(--mute);letter-spacing:2px}
+.detail .v{font-size:clamp(17px,2.3vw,40px);font-weight:800;margin-top:.6vh;overflow-wrap:anywhere;line-height:1.15}
 
 /* 4. INFORMASI */
-.info{padding-top:1.6vh;padding-bottom:1.6vh;font-size:clamp(15px,1.7vw,29px)}
-.info .h{font-weight:800;letter-spacing:2px;color:var(--mute);margin-bottom:.5vh}
+.info{padding-bottom:1.8vh}
+.strip{display:flex;align-items:center;gap:1.4vw;background:#fff8e6;border-left:.9vw solid var(--gold);border-radius:1vw;padding:1.3vh 1.8vw;box-shadow:0 .4vh 1.4vh #10233b14;font-size:clamp(14px,1.7vw,29px)}
+.strip .ic{flex:none;width:2.6em;height:2.6em;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:900;display:flex;align-items:center;justify-content:center;font-style:italic;font-family:Georgia,serif}
+.strip .h{font-weight:800;letter-spacing:2px;color:#8a6410;font-size:.72em;margin-bottom:.3vh}
 
 /* 5. FOOTER */
-.bottom{height:11%;display:flex;align-items:center;justify-content:space-between;border-bottom:0;font-size:clamp(15px,1.7vw,29px);color:var(--mute);background:#f7fafd}
-.clock{font-weight:800;font-size:clamp(22px,3vw,52px);color:var(--ink)}
-.hours{display:flex;gap:3vw;flex-wrap:wrap}
-
+.bottom{height:9%;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,1.6vw,27px);color:#d3e3f3;background:linear-gradient(100deg,var(--navy),#164a78)}
+.hours{display:flex;gap:2vw;flex-wrap:wrap;justify-content:center}
+.hours span{background:#ffffff1a;border:1px solid #ffffff2e;padding:.6vh 1.6vw;border-radius:999px;font-weight:600}
 
 /* ===== MODE CEK SURAT ===== */
 #queueView,#letterView{width:100%;height:100%;display:flex;flex-direction:column}
-#letterView{display:none;background:#cfd8e3}
+#letterView{display:none;background:linear-gradient(180deg,#d9e3ee,#c2d0e0)}
 .screen.letter #queueView{display:none}
-.screen.letter #letterView{display:flex}
-.lbar{display:flex;align-items:center;justify-content:space-between;gap:2vw;padding:1.2vh 3vw;background:#fff;border-bottom:1px solid var(--line)}
-.lbar .t{font-size:clamp(18px,2.4vw,42px);font-weight:900;color:var(--accent);letter-spacing:1px}
-.lbar .s{font-size:clamp(13px,1.4vw,24px);color:var(--mute);margin-top:.3vh}
-.lbar .clock{font-size:clamp(18px,2.4vw,40px)}
-.lbar img{height:6vh;display:none}
+.screen.letter #letterView{display:flex;animation:fade .3s ease}
+.lbar{display:flex;align-items:center;justify-content:space-between;gap:2vw;padding:1.2vh 3vw;color:#fff;background:linear-gradient(100deg,var(--navy),#164a78 60%,var(--blue));border-bottom:.6vh solid var(--gold);box-shadow:0 .6vh 2vh #0b2e4f44;position:relative;z-index:2}
+.lbar .t{font-size:clamp(18px,2.4vw,42px);font-weight:900;color:#fff;letter-spacing:1px}
+.lbar .s{font-size:clamp(13px,1.4vw,24px);color:#ffd980;margin-top:.3vh;font-weight:600}
+.lbar .clock{font-size:clamp(18px,2.4vw,40px);font-weight:800;padding:.6vh 1.3vw;border-radius:14px;background:#ffffff1f;border:1px solid #ffffff33;font-variant-numeric:tabular-nums}
+.lbar img{height:7vh;display:none;background:#fff;border-radius:50%;padding:.4vh}
 #letterWrap{flex:1;overflow:auto;padding:1.5vh 1vw;position:relative}
-#letterBox{margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 24px #10233b33}
+#letterBox{margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 1vh 4vh #10233b55;border-radius:.4vw}
 #letterFrame{border:0;display:block;transform-origin:top left;background:#fff}
-.wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.4vw,40px);color:var(--mute)}
+.wait{position:absolute;inset:0;display:flex;flex-direction:column;gap:2vh;align-items:center;justify-content:center;font-size:clamp(20px,2.4vw,40px);color:var(--navy);font-weight:700}
+.wait::before{content:"";width:6vh;height:6vh;border:.8vh solid #1f5d9133;border-top-color:var(--blue);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== PEMASANGAN LAYAR & STATUS ===== */
 #pairOv{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:#10233bee}
@@ -79,6 +90,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
       <div class="village" id="village">PEMERINTAH DESA</div>
       <div class="sub">INFORMASI PELAYANAN DESA</div>
     </div>
+    <div class="clock" id="clock"></div>
   </div>
 
   <div class="sec call" id="call">
@@ -89,19 +101,17 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
   </div>
 
   <div class="sec detail">
-    <div class="k">SEDANG DILAYANI</div><div class="v" id="serving">:</div>
-    <div class="k">PELAYANAN</div><div class="v" id="service">:</div>
-    <div class="k" id="k3">PETUGAS</div><div class="v" id="v3">:</div>
+    <div class="card"><div class="k">SEDANG DILAYANI</div><div class="v" id="serving">-</div></div>
+    <div class="card"><div class="k">PELAYANAN</div><div class="v" id="service">-</div></div>
+    <div class="card"><div class="k" id="k3">PETUGAS</div><div class="v" id="v3">-</div></div>
   </div>
 
   <div class="sec info">
-    <div class="h">INFORMASI</div>
-    <div id="infoText"></div>
+    <div class="strip"><div class="ic">i</div><div><div class="h">INFORMASI</div><div id="infoText"></div></div></div>
   </div>
 
   <div class="sec bottom">
     <div class="hours" id="hours"></div>
-    <div class="clock" id="clock"></div>
   </div>
 </div>
 
@@ -180,12 +190,12 @@ function showQueue(p){
   if(q||nm)$('go').textContent='SILAKAN KE';
 
   // Detail
-  $('serving').textContent=': '+(clean(p.serving)||nm||'-');
-  $('service').textContent=': '+(clean(p.service)||'-');
-  if(q){$('k3').textContent='PETUGAS';$('v3').textContent=': '+(lk||'-')}
+  $('serving').textContent=clean(p.serving)||nm||'-';
+  $('service').textContent=clean(p.service)||'-';
+  if(q){$('k3').textContent='PETUGAS';$('v3').textContent=lk||'-'}
   else{
     const extra=clean(p.number)?['NOMOR SURAT',clean(p.number)]:clean(p.purpose)?['KEPERLUAN',clean(p.purpose)]:['PETUGAS',lk||'-'];
-    $('k3').textContent=extra[0];$('v3').textContent=': '+extra[1];
+    $('k3').textContent=extra[0];$('v3').textContent=extra[1];
   }
 
   $('infoText').textContent=clean(p.info)||DEFAULTS.info;
@@ -344,8 +354,14 @@ async function unB64gzip(b64){
   const s=new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'));
   return await new Response(s).text();
 }
+let ticking=false,tickAgain=false,pingCh=null;
 async function cloudTick(){
   if(!sb||!code)return;
+  if(ticking){tickAgain=true;return}
+  ticking=true;
+  try{await cloudTickOnce()}finally{ticking=false;if(tickAgain){tickAgain=false;cloudTick()}}
+}
+async function cloudTickOnce(){
   try{
     const {data,error}=await sb.rpc('get_service_display',{p_code:code,p_since:cloudSeen});
     if(error)throw error;
@@ -368,7 +384,11 @@ async function cloudTick(){
 function cloudStart(){
   $('pairOv').style.display='none';
   clearInterval(cloudTimer);cloudSeen=null;cloudFirst=true;
-  cloudTick();cloudTimer=setInterval(cloudTick,3000);
+  cloudTick();cloudTimer=setInterval(cloudTick,1500);   // cadangan bila sinyal realtime terputus
+  try{   // sinyal dari aplikasi petugas: begitu ada dokumen baru, layar langsung mengambilnya
+    if(pingCh)sb.removeChannel(pingCh);
+    pingCh=sb.channel('svc:'+code).on('broadcast',{event:'ping'},()=>cloudTick()).subscribe();
+  }catch(e){console.warn('realtime',e)}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudTick()});
 }
 function cloudInit(){

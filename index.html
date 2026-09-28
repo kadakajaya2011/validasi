@@ -2624,8 +2624,9 @@ body{display:block!important}
       printFrame.contentWindow.print();
     }finally{cleanup()}
   };
-  if(printFrame.contentDocument.readyState==='complete') setTimeout(doPrint,80);
-  else printFrame.onload=()=>setTimeout(doPrint,80);
+  const go=()=>whenServiceSent(1500).then(doPrint);
+  if(printFrame.contentDocument.readyState==='complete') setTimeout(go,80);
+  else printFrame.onload=()=>setTimeout(go,80);
 }
 $('birthAppSelect').addEventListener('change',()=>{birthApplicationNik=$('birthAppSelect').value;fillBirthApplication(birthApplicationNik)});
 $('btnFindBirthWitness1').addEventListener('click',()=>findBirthWitness(1));
@@ -2883,7 +2884,8 @@ function printSupportDocument(title, bodyHtml, pageCss){
   })();
   const cleanup=()=>setTimeout(()=>frame.remove(),700);
   const doPrint=()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}finally{cleanup()}};
-  if(frame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else frame.onload=()=>setTimeout(doPrint,250);
+  const go=()=>whenServiceSent(1500).then(doPrint);
+  if(frame.contentDocument.readyState==='complete')setTimeout(go,80);else frame.onload=()=>setTimeout(go,80);
 }
 function printSPTJM(){
   const r=getBirthResident();
@@ -3156,7 +3158,7 @@ function printDeathApplication(){
   renderDeathApplication();const paper=$('deathApplicationPreview')?.querySelector('.death-app-paper');if(!paper){toast('Pratinjau formulir belum tersedia');return}
   paper.style.zoom='';
   const printFrame=document.createElement('iframe');printFrame.setAttribute('aria-hidden','true');Object.assign(printFrame.style,{position:'fixed',left:'-10000px',top:'0',width:'1px',height:'1px',border:'0',visibility:'hidden'});document.body.appendChild(printFrame);
-  const doc=printFrame.contentDocument,title=safePrintName('F-2.01 - Akta Kematian - '+$('deathAppName').value.trim()),styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>@page{size:210mm 330mm;margin:0!important}html,body{margin:0!important;padding:0!important;width:210mm!important;background:#fff!important;overflow:visible!important}.print-sheet{width:210mm!important;margin:0!important;padding:0!important}.print-sheet .death-app-paper{width:198.1mm!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0 auto!important;padding:10mm 5mm 4mm!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important;box-shadow:none!important;text-align:justify!important}.print-sheet .death-app-paper .signature{display:table!important;width:100%!important;margin-top:5mm!important;page-break-inside:avoid!important;break-inside:avoid!important}.print-sheet .death-app-paper .signature td{display:table-cell!important}.print-sheet .death-app-paper .sigspace{height:14mm!important}.print-sheet .death-app-paper .section,.print-sheet .death-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);doc.close();mirrorFrameToDisplay(doc,{service:'Pengajuan Akta Kematian — Formulir F-2.01',name:$('deathAppName').value.trim(),page:{w:210,h:330}});const cleanup=()=>setTimeout(()=>printFrame.remove(),700);const doPrint=()=>{try{printFrame.contentWindow.focus();printFrame.contentWindow.print()}finally{cleanup()}};if(printFrame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else printFrame.onload=()=>setTimeout(doPrint,250);
+  const doc=printFrame.contentDocument,title=safePrintName('F-2.01 - Akta Kematian - '+$('deathAppName').value.trim()),styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>@page{size:210mm 330mm;margin:0!important}html,body{margin:0!important;padding:0!important;width:210mm!important;background:#fff!important;overflow:visible!important}.print-sheet{width:210mm!important;margin:0!important;padding:0!important}.print-sheet .death-app-paper{width:198.1mm!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0 auto!important;padding:10mm 5mm 4mm!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important;box-shadow:none!important;text-align:justify!important}.print-sheet .death-app-paper .signature{display:table!important;width:100%!important;margin-top:5mm!important;page-break-inside:avoid!important;break-inside:avoid!important}.print-sheet .death-app-paper .signature td{display:table-cell!important}.print-sheet .death-app-paper .sigspace{height:14mm!important}.print-sheet .death-app-paper .section,.print-sheet .death-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);doc.close();mirrorFrameToDisplay(doc,{service:'Pengajuan Akta Kematian — Formulir F-2.01',name:$('deathAppName').value.trim(),page:{w:210,h:330}});const cleanup=()=>setTimeout(()=>printFrame.remove(),700);const doPrint=()=>{try{printFrame.contentWindow.focus();printFrame.contentWindow.print()}finally{cleanup()}};if(printFrame.contentDocument.readyState==='complete')setTimeout(()=>whenServiceSent(1500).then(doPrint),80);else printFrame.onload=()=>setTimeout(()=>whenServiceSent(1500).then(doPrint),80);
 }
 $('btnDeathApplication').addEventListener('click',()=>{if(!hasPerm('death_application'))return toast('Anda tidak memiliki hak akses Permohonan Akta Kematian');openDeathApplication()});
 $('deathApplicationSelect').addEventListener('change',fillDeathApplication);
@@ -3511,7 +3513,7 @@ $('btnProcessImport').addEventListener('click',async()=>{
 });
 function download(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function safePrintName(v){return String(v||'').trim().replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').replace(/\.+$/,'').trim()||'Dokumen'}
-function printWithFilename(title,printFn,cleanupFn){try{mirrorBodyPrint(title)}catch(e){console.warn(e)}const oldTitle=document.title;document.title=safePrintName(title);try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}}
+function printWithFilename(title,printFn,cleanupFn){try{mirrorBodyPrint(title)}catch(e){console.warn(e)}const oldTitle=document.title;document.title=safePrintName(title);const run=()=>{try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}};whenServiceSent(1500).then(run)}
 function countRows(rows,f){const o={};rows.forEach(r=>{const k=r[f]||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>b[1]-a[1])}
 function countRWRows(rows){const o={};rows.forEach(r=>{const k=String(r.RW||'Tidak diisi').trim()||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>{const na=parseInt(a[0],10),nb=parseInt(b[0],10);if(Number.isFinite(na)&&Number.isFinite(nb))return na-nb;if(Number.isFinite(na))return -1;if(Number.isFinite(nb))return 1;return a[0].localeCompare(b[0],'id')})}
 function activeFilterLabels(){const map=[['search','Pencarian'],['fRT','RT'],['fRW','RW'],['fJK','Jenis Kelamin'],['fSH','Hubungan Keluarga'],['fStatus','Status'],['fAgama','Agama'],['fPendidikan','Pendidikan'],['fPekerjaan','Pekerjaan']];const out=[];map.forEach(([id,label])=>{const el=$(id);if(el&&el.value)out.push([label,el.value])});return out}
@@ -4802,7 +4804,13 @@ function syncServiceCode(force){
 }
 // ambil kode bersama begitu petugas sudah login
 (function(){let n=0;const t=setInterval(()=>{if(++n>60)return clearInterval(t);if(!window.sb||!window.currentUser)return;clearInterval(t);syncServiceCode().catch(e=>console.warn('Kode layar bersama',e))},2000)})();
-let cloudPushChain=Promise.resolve(),cloudWarned=false;
+let cloudPushChain=Promise.resolve(),cloudWarned=false,cloudPushLast=null;
+// Tahan pencetakan sebentar sampai dokumen terkirim ke layar lain. Saat jendela cetak terbuka, browser membekukan
+// proses di halaman ini, jadi bila dokumen belum terkirim, layar baru menerimanya setelah jendela cetak ditutup.
+function whenServiceSent(maxMs){
+  const p=cloudPushLast;if(!p)return Promise.resolve();
+  return Promise.race([p,new Promise(r=>setTimeout(r,maxMs||1500))]);
+}
 async function gzipB64(str){
   const s=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));
   const buf=new Uint8Array(await new Response(s).arrayBuffer());
@@ -4810,9 +4818,22 @@ async function gzipB64(str){
   for(let i=0;i<buf.length;i+=CH)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+CH));
   return btoa(bin);
 }
+// Sinyal ringan (tanpa data) lewat Realtime Broadcast: layar langsung mengambil data terbaru tanpa menunggu pengecekan berkala
+let svcPingCh=null,svcPingCode='';
+function pingServiceDisplay(code){
+  try{
+    if(!window.sb||!code)return;
+    if(!svcPingCh||svcPingCode!==code){
+      if(svcPingCh)try{window.sb.removeChannel(svcPingCh)}catch(e){}
+      svcPingCode=code;svcPingCh=window.sb.channel('svc:'+code);svcPingCh.subscribe();
+    }
+    const send=()=>svcPingCh.send({type:'broadcast',event:'ping',payload:{t:Date.now()}});
+    send();setTimeout(send,700);   // diulang sekali bila kanal baru tersambung
+  }catch(e){console.warn('ping layar',e)}
+}
 function cloudPushDisplay(payload,docHtml){
   if(!window.sb||!window.currentUser)return;
-  cloudPushChain=cloudPushChain.then(async()=>{
+  cloudPushLast=cloudPushChain=cloudPushChain.then(async()=>{
     try{
       let doc=null,enc='plain';
       if(docHtml){
@@ -4831,6 +4852,7 @@ function cloudPushDisplay(payload,docHtml){
       },{onConflict:'id'});
       if(error)throw error;
       cloudWarned=false;
+      pingServiceDisplay(scode);
     }catch(e){
       console.warn('Gagal kirim ke layar pelayanan (cloud)',e);
       if(!cloudWarned){cloudWarned=true;
