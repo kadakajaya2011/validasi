@@ -1665,6 +1665,16 @@ function openEdit(index){
     h+=members.map(m=>`<option value="${esc(m.NIK||'')}">${esc(m['NAMA LENGKAP']||'-')} — ${esc(m.SHDRT||'Anggota Keluarga')} — NIK ${esc(m.NIK||'-')}</option>`).join('');
     h+='</select></label><div class="hint" style="margin-top:6px">Muncul hanya jika Kepala Keluarga ini diubah menjadi hubungan keluarga lain. Pilih anggota yang akan menjadi Kepala Keluarga pengganti.</div></div>';
     $('editFormBody').insertAdjacentHTML('beforeend',h);
+    // Tambahan khusus Kepala Keluarga: gunakan modul Ubah No. KK yang sama
+    // dengan Data Keluarga, sehingga seluruh anggota dalam KK ikut berubah.
+    const editKKInput=$('edit_NO_KK');
+    if(editKKInput){
+      const kkWrap=editKKInput.closest('label');
+      if(kkWrap){
+        kkWrap.insertAdjacentHTML('beforeend',`<div style="margin-top:7px"><button type="button" class="btn-mini edit" id="btnEditHeadChangeKK">✏️ Ganti No. KK</button></div><div class="hint" style="margin-top:4px">Khusus Kepala Keluarga. Perubahan menggunakan fitur Ubah No. KK dan diterapkan ke seluruh anggota pada KK ini.</div>`);
+        $('btnEditHeadChangeKK')?.addEventListener('click',()=>openChangeKK(String(current['NO KK']||'').trim()));
+      }
+    }
     const relationSelect=$('edit_SHDRT'),wrap=$('editHeadReplacementWrap'),replacement=$('editHeadReplacement');
     const syncReplacementVisibility=()=>{
       const changingAway=String(relationSelect?.value||'').trim().toUpperCase()!=='KEPALA KELUARGA';
