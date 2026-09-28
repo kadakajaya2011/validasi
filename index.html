@@ -1229,6 +1229,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
         <label><b>Nama Kabupaten/Kota</b><input class="input" id="setRegency" placeholder="Contoh: Sumedang"></label>
         <label><b>Nama Provinsi</b><input class="input" id="setProvince" placeholder="Contoh: Jawa Barat"></label>
         <label><b>Nama Kepala Desa</b><input class="input" id="setHead" placeholder="Nama lengkap Kepala Desa"></label>
+        <label style="grid-column:1/-1"><b>Pejabat Penandatangan Surat Desa</b><div id="signerSettingsList" style="margin-top:7px"></div><button class="btn" type="button" id="btnAddSigner" style="margin-top:7px">＋ Tambah Pejabat</button><div class="hint" style="margin-top:6px">Kepala Desa otomatis menjadi penandatangan default pada Surat Desa. Pejabat lain dapat dipilih saat membuat surat.</div></label>
         <label><b>Alamat Kantor Desa</b><input class="input" id="setOfficeAddress" placeholder="Alamat lengkap kantor desa"></label>
         <label style="grid-column:1/-1"><b>Logo Desa / Lambang</b><input class="input" id="setLogo" type="file" accept="image/png,image/jpeg,image/webp"></label>
         <label><b>Orientasi Cetak</b><select class="select" id="setPrintOrientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
@@ -1286,6 +1287,8 @@ body{font-family:Arial,Helvetica,sans-serif!important}
             <label id="letterPurposeWrap"><b>Keperluan</b><input class="input" id="letterPurpose" placeholder="Keperluan surat"></label>
           </div>
           <div class="letter-section-gap small"></div>
+          <label><b>Penandatangan</b><select class="select" id="letterSigner"></select></label>
+          <div class="letter-section-gap small"></div>
           <div id="letterExtraFields" class="letter-extra-fields"></div>
           <div class="letter-section-gap"></div>
           <label><b>Keterangan Tambahan</b><textarea class="input" id="letterNote" rows="3" placeholder="Bila diperlukan"></textarea></label>
@@ -1320,7 +1323,7 @@ const $=id=>document.getElementById(id); const menuWrap=$('menuWrap'),menuPanel=
 function updateAppTitle(){const desa=String(desaSettings?.village||'').trim().replace(/^desa\s+/i,'');const title='Data Kependudukan Desa'+(desa?' '+desa:'');document.title=title;const el=$('appTitle');if(el)el.textContent=title;const logo=$('appTitleLogo');if(logo){logo.src=desaSettings?.logo||'';logo.style.display=desaSettings?.logo?'block':'none'}const favicon=$('appFavicon');if(favicon)favicon.href=desaSettings?.logo||''}
 function isValidNik(v){return /^\d{16}$/.test(String(v||'').trim())}
 function isValidKK(v){return /^\d{16}$/.test(String(v||'').trim())}
-function loadSettings(){try{const x=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');return Object.assign({village:'',district:'',regency:'',province:'',head:'',officeAddress:'',logo:'',printOrientation:'portrait',pinHash:''},x)}catch(e){return {village:'',district:'',regency:'',province:'',head:'',officeAddress:'',logo:'',printOrientation:'portrait',pinHash:''}}}
+function loadSettings(){try{const x=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');return Object.assign({village:'',district:'',regency:'',province:'',head:'',officeAddress:'',logo:'',printOrientation:'portrait',pinHash:'',signers:[]},x)}catch(e){return {village:'',district:'',regency:'',province:'',head:'',officeAddress:'',logo:'',printOrientation:'portrait',pinHash:'',signers:[]}}}
 async function cloudLoadSettings(){
   if(!window.sb)return desaSettings;
   const {data,error}=await window.sb.from('app_settings').select('settings').eq('id','main').maybeSingle();
@@ -1343,10 +1346,55 @@ async function saveSettings(){
     if(error)throw error;
   }
 }
-async function openSettings(){closeMenu();await cloudLoadSettings();$('setVillage').value=desaSettings.village||'';$('setDistrict').value=desaSettings.district||'';$('setRegency').value=desaSettings.regency||'';$('setProvince').value=desaSettings.province||'';$('setHead').value=desaSettings.head||'';$('setOfficeAddress').value=desaSettings.officeAddress||'';$('setPostal').value=desaSettings.postal||'';$('setPrintOrientation').value=desaSettings.printOrientation||'portrait';$('setLogo').value='';$('setPin').value='';$('setPinConfirm').value='';updatePinStatusHint();renderLogoSetting();$('settingsOverlay').classList.add('open')}
+function getConfiguredSigners(){
+  const raw=Array.isArray(desaSettings?.signers)?desaSettings.signers:[];
+  const out=[];
+  raw.forEach(x=>{
+    const jabatan=String(x?.jabatan||'').trim(), nama=String(x?.nama||'').trim();
+    if(jabatan&&nama)out.push({jabatan,nama});
+  });
+  const headName=String(desaSettings?.head||'').trim();
+  if(headName&&!out.some(x=>x.jabatan.toLowerCase()==='kepala desa'))out.unshift({jabatan:'Kepala Desa',nama:headName});
+  else if(headName){out.forEach(x=>{if(x.jabatan.toLowerCase()==='kepala desa')x.nama=headName})}
+  return out;
+}
+function renderSignerSettings(){
+  const wrap=$('signerSettingsList'); if(!wrap)return;
+  let rows=Array.isArray(desaSettings?.signers)?desaSettings.signers.map(x=>({jabatan:String(x?.jabatan||''),nama:String(x?.nama||'')})) : [];
+  const headName=String(desaSettings?.head||'').trim();
+  const headIndex=rows.findIndex(x=>x.jabatan.trim().toLowerCase()==='kepala desa');
+  if(headIndex>=0){rows[headIndex]={jabatan:'Kepala Desa',nama:headName||rows[headIndex].nama};}
+  else rows.unshift({jabatan:'Kepala Desa',nama:headName});
+  desaSettings.signers=rows;
+  wrap.innerHTML=rows.map((x,i)=>`<div class="signer-setting-row" data-signer-row="${i}" style="display:grid;grid-template-columns:1fr 1.3fr auto;gap:7px;margin-bottom:7px"><input class="input signer-role" value="${esc(x.jabatan)}" placeholder="Jabatan"><input class="input signer-name" value="${esc(x.nama)}" placeholder="Nama pejabat">${i===0?'<span></span>':`<button class="btn" type="button" data-remove-signer="${i}">Hapus</button>`}</div>`).join('');
+}
+function collectSignerSettings(){
+  const rows=[...document.querySelectorAll('#signerSettingsList .signer-setting-row')];
+  return rows.map(row=>({jabatan:String(row.querySelector('.signer-role')?.value||'').trim(),nama:String(row.querySelector('.signer-name')?.value||'').trim()})).filter(x=>x.jabatan&&x.nama);
+}
+function ensureHeadSigner(){
+  const headName=String(desaSettings?.head||'').trim();
+  let rows=getConfiguredSigners().filter(x=>x.jabatan.toLowerCase()!=='kepala desa');
+  if(headName)rows.unshift({jabatan:'Kepala Desa',nama:headName});
+  desaSettings.signers=rows;
+}
+function populateLetterSigner(selected){
+  const el=$('letterSigner'); if(!el)return;
+  const rows=getConfiguredSigners();
+  if(!rows.length){el.innerHTML='<option value="Kepala Desa">Kepala Desa</option>';el.value='Kepala Desa';return}
+  el.innerHTML=rows.map(x=>`<option value="${esc(x.jabatan)}">${esc(x.jabatan)} — ${esc(x.nama)}</option>`).join('');
+  const want=String(selected||'Kepala Desa');
+  el.value=rows.some(x=>x.jabatan===want)?want:(rows.some(x=>x.jabatan.toLowerCase()==='kepala desa')?rows.find(x=>x.jabatan.toLowerCase()==='kepala desa').jabatan:rows[0].jabatan);
+}
+function selectedLetterSigner(){
+  const wanted=String($('letterSigner')?.value||'Kepala Desa');
+  const rows=getConfiguredSigners();
+  return rows.find(x=>x.jabatan===wanted)||rows.find(x=>x.jabatan.toLowerCase()==='kepala desa')||{jabatan:'Kepala Desa',nama:String(desaSettings?.head||'').trim()};
+}
+async function openSettings(){closeMenu();await cloudLoadSettings();$('setVillage').value=desaSettings.village||'';$('setDistrict').value=desaSettings.district||'';$('setRegency').value=desaSettings.regency||'';$('setProvince').value=desaSettings.province||'';$('setHead').value=desaSettings.head||'';$('setOfficeAddress').value=desaSettings.officeAddress||'';$('setPostal').value=desaSettings.postal||'';$('setPrintOrientation').value=desaSettings.printOrientation||'portrait';renderSignerSettings();$('setLogo').value='';$('setPin').value='';$('setPinConfirm').value='';updatePinStatusHint();renderLogoSetting();$('settingsOverlay').classList.add('open')}
 function renderLogoSetting(){const el=$('setLogoPreview');el.innerHTML=desaSettings.logo?'<div style="display:flex;align-items:center;gap:12px"><img src="'+desaSettings.logo+'" style="width:75px;height:75px;object-fit:contain;border:1px solid #d9e1ea;border-radius:8px;background:#fff;padding:4px"><span>Logo tersimpan dan akan dipakai pada kop surat.</span></div>':'Belum ada logo. Pilih file gambar bila ingin menambahkan logo.'}
 async function saveSettingsForm(){
-  desaSettings.village=$('setVillage').value.trim();desaSettings.district=$('setDistrict').value.trim();desaSettings.regency=$('setRegency').value.trim();desaSettings.province=$('setProvince').value.trim();desaSettings.head=$('setHead').value.trim();desaSettings.officeAddress=$('setOfficeAddress').value.trim();desaSettings.postal=$('setPostal').value.trim();desaSettings.printOrientation=$('setPrintOrientation').value==='landscape'?'landscape':'portrait';
+  desaSettings.village=$('setVillage').value.trim();desaSettings.district=$('setDistrict').value.trim();desaSettings.regency=$('setRegency').value.trim();desaSettings.province=$('setProvince').value.trim();desaSettings.head=$('setHead').value.trim();desaSettings.officeAddress=$('setOfficeAddress').value.trim();desaSettings.signers=collectSignerSettings().filter(x=>x.jabatan.toLowerCase()!=='kepala desa');if(desaSettings.head)desaSettings.signers.unshift({jabatan:'Kepala Desa',nama:desaSettings.head});desaSettings.postal=$('setPostal').value.trim();desaSettings.printOrientation=$('setPrintOrientation').value==='landscape'?'landscape':'portrait';
   const pin=$('setPin').value,pinConfirm=$('setPinConfirm').value;
   if(pin||pinConfirm){
     if(pin.length<4){toast('PIN minimal 4 karakter');return}
@@ -4161,7 +4209,7 @@ function getLetterRegister(){try{return JSON.parse(localStorage.getItem(LETTER_K
 function saveLetterRegister(v){localStorage.setItem(LETTER_KEY,JSON.stringify(v))}
 function normalizeLetterRecord(x){
   const r=x&&typeof x==='object'?x:{};
-  return {id:String(r.id||crypto.randomUUID()),date:String(r.date||''),number:String(r.number||''),type:String(r.type||''),nik:String(r.nik||''),name:String(r.name||''),kk:String(r.kk||''),purpose:String(r.purpose||''),note:String(r.note||''),extras:r.extras&&typeof r.extras==='object'?r.extras:{},created_by:r.created_by||null,updated_by:r.updated_by||null,created_at:r.created_at||null,updated_at:r.updated_at||null};
+  return {id:String(r.id||crypto.randomUUID()),date:String(r.date||''),number:String(r.number||''),type:String(r.type||''),nik:String(r.nik||''),name:String(r.name||''),kk:String(r.kk||''),purpose:String(r.purpose||''),note:String(r.note||''),extras:r.extras&&typeof r.extras==='object'?r.extras:{},signer_jabatan:String(r.signer_jabatan||'Kepala Desa'),signer_nama:String(r.signer_nama||''),created_by:r.created_by||null,updated_by:r.updated_by||null,created_at:r.created_at||null,updated_at:r.updated_at||null};
 }
 async function syncCloudLetterRegister(){
   if(!window.sb||!window.currentUser)return getLetterRegister();
@@ -4286,6 +4334,10 @@ function buildLetterHtml(){
   const r=selectedLetterPerson, type=$('letterType').value, ex=collectLetterExtras(), date=$('letterDate').value||todayISO(), num=$('letterNumber').value.trim()||'................................';
   if(!r)return '<div class="empty">Masukkan NIK lalu klik Cari. Biodata penduduk akan diambil otomatis dari Master Penduduk.</div>';
   const ds=desaSettings||{};
+  const signer=selectedLetterSigner();
+  const signerJabatan=String(signer.jabatan||'Kepala Desa').trim();
+  const signerNama=String(signer.nama||ds.head||'').trim();
+  const penandatanganLabel=esc(signerJabatan||'Kepala Desa');
   const desa=(ds.village||'................................').replace(/^desa\s+/i,'');
   const kec=(ds.district||'................................').replace(/^kecamatan\s+/i,'');
   const kab=(ds.regency||'................................').replace(/^(kabupaten|kab\.|kota)\s+/i,'');
@@ -4345,7 +4397,7 @@ function buildLetterHtml(){
     extraBlock=`<table class="letter-table compact"><tr><td>Jenis/Status</td><td>:</td><td>${esc(ex.exLandType||'-')}</td></tr><tr><td>Lokasi</td><td>:</td><td>${esc(ex.exLandPlace||'-')}</td></tr></table>${ex.exDetail?`<p>Keterangan: ${esc(ex.exDetail)}</p>`:''}`;
   } else if(type==='Serba Guna'){
     statement=`Surat keterangan ini dibuat untuk menerangkan bahwa yang bersangkutan benar penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)}.`;
-    extraBlock=`<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||'-')}</b>.</p>${ex.exDetail?`<p>Keterangan / Isi Surat: ${esc(ex.exDetail)}</p>`:''}`;
+    extraBlock=`${ex.exDetail?`<p>Keterangan / Isi Surat: ${esc(ex.exDetail)}</p>`:''}<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||'-')}</b>.</p>`;
   } else if(type==='Penghasilan'){
     statement=`Berdasarkan keterangan dari RT/RW setempat dan data yang ada, benar bahwa yang bersangkutan Penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)} dan :`;
     extraBlock=`<p class="center-strong">==benar mempunyai penghasilan rata-rata ${esc(ex.exIncome||'Rp. ........................')} per bulan==</p><p>Surat Keterangan ini dipergunakan untuk : <b>${esc($('letterPurpose').value||'-')}</b></p>${ex.exDetail?`<p>${esc(ex.exDetail)}</p>`:''}`;
@@ -4419,9 +4471,9 @@ function buildLetterHtml(){
 
       <div class="kuasa-knowing">
         <div>Mengetahui :</div>
-        <div>Kepala Desa ${esc(desa)}</div>
+        <div>${penandatanganLabel} ${esc(desa)}</div>
           <div class="kuasa-space"></div>
-        <div class="kuasa-name">${esc(ds.head||'................................')} </div>
+        <div class="kuasa-name">${esc(signerNama||'................................')} </div>
       </div>
     </div>`;
   }
@@ -4434,11 +4486,11 @@ function buildLetterHtml(){
   if(commonNote)extraBlock+=`<p>${esc(commonNote)}</p>`;
   let signature='';
   const tanggal=`${esc(desa)}, ${esc(letterIndoDate(date))}`;
-  const kepala=`<b>( ${esc(ds.head||'................................')} )</b>`;
-  if(type==='SKCK') signature=`<div class="letter-sign-compact"><div class="letter-sign-grid two"><div>Mengetahui,<br>Reg. No. : ................................<br><b>CAMAT ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NIP. ........................</div><div>${tanggal}<br>Kepala Desa ${esc(desa)}<div class="space short"></div><br>${kepala}</div></div><div class="letter-sign-know">Mengetahui :</div><div class="letter-sign-grid two stacked"><div><b>DANRAMIL ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div><div><b>KAPOLSEK ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div></div></div>`;
-  else if(type==='Belum Menikah') signature=`<div class="letter-sign-grid two"><div>Mengetahui,<br>Kepala KUA Kecamatan ${esc(kec)}<div class="space"></div><b>( ................................ )</b></div><div>${tanggal}<br>Kepala Desa<div class="space"></div>${kepala}</div></div>`;
-  else if(type==='Izin Rame-Rame') signature=`<div class="letter-sign-compact"><div class="letter-sign-grid two"><div>Mengetahui,<br><b>CAMAT ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NIP. ........................</div><div>${tanggal}<br>Kepala Desa ${esc(desa)}<div class="space short"></div>${kepala}</div></div><div class="letter-sign-know">Mengetahui :</div><div class="letter-sign-grid two stacked"><div><b><br><br><br>DANRAMIL ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div><div>Pertimbangan Kapolsek ${esc(kec)}<br>No. : ................................<br>Atas permohonannya :<br>Tidak/Diizinkan dengan catatan :<div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div></div></div>`;
-  else signature=`<div class="letter-sign"><div>${tanggal}<br>Kepala Desa<div class="space"></div>${kepala}</div></div>`;
+  const kepala=`<b>( ${esc(signerNama||'................................')} )</b>`;
+  if(type==='SKCK') signature=`<div class="letter-sign-compact"><div class="letter-sign-grid two"><div>Mengetahui,<br>Reg. No. : ................................<br><b>CAMAT ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NIP. ........................</div><div>${tanggal}<br>${penandatanganLabel} ${esc(desa)}<div class="space short"></div><br>${kepala}</div></div><div class="letter-sign-know">Mengetahui :</div><div class="letter-sign-grid two stacked"><div><b>DANRAMIL ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div><div><b>KAPOLSEK ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div></div></div>`;
+  else if(type==='Belum Menikah') signature=`<div class="letter-sign-grid two"><div>Mengetahui,<br>Kepala KUA Kecamatan ${esc(kec)}<div class="space"></div><b>( ................................ )</b></div><div>${tanggal}<br>${penandatanganLabel}<div class="space"></div>${kepala}</div></div>`;
+  else if(type==='Izin Rame-Rame') signature=`<div class="letter-sign-compact"><div class="letter-sign-grid two"><div>Mengetahui,<br><b>CAMAT ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NIP. ........................</div><div>${tanggal}<br>${penandatanganLabel} ${esc(desa)}<div class="space short"></div>${kepala}</div></div><div class="letter-sign-know">Mengetahui :</div><div class="letter-sign-grid two stacked"><div><b><br><br><br>DANRAMIL ${esc(kec).toUpperCase()}</b><div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div><div>Pertimbangan Kapolsek ${esc(kec)}<br>No. : ................................<br>Atas permohonannya :<br>Tidak/Diizinkan dengan catatan :<div class="space short"></div><b>( ................................ )</b><br>NRP. ........................</div></div></div>`;
+  else signature=`<div class="letter-sign"><div>${tanggal}<br>${penandatanganLabel}<div class="space"></div>${kepala}</div></div>`;
   return `<div class="letter-paper"><div class="letter-head">${logo}<div class="head-text"><div class="gov">PEMERINTAH DAERAH KABUPATEN ${esc(kab).toUpperCase()}</div><div class="district">KECAMATAN ${esc(kec).toUpperCase()}</div><div class="village">DESA ${esc(desa).toUpperCase()}</div>${alamatKantor?`<div class="address">${esc(alamatKantor)}</div>`:''}</div></div><div class="letter-title">${letterTypeTitle(type)}</div><div class="letter-number">Nomor : ${esc(num)}</div><div class="letter-body"><p>Yang bertanda tangan di bawah ini, Kepala Desa ${esc(desa)} Kecamatan ${esc(kec)} Kabupaten ${esc(kab)}, menerangkan dengan sebenarnya bahwa:</p>${biodata}${type==='Izin Rame-Rame'?statement:`<p>${statement}</p>`}${extraBlock}<p>Demikian keterangan ini dibuat untuk dipergunakan sebagaimana mestinya.</p></div>${signature}</div>`;
 }
 function renderLetter(){ $('letterPreview').innerHTML=buildLetterHtml(); renderLetterRegister(); }
@@ -4447,7 +4499,7 @@ async function renderLetterRegister(){
   $('letterRegister').innerHTML=rows.length?'<div style="font-size:16px;font-weight:800;margin-bottom:10px">Register Surat Tersimpan</div><div style="overflow:auto"><table><thead><tr><th>No</th><th>Tanggal</th><th>Nomor</th><th>Jenis</th><th>NIK</th><th>Nama</th><th>KK</th><th>Aksi</th></tr></thead><tbody>'+rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(letterIndoDate(x.date))}</td><td>${esc(x.number)}</td><td>${esc(x.type)}</td><td>${esc(x.nik)}</td><td>${esc(x.name)}</td><td>${esc(x.kk||'')}</td><td><button class="btn-mini edit" data-letter-load="${i}">Muat</button> <button class="btn-mini delete" data-letter-del="${i}">Hapus</button></td></tr>`).join('')+'</tbody></table></div>':'<div class="empty" style="padding:35px 10px">Belum ada surat yang tersimpan dalam Register Surat Desa.</div>';
 }
 function resetLetterForm(){
-  selectedLetterPerson=null;letterEditingIndex=-1;$('letterNik').value='';$('letterNumber').value='';$('letterDate').value=todayISO();$('letterPurpose').value='';$('letterNote').value='';$('letterType').value='Domisili';updateLetterTypeOptions();$('letterExtraFields').innerHTML=extraFieldsHtml('Domisili');$('letterPersonPreview').innerHTML='';renderLetter();
+  selectedLetterPerson=null;letterEditingIndex=-1;$('letterNik').value='';$('letterNumber').value='';$('letterDate').value=todayISO();$('letterPurpose').value='';$('letterNote').value='';$('letterType').value='Domisili';populateLetterSigner('Kepala Desa');updateLetterTypeOptions();$('letterExtraFields').innerHTML=extraFieldsHtml('Domisili');$('letterPersonPreview').innerHTML='';renderLetter();
 }
 async function openLetters(nik=''){closeMenu();await syncCloudLetterRegister();resetLetterForm();$('letterOverlay').classList.add('open');const body=$('letterOverlay').querySelector('.modal-body');if(body)body.scrollTop=0;const v=(typeof nik==='string')?nik.trim():'';if(/^\d{16}$/.test(v)){$('letterNik').value=v;showLetterPerson();renderLetter()}}
 $('tbody').addEventListener('click',e=>{
@@ -4469,6 +4521,8 @@ $('tbody').addEventListener('click',e=>{
 $('btnLetters').addEventListener('click',()=>{if(!hasPerm('letters'))return toast('Anda tidak memiliki hak akses Register Surat Desa');openLetters()});
 $('btnSettings').addEventListener('click',()=>{if(!hasPerm('settings'))return toast('Anda tidak memiliki hak akses Pengaturan Desa');openSettings()});
 $('btnSaveSettings').addEventListener('click',saveSettingsForm);
+$('btnAddSigner').addEventListener('click',()=>{const rows=collectSignerSettings();rows.push({jabatan:'',nama:''});desaSettings.signers=rows;renderSignerSettings()});
+$('signerSettingsList').addEventListener('click',e=>{const b=e.target.closest('[data-remove-signer]');if(!b)return;const rows=collectSignerSettings();rows.splice(Number(b.dataset.removeSigner),1);desaSettings.signers=rows;renderSignerSettings()});
 $('btnRemoveLogo').addEventListener('click',async()=>{desaSettings.logo='';try{await saveSettings()}catch(err){toast('Gagal menghapus logo: '+err.message);return}renderLogoSetting();toast('Logo dihapus')});
 $('setLogo').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;if(f.size>1500000){toast('Ukuran logo maksimal 1,5 MB');e.target.value='';return}if(window.sb&&window.currentUser){try{const ext=(f.name.split('.').pop()||'png').toLowerCase();const path='desa-logo-'+window.currentUser.id+'.'+ext;const up=await window.sb.storage.from('app-assets').upload(path,f,{upsert:true,contentType:f.type});if(up.error)throw up.error;const pub=window.sb.storage.from('app-assets').getPublicUrl(path);desaSettings.logo=pub.data.publicUrl;renderLogoSetting();toast('Logo berhasil diunggah. Klik Simpan Pengaturan.')}catch(err){toast('Upload logo gagal: '+err.message)}}else{const rd=new FileReader();rd.onload=()=>{desaSettings.logo=rd.result;renderLogoSetting()};rd.readAsDataURL(f)}});
 
@@ -4529,6 +4583,7 @@ $('letterRegister').addEventListener('click',async e=>{
     $('letterDate').value=x.date||todayISO();
     $('letterPurpose').value=x.purpose||'';
     $('letterNote').value=x.note||'';
+    populateLetterSigner(x.signer_jabatan||'Kepala Desa');
     setLetterExtras(x.extras||{});
     showLetterPerson();
     const st=String(selectedLetterPerson?.STATUS||'').trim().toLowerCase();
@@ -4551,6 +4606,7 @@ $('btnExportLetterRegister').addEventListener('click',()=>{const blob=new Blob([
 $('btnImportLetterRegister').addEventListener('click',()=>$('letterRegisterFile').click());
 $('letterRegisterFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const v=JSON.parse(rd.result);if(!Array.isArray(v))throw new Error('Format bukan array');const rows=v.map(normalizeLetterRecord);for(const rec of rows)await upsertCloudLetterRecord(rec);saveLetterRegister(rows);await syncCloudLetterRegister();await renderLetterRegister();toast('Register surat berhasil diimpor dan disinkronkan')}catch(err){toast('File register tidak valid atau gagal disinkronkan: '+(err.message||err))}};rd.readAsText(f);e.target.value='' });
 
+$('letterSigner').addEventListener('change',()=>renderLetter());
 $('letterType').addEventListener('change',()=>{
   const type=$('letterType').value;
   $('letterExtraFields').innerHTML=extraFieldsHtml(type);
@@ -4629,7 +4685,7 @@ $('btnSaveLetter').addEventListener('click',async()=>{
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
   const rows=getLetterRegister(),r=selectedLetterPerson;
   const old=letterEditingIndex>=0?rows[letterEditingIndex]:null;
-  const rec=normalizeLetterRecord({id:old?.id||crypto.randomUUID(),date:$('letterDate').value||todayISO(),number:$('letterNumber').value.trim(),type:$('letterType').value,nik:String(r.NIK||''),name:r['NAMA LENGKAP']||'',kk:r['NO KK']||'',purpose:$('letterPurpose').value.trim(),note:$('letterNote').value.trim(),extras:collectLetterExtras(),created_by:old?.created_by||window.currentUser?.id||null,created_at:old?.created_at||new Date().toISOString()});
+  const rec=normalizeLetterRecord({id:old?.id||crypto.randomUUID(),date:$('letterDate').value||todayISO(),number:$('letterNumber').value.trim(),type:$('letterType').value,nik:String(r.NIK||''),name:r['NAMA LENGKAP']||'',kk:r['NO KK']||'',purpose:$('letterPurpose').value.trim(),note:$('letterNote').value.trim(),extras:collectLetterExtras(),signer_jabatan:selectedLetterSigner().jabatan,signer_nama:selectedLetterSigner().nama,created_by:old?.created_by||window.currentUser?.id||null,created_at:old?.created_at||new Date().toISOString()});
   if(!rec.number){toast('Isi Nomor Surat terlebih dahulu');$('letterNumber').focus();return}
   try{
     await upsertCloudLetterRecord(rec);
