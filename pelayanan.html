@@ -99,7 +99,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
     <div style="display:flex;align-items:center;gap:1.2vw">
       <img id="llogo" alt="">
       <div>
-        <div class="t">MOHON PERIKSA SURAT ANDA</div>
+        <div class="t" id="ltitle">MOHON PERIKSA DOKUMEN ANDA</div>
         <div class="s" id="lsub"></div>
       </div>
     </div>
@@ -173,38 +173,42 @@ function renderHours(){
   DEFAULTS.hours.forEach(h=>{const s=document.createElement('span');s.textContent=h;$('hours').appendChild(s)});
 }
 
-/* ===== MODE CEK SURAT ===== */
+/* ===== MODE CEK DOKUMEN (surat, biodata, F-1.01, KTP, akta, dll.) ===== */
 const LETTER_KEY='DESA_SERVICE_DISPLAY_LETTER';
-let lastLetter=null,lastKey='',zoom=1,dims=null;
+const MM=3.7795;
+let lastDoc=null,lastKey='',zoom=1,dims=null,curPage=null,pausedUntil=0;
 
-function getLetter(p){
-  if(p.letterHtml)return lastLetter={updatedAt:p.updatedAt,html:p.letterHtml,css:p.letterCss||''};
-  if(lastLetter&&lastLetter.updatedAt===p.updatedAt)return lastLetter;
-  try{const l=JSON.parse(localStorage.getItem(LETTER_KEY)||'null');if(l&&l.html&&l.updatedAt===p.updatedAt)return lastLetter=l}catch(e){}
+function getDoc(p){
+  if(p.docHtml)return lastDoc={updatedAt:p.updatedAt,docHtml:p.docHtml};
+  if(lastDoc&&lastDoc.updatedAt===p.updatedAt)return lastDoc;
+  try{const l=JSON.parse(localStorage.getItem(LETTER_KEY)||'null');if(l&&l.docHtml&&l.updatedAt===p.updatedAt)return lastDoc=l}catch(e){}
   return null;
 }
-function showLetter(p){
+function showDoc(p){
   const desa=stripVillage(p.village);
-  $('lsub').textContent=[clean(p.name),clean(p.service),desa?'Desa '+desa:''].filter(Boolean).join('  •  ');
+  $('ltitle').textContent=clean(p.service)||'MOHON PERIKSA DOKUMEN ANDA';
+  $('lsub').textContent=['Mohon periksa dokumen Anda',clean(p.name),desa?'Desa '+desa:''].filter(Boolean).join('  •  ');
   if(p.logo){$('llogo').src=p.logo;$('llogo').style.display='block'}
-  const l=getLetter(p);
+  const l=getDoc(p);
   const fr=$('letterFrame');
   if(!l){$('lwait').style.display='flex';return}
   $('lwait').style.display='none';
-  zoom=1;dims=null;
-  fr.style.width='1000px';fr.style.height='4000px';fr.style.transform='none';
+  curPage={w:(p.page&&p.page.w)||215.9,h:(p.page&&p.page.h)||330.2};
+  zoom=1;dims=null;$('letterWrap').scrollTop=0;
+  fr.style.width=Math.round(curPage.w*MM)+'px';fr.style.height=Math.round(curPage.h*MM)+'px';fr.style.transform='none';
   fr.onload=()=>{measure();setTimeout(measure,400);setTimeout(measure,1200)};
-  fr.srcdoc='<!doctype html><html><head><meta charset="utf-8"><style>'+l.css+'</style>'+
-    '<style>html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:hidden!important;height:auto!important}'+
-    '#letterPreview{display:block!important;width:auto!important}.letter-paper{margin:0!important;box-shadow:none!important;zoom:1!important}</style>'+
-    '</head><body><div id="letterPreview">'+l.html+'</div></body></html>';
+  fr.srcdoc=l.docHtml.replace(/<\/head>/i,'<style>html,body{overflow:hidden!important}</style></head>');
 }
 function measure(){
   try{
-    const d=$('letterFrame').contentDocument;
-    const paper=d.querySelector('.letter-paper')||d.getElementById('letterPreview');
-    const r=paper.getBoundingClientRect();
-    dims={w:Math.ceil(r.width),h:Math.ceil(r.height)};
+    const fr=$('letterFrame'),d=fr.contentDocument;
+    const pw=Math.round(curPage.w*MM),ph=Math.round(curPage.h*MM);
+    const bb=d.body.getBoundingClientRect();
+    let kb=0,kr=0;Array.from(d.body.children).forEach(c=>{const r=c.getBoundingClientRect();kb=Math.max(kb,r.bottom);kr=Math.max(kr,r.right)});
+    // catatan: scrollHeight html tidak dipakai karena selalu >= tinggi iframe
+    const cw=Math.max(pw,Math.ceil(kr),Math.ceil(bb.width));
+    const ch=Math.max(200,Math.ceil(kb),Math.ceil(bb.height));
+    dims={w:cw,h:ch,pageH:ph};
     fit();
   }catch(e){}
 }
@@ -214,8 +218,11 @@ function fit(){
   const cs=getComputedStyle(wrap);
   const aw=wrap.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
   const ah=wrap.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-  const sc=Math.min(aw/dims.w,ah/dims.h)*zoom;
-  fr.style.width=Math.max(1000,dims.w)+'px';
+  // satu halaman: muat seluruhnya; banyak halaman: sesuaikan lebar/tinggi 1 halaman lalu gulir otomatis
+  const multi=dims.h>dims.pageH*1.12;
+  const refH=multi?dims.pageH:dims.h;
+  const sc=Math.min(aw/dims.w,ah/refH)*zoom;
+  fr.style.width=dims.w+'px';
   fr.style.height=dims.h+'px';
   fr.style.transform='scale('+sc+')';
   box.style.width=Math.floor(dims.w*sc)+'px';
@@ -223,29 +230,33 @@ function fit(){
 }
 // Zoom oleh petugas: + / - / 0 (layar ke-2 ada di komputer yang sama)
 window.addEventListener('keydown',e=>{
-  if(!document.getElementById('screen').classList.contains('letter'))return;
+  if(!$('screen').classList.contains('letter'))return;
+  pausedUntil=Date.now()+25000;
   if(e.key==='+'||e.key==='='){zoom=Math.min(zoom*1.15,4);fit()}
   else if(e.key==='-'||e.key==='_'){zoom=Math.max(zoom/1.15,.3);fit()}
   else if(e.key==='0'){zoom=1;fit()}
 });
+['wheel','touchstart','mousedown'].forEach(ev=>$('letterWrap').addEventListener(ev,()=>{pausedUntil=Date.now()+25000},{passive:true}));
+// Dokumen banyak halaman (mis. KTP beberapa anggota, F-1.01): gulir otomatis per layar agar warga bisa memeriksa semuanya
+setInterval(()=>{
+  if(!$('screen').classList.contains('letter')||Date.now()<pausedUntil)return;
+  const w=$('letterWrap');
+  if(w.scrollHeight<=w.clientHeight+20)return;
+  const atEnd=w.scrollTop+w.clientHeight>=w.scrollHeight-4;
+  w.scrollTo({top:atEnd?0:w.scrollTop+w.clientHeight*0.9,behavior:'smooth'});
+},8000);
 window.addEventListener('resize',fit);
 
 /* ===== PENGATUR TAMPILAN ===== */
 function showState(p){
   p=p||{};
-  const isLetter=p.mode==='letter';
-  const key=[p.updatedAt||'',p.mode||'',p.letterHtml?'H':'-'].join('|');
+  const isDoc=p.mode==='doc'||p.mode==='letter';
+  const key=[p.updatedAt||'',p.mode||'',p.docHtml?'H':'-'].join('|');
   if(key===lastKey)return;               // abaikan kiriman ganda (BroadcastChannel + postMessage + storage)
+  lastKey=key;
   const scr=$('screen');
-  if(isLetter){
-    scr.classList.add('letter');
-    showLetter(p);
-    lastKey=key;
-  }else{
-    scr.classList.remove('letter');
-    lastKey=key;
-    showQueue(p);
-  }
+  if(isDoc){scr.classList.add('letter');showDoc(p)}
+  else{scr.classList.remove('letter');showQueue(p)}
 }
 
 function decodeHashPayload(){
