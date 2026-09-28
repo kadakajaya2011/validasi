@@ -1560,8 +1560,9 @@ $('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('i
     const r=data.find(x=>String(x.NIK)===String(react.dataset.reactivateNik));
     if(!r)return;
     if(!confirm('Aktifkan kembali '+(r['NAMA LENGKAP']||r.NIK)+'?'))return;
+    const inactiveBeforeReactivate={alasan:String(r.ALASAN_NONAKTIF||'').trim(),tanggal:String(r.TGL_NONAKTIF||'').trim(),keterangan:String(r.KETERANGAN_NONAKTIF||'').trim()};
     reactivateResident(r);
-    addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});
+    addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF',alasanSebelumnya:inactiveBeforeReactivate.alasan,tanggalSebelumnya:inactiveBeforeReactivate.tanggal,keteranganSebelumnya:inactiveBeforeReactivate.keterangan});
     try{await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){toast('Gagal menyimpan: '+(err.message||err))}
     return;
   }
@@ -2190,6 +2191,8 @@ $('btnPrintKtpSelected').addEventListener('click',printKtpSelected);
 $('btnPrintKtpAll').addEventListener('click',printKtpAll);
 
 $('btnSaveEdit').addEventListener('click',async()=>{if(editingIndex<0||!data[editingIndex])return;const r={};fields.forEach(f=>{const el=$('edit_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'')});if(!validateRequiredResidentFields(r,'edit_'))return;if(!r.NIK){toast('NIK wajib diisi');return}if(!isValidNik(r.NIK)){toast('NIK harus terdiri dari 16 digit angka');return}if(data.some((x,i)=>i!==editingIndex&&x.NIK===r.NIK)){toast('NIK sudah digunakan data lain');return}const before=data[editingIndex];
+  // Data yang sudah diaktifkan kembali tetap berstatus AKTIF saat diedit.
+  // Data hanya menjadi TIDAK AKTIF lagi jika pengguna memilih Hapus.
   r.STATUS_AKTIF=String(before.STATUS_AKTIF||'AKTIF').trim().toUpperCase()||'AKTIF';
   r.ALASAN_NONAKTIF=String(before.ALASAN_NONAKTIF||'').trim();
   r.TGL_NONAKTIF=String(before.TGL_NONAKTIF||'').trim();
