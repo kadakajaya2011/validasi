@@ -1293,7 +1293,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           <div class="letter-section-gap"></div>
           <label><b>Keterangan Tambahan</b><textarea class="input" id="letterNote" rows="3" placeholder="Bila diperlukan"></textarea></label>
           <div style="height:10px"></div>
-          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn btn-primary" id="btnShowServiceDisplay">📺 Tampilkan di Layar Pelayanan</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn btn-primary" id="btnShowServiceDisplay">📺 Tampilkan Surat di Layar Pelayanan</button><button class="btn" id="btnCloseServiceDisplay">⏹ Tutup Surat di Layar</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
           <div class="hint" style="margin-top:8px">NIK hanya dipakai untuk mengambil biodata dari Master Penduduk. Biodata tidak perlu diketik ulang.</div>
         </div>
         <div>
@@ -4671,36 +4671,68 @@ $('btnPreviewLetter').addEventListener('click',()=>{
   renderLetter();
   toast('Surat diperbarui');
 });
+/* ===== Layar Pelayanan (layar ke-2) ===== */
+const SERVICE_DISPLAY_URL='./pelayanan.html';
+const SERVICE_STATE_KEY='DESA_SERVICE_DISPLAY_STATE';
+const SERVICE_LETTER_KEY='DESA_SERVICE_DISPLAY_LETTER';
+// Kumpulkan CSS halaman ini (kecuali @media print) agar surat tampil identik di layar ke-2
+function collectLetterCss(){
+  let css='';
+  for(const sh of Array.from(document.styleSheets)){
+    let rules;try{rules=sh.cssRules}catch(e){continue}
+    for(const r of Array.from(rules||[])){
+      if(r.type===CSSRule.MEDIA_RULE&&/print/i.test(r.conditionText||r.media?.mediaText||''))continue;
+      css+=r.cssText+'\n';
+    }
+  }
+  return css;
+}
+function openServiceDisplay(payload,letter){
+  // simpan: surat dulu, baru status ringan (agar event storage di layar ke-2 menemukan suratnya)
+  try{if(letter)localStorage.setItem(SERVICE_LETTER_KEY,JSON.stringify({updatedAt:payload.updatedAt,...letter}));else localStorage.removeItem(SERVICE_LETTER_KEY)}catch(e){console.warn('Surat terlalu besar untuk localStorage',e)}
+  try{localStorage.setItem(SERVICE_STATE_KEY,JSON.stringify(payload))}catch(e){console.warn('Gagal menyimpan status layar pelayanan',e)}
+  const full=letter?{...payload,letterHtml:letter.html,letterCss:letter.css}:payload;
+  let win=null;
+  try{
+    const packed=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    win=window.open(SERVICE_DISPLAY_URL+'#service='+encodeURIComponent(packed),'desaServiceDisplay');
+  }catch(e){try{win=window.open(SERVICE_DISPLAY_URL,'desaServiceDisplay')}catch(err){}}
+  try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload:full});setTimeout(()=>bc.close(),500)}catch(e){}
+  // postMessage: tetap jalan walau BroadcastChannel/localStorage tidak dibagi antar jendela; diulang untuk jendela yang baru dibuka
+  if(win){
+    const send=()=>{try{win.postMessage({type:'SHOW_SERVICE',payload:full},'*')}catch(e){}};
+    send();setTimeout(send,600);setTimeout(send,1800);
+    try{win.focus()}catch(e){}
+  }
+  return !!win;
+}
+function servicePayloadBase(r){
+  return {
+    version:2,
+    village:String(desaSettings?.village||'Desa').replace(/^(desa|kelurahan)\s+/i,'').trim(),
+    district:String(desaSettings?.district||'').replace(/^kecamatan\s+/i,'').trim(),
+    logo:desaSettings?.logo||'',
+    name:String(r?.['NAMA LENGKAP']||r?.NAMA_LGKP||'').trim(),
+    nik:String(r?.NIK||'').trim(),
+    service:$('letterType')?letterTypeTitle($('letterType').value):'',
+    number:String($('letterNumber')?.value||'').trim(),
+    purpose:String($('letterPurpose')?.value||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+}
 function showLetterOnServiceDisplay(){
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
   renderLetter();
-  const r=selectedLetterPerson;
-  const payload={
-    version:1,
-    village:String(desaSettings?.village||'Desa').replace(/^(desa|kelurahan)\s+/i,'').trim(),
-    district:String(desaSettings?.district||'').replace(/^kecamatan\s+/i,'').trim(),
-    logo:desaSettings?.logo||'',
-    name:String(r['NAMA LENGKAP']||r.NAMA_LGKP||'').trim(),
-    nik:String(r.NIK||'').trim(),
-    service:letterTypeTitle($('letterType').value),
-    number:String($('letterNumber').value||'').trim(),
-    purpose:String($('letterPurpose').value||'').trim(),
-    updatedAt:new Date().toISOString()
-  };
-  try{localStorage.setItem('DESA_SERVICE_DISPLAY_STATE',JSON.stringify(payload))}catch(e){console.warn('Gagal menyimpan status layar pelayanan',e)}
-  // Kirim juga melalui URL agar display.html tetap menerima data ketika dibuka
-  // dari GitHub Pages atau ketika BroadcastChannel/localStorage tidak tersedia.
-  let win=null;
-  try{
-    const packed=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    win=window.open('./display.html#service='+encodeURIComponent(packed),'desaServiceDisplay');
-  }catch(e){
-    try{win=window.open('./display.html','desaServiceDisplay')}catch(err){}
-  }
-  try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload});setTimeout(()=>bc.close(),500)}catch(e){}
-  if(win){try{win.focus()}catch(e){}}
-  toast('Data pelayanan dikirim ke layar pelayanan');
+  const payload={...servicePayloadBase(selectedLetterPerson),mode:'letter'};
+  const letter={html:$('letterPreview').innerHTML,css:collectLetterCss()};
+  openServiceDisplay(payload,letter);
+  toast('Surat ditampilkan di layar pelayanan');
+}
+function closeLetterOnServiceDisplay(){
+  const payload={...servicePayloadBase(selectedLetterPerson),mode:'queue'};
+  openServiceDisplay(payload,null);
+  toast('Layar pelayanan kembali ke tampilan antrian');
 }
 
 $('btnPrintLetter').addEventListener('click',()=>{
@@ -4711,7 +4743,7 @@ $('btnPrintLetter').addEventListener('click',()=>{
   setPrintPageOrientation('portrait');
   const name=selectedLetterPerson['NAMA LENGKAP']||selectedLetterPerson.NIK||'Penduduk';
   printWithFilename(letterTypeTitle($('letterType').value)+' - '+name,()=>window.print(),()=>{document.body.classList.remove('print-letter');clearPrintOrientation()});
-});$('btnShowServiceDisplay').addEventListener('click',showLetterOnServiceDisplay);
+});$('btnShowServiceDisplay').addEventListener('click',showLetterOnServiceDisplay);$('btnCloseServiceDisplay').addEventListener('click',closeLetterOnServiceDisplay);
 
 $('btnSaveLetter').addEventListener('click',async()=>{
   if(!selectedLetterPerson){showLetterPerson()}
