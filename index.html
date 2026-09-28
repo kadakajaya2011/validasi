@@ -4689,8 +4689,15 @@ function showLetterOnServiceDisplay(){
     updatedAt:new Date().toISOString()
   };
   try{localStorage.setItem('DESA_SERVICE_DISPLAY_STATE',JSON.stringify(payload))}catch(e){console.warn('Gagal menyimpan status layar pelayanan',e)}
+  // Kirim juga melalui URL agar display.html tetap menerima data ketika dibuka
+  // dari GitHub Pages atau ketika BroadcastChannel/localStorage tidak tersedia.
   let win=null;
-  try{win=window.open('./display.html','desaServiceDisplay')}catch(e){}
+  try{
+    const packed=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    win=window.open('./display.html#service='+encodeURIComponent(packed),'desaServiceDisplay');
+  }catch(e){
+    try{win=window.open('./display.html','desaServiceDisplay')}catch(err){}
+  }
   try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload});setTimeout(()=>bc.close(),500)}catch(e){}
   if(win){try{win.focus()}catch(e){}}
   toast('Data pelayanan dikirim ke layar pelayanan');

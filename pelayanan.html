@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Layar Pelayanan Desa</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif;background:#071827;color:#fff;overflow:hidden}body{display:flex;align-items:center;justify-content:center}.screen{width:100%;height:100%;display:flex;flex-direction:column}.top{height:18%;display:flex;align-items:center;gap:22px;padding:18px 34px;background:#0c2740;border-bottom:4px solid #e5b93f}.logo{width:82px;height:82px;object-fit:contain;background:#fff;border-radius:12px;padding:5px;display:none}.village{font-size:clamp(26px,3vw,48px);font-weight:800}.sub{font-size:clamp(16px,1.5vw,26px);opacity:.8;margin-top:6px}.main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px}.card{width:min(1100px,90vw);padding:36px 42px;border-radius:28px;background:#103452;box-shadow:0 18px 60px #0007}.label{font-size:clamp(18px,2vw,30px);letter-spacing:2px;text-transform:uppercase;opacity:.8}.name{font-size:clamp(38px,6vw,88px);font-weight:900;margin:16px 0 18px;line-height:1.05}.service{font-size:clamp(24px,3vw,46px);font-weight:700}.purpose{font-size:clamp(18px,2vw,28px);margin-top:14px;opacity:.85}.bottom{height:15%;display:flex;align-items:center;justify-content:space-between;padding:20px 34px;background:#0c2740;font-size:clamp(16px,1.5vw,25px)}.clock{font-weight:800}.empty .card{background:transparent;box-shadow:none}.empty .name{font-size:clamp(34px,5vw,70px)}.hint{opacity:.78;font-size:clamp(18px,2vw,28px);margin-top:18px}.fade{animation:fade .35s ease}@keyframes fade{from{opacity:.2;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif;background:#eef3f8;color:#10233b;overflow:hidden}body{display:flex;align-items:center;justify-content:center}.screen{width:100%;height:100%;display:flex;flex-direction:column}.top{height:18%;display:flex;align-items:center;gap:22px;padding:18px 34px;background:#fff;border-bottom:1px solid #d9e2ec;box-shadow:0 2px 12px #00000010}.logo{width:82px;height:82px;object-fit:contain;background:#fff;border-radius:12px;padding:5px;display:none}.village{font-size:clamp(26px,3vw,48px);font-weight:800;color:#10233b}.sub{font-size:clamp(16px,1.5vw,26px);color:#5d7188;margin-top:6px}.main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px}.card{width:min(1100px,90vw);padding:42px 48px;border-radius:24px;background:#fff;box-shadow:0 14px 40px #20354a18;border:1px solid #dce5ee}.label{font-size:clamp(18px,2vw,30px);letter-spacing:2px;text-transform:uppercase;color:#60758b}.name{font-size:clamp(38px,6vw,88px);font-weight:900;margin:16px 0 18px;line-height:1.05;color:#10233b}.service{font-size:clamp(24px,3vw,46px);font-weight:700;color:#1f5d91}.purpose{font-size:clamp(18px,2vw,28px);margin-top:14px;color:#50657b}.bottom{height:15%;display:flex;align-items:center;justify-content:space-between;padding:20px 34px;background:#fff;border-top:1px solid #d9e2ec;font-size:clamp(16px,1.5vw,25px);color:#52677d}.clock{font-weight:800}.empty .card{background:#fff;box-shadow:0 14px 40px #20354a18}.empty .name{font-size:clamp(34px,5vw,70px)}.hint{opacity:.78;font-size:clamp(18px,2vw,28px);margin-top:18px}.fade{animation:fade .35s ease}@keyframes fade{from{opacity:.2;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
 </style>
 </head>
 <body>
@@ -30,7 +30,19 @@ function showState(p){
   $('hint').textContent=clean(p.number)?'Nomor Surat: '+clean(p.number):'Silakan menunggu pelayanan Anda.';
   $('card').classList.remove('fade');void $('card').offsetWidth;$('card').classList.add('fade');
 }
-function load(){try{const p=JSON.parse(localStorage.getItem(KEY)||'null');if(p)showState(p)}catch(e){}}
+function decodeHashPayload(){
+  try{
+    const m=location.hash.match(/^#service=(.+)$/);
+    if(!m)return null;
+    const raw=decodeURIComponent(m[1]);
+    return JSON.parse(decodeURIComponent(escape(atob(raw))));
+  }catch(e){return null}
+}
+function load(){
+  const fromHash=decodeHashPayload();
+  if(fromHash){showState(fromHash);try{localStorage.setItem(KEY,JSON.stringify(fromHash))}catch(e){};return}
+  try{const p=JSON.parse(localStorage.getItem(KEY)||'null');if(p)showState(p)}catch(e){}
+}
 function clock(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('date').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}
 load();clock();setInterval(clock,1000);
 try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.onmessage=e=>{if(e.data?.type==='SHOW_SERVICE')showState(e.data.payload)}}catch(e){}
