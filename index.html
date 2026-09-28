@@ -4298,7 +4298,7 @@ function buildLetterHtml(){
   const bioRows=[['Nama lengkap',`<b>${esc(nama)}</b>`],['Nomor Induk Kependudukan',esc(nik)],['Nomor Kartu Keluarga',esc(kk)],['Tempat, Tanggal Lahir',`${esc(tempatLahir)}, ${esc(tglLahir)}`],['Jenis Kelamin',esc(r.JK||'-')],['Agama',esc(r.AGAMA||'-')]];
   if(type!=='Izin Rame-Rame')bioRows.push(['Pendidikan',esc(r.PENDIDIKAN||'-')],['Pekerjaan',esc(r.PEKERJAAN||'-')]);
   bioRows.push(['Status Perkawinan',esc(r.STATUS||'-')]);
-  if(type!=='Izin Rame-Rame')bioRows.push(['Nama Orang Tua',`${esc(r.NAMA_LGKP_AYAH||'-')} / ${esc(r.NAMA_LGKP_IBU||'-')}`]);
+  if(type!=='Izin Rame-Rame')bioRows.push(['Nama Orang Tua',esc(r.NAMA_LGKP_AYAH||r.NAMA_LGKP_IBU||'-')]);
   bioRows.push(['Alamat',`${esc(alamat)} &nbsp; RT. ${esc(rt)} RW. ${esc(rw)}<br>Desa ${esc(desa)} &nbsp;&nbsp; Kecamatan ${esc(kec)}<br>Kabupaten ${esc(kab)} &nbsp;&nbsp; Provinsi ${esc(prov)}`]);
   const biodata=`<table class="letter-table biodata">${bioRows.map(x=>`<tr><td>${x[0]}</td><td>:</td><td>${x[1]}</td></tr>`).join('')}</table>`;
   let statement='', extraBlock='';
@@ -4345,7 +4345,7 @@ function buildLetterHtml(){
     extraBlock=`<table class="letter-table compact"><tr><td>Jenis/Status</td><td>:</td><td>${esc(ex.exLandType||'-')}</td></tr><tr><td>Lokasi</td><td>:</td><td>${esc(ex.exLandPlace||'-')}</td></tr></table>${ex.exDetail?`<p>Keterangan: ${esc(ex.exDetail)}</p>`:''}`;
   } else if(type==='Serba Guna'){
     statement=`Surat keterangan ini dibuat untuk menerangkan bahwa yang bersangkutan benar penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)}.`;
-    extraBlock=`<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||'-')}</b>.</p>${ex.exDetail?`<p>Keterangan / Isi Surat: ${esc(ex.exDetail)}</p>`:''}`;
+    extraBlock=`<p>Surat ini dibuat untuk keperluan: <b>${esc($('letterPurpose').value||ex.exDetail||'-')}</b>.</p>`;
   } else if(type==='Penghasilan'){
     statement=`Berdasarkan keterangan dari RT/RW setempat dan data yang ada, benar bahwa yang bersangkutan Penduduk Desa ${esc(desa)} Kecamatan ${esc(kec)} dan :`;
     extraBlock=`<p class="center-strong">==benar mempunyai penghasilan rata-rata ${esc(ex.exIncome||'Rp. ........................')} per bulan==</p><p>Surat Keterangan ini dipergunakan untuk : <b>${esc($('letterPurpose').value||'-')}</b></p>${ex.exDetail?`<p>${esc(ex.exDetail)}</p>`:''}`;
