@@ -731,7 +731,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 </div>
 
 
-<style>.svc-ctl{display:flex;align-items:center;gap:6px}.svc-auto{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap}@media(max-width:700px){.svc-ctl .btn{padding:6px 8px;font-size:12px}}</style></head>
+</head>
 <body>
 
 <style id="cloudAuthStyles">
@@ -829,7 +829,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
     <div class="modal-foot"><button class="btn" data-close="accountOverlay">Tutup</button></div>
   </div>
 </div>
-<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnOpenDisplay" title="Buka / fokus jendela layar pelayanan">📺 Layar 2</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><button class="btn btn-ghost" id="btnCopyDisplayLink" title="Salin tautan layar pelayanan untuk dibuka di perangkat lain">🔗</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label><label class="svc-auto" title="Layar 2 kembali ke antrian otomatis setelah jendela cetak ditutup"><input type="checkbox" id="chkAutoHide"> Tutup otomatis</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
+<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
 <button class="menu-item menu-dashboard-item" id="btnDashboard">🏠 Dashboard</button>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">👥 <span style="flex:1">PENDAFTARAN PENDUDUK</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnInactivePopulation">♻️ Penduduk Tidak Aktif</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📜 <span style="flex:1">PENCATATAN SIPIL</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnBirthApplicationMenu">👶 Permohonan Akta Kelahiran</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button></div></div>
@@ -1293,7 +1293,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           <div class="letter-section-gap"></div>
           <label><b>Keterangan Tambahan</b><textarea class="input" id="letterNote" rows="3" placeholder="Bila diperlukan"></textarea></label>
           <div style="height:10px"></div>
-          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn btn-primary" id="btnShowServiceDisplay">📺 Tampilkan Surat di Layar Pelayanan</button><button class="btn" id="btnCloseServiceDisplay">⏹ Tutup Surat di Layar</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
           <div class="hint" style="margin-top:8px">NIK hanya dipakai untuk mengambil biodata dari Master Penduduk. Biodata tidak perlu diketik ulang.</div>
         </div>
         <div>
@@ -2615,7 +2615,6 @@ body{display:block!important}
 .print-sheet .birth-app-paper .section,.print-sheet .birth-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}
 </style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);
   doc.close();
-  mirrorFrameToDisplay(doc,{service:'Pengajuan Akta Kelahiran — Formulir F-2.01',name:birthValue('birthAppName')||'',page:{w:215.9,h:330.2}});
 
   const cleanup=()=>{setTimeout(()=>printFrame.remove(),500)};
   const doPrint=()=>{
@@ -2624,9 +2623,8 @@ body{display:block!important}
       printFrame.contentWindow.print();
     }finally{cleanup()}
   };
-  const go=()=>whenServiceSent(1500).then(doPrint);
-  if(printFrame.contentDocument.readyState==='complete') setTimeout(go,80);
-  else printFrame.onload=()=>setTimeout(go,80);
+  if(printFrame.contentDocument.readyState==='complete') setTimeout(doPrint,80);
+  else printFrame.onload=()=>setTimeout(doPrint,80);
 }
 $('birthAppSelect').addEventListener('change',()=>{birthApplicationNik=$('birthAppSelect').value;fillBirthApplication(birthApplicationNik)});
 $('btnFindBirthWitness1').addEventListener('click',()=>findBirthWitness(1));
@@ -2877,15 +2875,9 @@ function printSupportDocument(title, bodyHtml, pageCss){
   doc.open();
   doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>${pageCss}</style></head><body>${bodyHtml}</body></html>`);
   doc.close();
-  (function(){
-    const parts=String(title).split(' - '),label=parts[0],nm=parts.slice(1).join(' - ');
-    const grp=/kematian/i.test(label)?'Pengajuan Akta Kematian':'Pengajuan Akta Kelahiran';
-    mirrorFrameToDisplay(doc,{service:grp+' — '+label,name:nm,page:parsePageMm(pageCss)});
-  })();
   const cleanup=()=>setTimeout(()=>frame.remove(),700);
   const doPrint=()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}finally{cleanup()}};
-  const go=()=>whenServiceSent(1500).then(doPrint);
-  if(frame.contentDocument.readyState==='complete')setTimeout(go,80);else frame.onload=()=>setTimeout(go,80);
+  if(frame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else frame.onload=()=>setTimeout(doPrint,250);
 }
 function printSPTJM(){
   const r=getBirthResident();
@@ -3158,7 +3150,7 @@ function printDeathApplication(){
   renderDeathApplication();const paper=$('deathApplicationPreview')?.querySelector('.death-app-paper');if(!paper){toast('Pratinjau formulir belum tersedia');return}
   paper.style.zoom='';
   const printFrame=document.createElement('iframe');printFrame.setAttribute('aria-hidden','true');Object.assign(printFrame.style,{position:'fixed',left:'-10000px',top:'0',width:'1px',height:'1px',border:'0',visibility:'hidden'});document.body.appendChild(printFrame);
-  const doc=printFrame.contentDocument,title=safePrintName('F-2.01 - Akta Kematian - '+$('deathAppName').value.trim()),styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>@page{size:210mm 330mm;margin:0!important}html,body{margin:0!important;padding:0!important;width:210mm!important;background:#fff!important;overflow:visible!important}.print-sheet{width:210mm!important;margin:0!important;padding:0!important}.print-sheet .death-app-paper{width:198.1mm!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0 auto!important;padding:10mm 5mm 4mm!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important;box-shadow:none!important;text-align:justify!important}.print-sheet .death-app-paper .signature{display:table!important;width:100%!important;margin-top:5mm!important;page-break-inside:avoid!important;break-inside:avoid!important}.print-sheet .death-app-paper .signature td{display:table-cell!important}.print-sheet .death-app-paper .sigspace{height:14mm!important}.print-sheet .death-app-paper .section,.print-sheet .death-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);doc.close();mirrorFrameToDisplay(doc,{service:'Pengajuan Akta Kematian — Formulir F-2.01',name:$('deathAppName').value.trim(),page:{w:210,h:330}});const cleanup=()=>setTimeout(()=>printFrame.remove(),700);const doPrint=()=>{try{printFrame.contentWindow.focus();printFrame.contentWindow.print()}finally{cleanup()}};if(printFrame.contentDocument.readyState==='complete')setTimeout(()=>whenServiceSent(1500).then(doPrint),80);else printFrame.onload=()=>setTimeout(()=>whenServiceSent(1500).then(doPrint),80);
+  const doc=printFrame.contentDocument,title=safePrintName('F-2.01 - Akta Kematian - '+$('deathAppName').value.trim()),styles=Array.from(document.querySelectorAll('style')).map(x=>x.outerHTML).join('\n');doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${styles}<style>@page{size:210mm 330mm;margin:0!important}html,body{margin:0!important;padding:0!important;width:210mm!important;background:#fff!important;overflow:visible!important}.print-sheet{width:210mm!important;margin:0!important;padding:0!important}.print-sheet .death-app-paper{width:198.1mm!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0 auto!important;padding:10mm 5mm 4mm!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important;box-shadow:none!important;text-align:justify!important}.print-sheet .death-app-paper .signature{display:table!important;width:100%!important;margin-top:5mm!important;page-break-inside:avoid!important;break-inside:avoid!important}.print-sheet .death-app-paper .signature td{display:table-cell!important}.print-sheet .death-app-paper .sigspace{height:14mm!important}.print-sheet .death-app-paper .section,.print-sheet .death-app-paper .box{page-break-inside:avoid!important;break-inside:avoid!important}</style></head><body><div class="print-sheet">${paper.outerHTML}</div></body></html>`);doc.close();const cleanup=()=>setTimeout(()=>printFrame.remove(),700);const doPrint=()=>{try{printFrame.contentWindow.focus();printFrame.contentWindow.print()}finally{cleanup()}};if(printFrame.contentDocument.readyState==='complete')setTimeout(doPrint,250);else printFrame.onload=()=>setTimeout(doPrint,250);
 }
 $('btnDeathApplication').addEventListener('click',()=>{if(!hasPerm('death_application'))return toast('Anda tidak memiliki hak akses Permohonan Akta Kematian');openDeathApplication()});
 $('deathApplicationSelect').addEventListener('change',fillDeathApplication);
@@ -3513,7 +3505,7 @@ $('btnProcessImport').addEventListener('click',async()=>{
 });
 function download(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function safePrintName(v){return String(v||'').trim().replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').replace(/\.+$/,'').trim()||'Dokumen'}
-function printWithFilename(title,printFn,cleanupFn){try{mirrorBodyPrint(title)}catch(e){console.warn(e)}const oldTitle=document.title;document.title=safePrintName(title);const run=()=>{try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}};whenServiceSent(1500).then(run)}
+function printWithFilename(title,printFn,cleanupFn){const oldTitle=document.title;document.title=safePrintName(title);try{printFn()}finally{setTimeout(()=>{document.title=oldTitle;if(cleanupFn)cleanupFn()},700)}}
 function countRows(rows,f){const o={};rows.forEach(r=>{const k=r[f]||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>b[1]-a[1])}
 function countRWRows(rows){const o={};rows.forEach(r=>{const k=String(r.RW||'Tidak diisi').trim()||'Tidak diisi';o[k]=(o[k]||0)+1});return Object.entries(o).sort((a,b)=>{const na=parseInt(a[0],10),nb=parseInt(b[0],10);if(Number.isFinite(na)&&Number.isFinite(nb))return na-nb;if(Number.isFinite(na))return -1;if(Number.isFinite(nb))return 1;return a[0].localeCompare(b[0],'id')})}
 function activeFilterLabels(){const map=[['search','Pencarian'],['fRT','RT'],['fRW','RW'],['fJK','Jenis Kelamin'],['fSH','Hubungan Keluarga'],['fStatus','Status'],['fAgama','Agama'],['fPendidikan','Pendidikan'],['fPekerjaan','Pekerjaan']];const out=[];map.forEach(([id,label])=>{const el=$(id);if(el&&el.value)out.push([label,el.value])});return out}
@@ -4679,284 +4671,6 @@ $('btnPreviewLetter').addEventListener('click',()=>{
   renderLetter();
   toast('Surat diperbarui');
 });
-/* ===== Layar Pelayanan (layar ke-2) ===== */
-const SERVICE_DISPLAY_URL='./pelayanan.html';
-const SERVICE_STATE_KEY='DESA_SERVICE_DISPLAY_STATE';
-const SERVICE_LETTER_KEY='DESA_SERVICE_DISPLAY_LETTER';
-const SERVICE_AUTO_KEY='DESA_SERVICE_AUTO_MIRROR';
-const SERVICE_HIDE_KEY='DESA_SERVICE_AUTO_HIDE';
-let serviceHidePending=false;
-function autoHideOn(){try{return localStorage.getItem(SERVICE_HIDE_KEY)!=='0'}catch(e){return true}}
-// Dipanggil saat jendela cetak ditutup (dicetak maupun dibatalkan): layar kembali ke antrian
-function serviceAutoHide(){
-  if(!serviceHidePending)return;
-  serviceHidePending=false;
-  setTimeout(()=>{try{closeServiceDocument()}catch(e){console.warn(e)}},300);
-}
-window.addEventListener('afterprint',serviceAutoHide);
-let serviceWin=null,lastServiceInfo=null;
-function autoDisplayOn(){try{return localStorage.getItem(SERVICE_AUTO_KEY)!=='0'}catch(e){return true}}
-function serviceWinAlive(){try{return !!(serviceWin&&!serviceWin.closed)}catch(e){return false}}
-// Kumpulkan CSS halaman ini (kecuali @media print) agar dokumen tampil identik di layar ke-2
-function collectLetterCss(){
-  let css='';
-  for(const sh of Array.from(document.styleSheets)){
-    let rules;try{rules=sh.cssRules}catch(e){continue}
-    for(const r of Array.from(rules||[])){
-      if(r.type===CSSRule.MEDIA_RULE&&/print/i.test(r.conditionText||r.media?.mediaText||''))continue;
-      css+=r.cssText+'\n';
-    }
-  }
-  return css;
-}
-// Ukuran halaman (mm) dari deklarasi @page size:... pada CSS cetak
-function parsePageMm(css){
-  const m=/@page\s*\{[^}]*?size\s*:\s*([^;}!]+)/i.exec(String(css||''));
-  if(!m)return {w:215.9,h:330.2};
-  const t=m[1].trim().toLowerCase();
-  let w,h;
-  const nums=t.match(/([\d.]+)\s*mm/g);
-  if(nums&&nums.length>=2){w=parseFloat(nums[0]);h=parseFloat(nums[1])}
-  else if(/a4/.test(t)){w=210;h=297}
-  else if(/f4|folio|legal/.test(t)){w=215.9;h=330.2}
-  else {w=215.9;h=330.2}
-  if(/landscape/.test(t)&&w<h){const x=w;w=h;h=x}
-  return {w,h};
-}
-function serviceOfficerName(){
-  const pr=window.currentProfile||{};
-  const n=String(pr.full_name||'').trim();
-  if(n)return n;
-  return String(pr.email||window.currentUser?.email||'').split('@')[0].trim();
-}
-function mkServicePayload(info,mode){
-  info=info||{};
-  return {
-    version:3,mode,
-    officer:serviceOfficerName(),   // nama akun petugas yang sedang melayani (tampil sebagai PETUGAS di layar)
-    village:String(desaSettings?.village||'Desa').replace(/^(desa|kelurahan)\s+/i,'').trim(),
-    district:String(desaSettings?.district||'').replace(/^kecamatan\s+/i,'').trim(),
-    logo:desaSettings?.logo||'',
-    name:String(info.name||'').trim(),
-    nik:String(info.nik||'').trim(),
-    service:String(info.service||'').trim(),
-    number:String(info.number||'').trim(),
-    purpose:String(info.purpose||'').trim(),
-    page:info.page||null,
-    updatedAt:new Date().toISOString()
-  };
-}
-function sendToServiceDisplay(payload,docHtml,opts){
-  opts=opts||{};
-  // simpan: dokumen dulu, baru status ringan (agar event storage di layar ke-2 menemukan dokumennya)
-  try{if(docHtml)localStorage.setItem(SERVICE_LETTER_KEY,JSON.stringify({updatedAt:payload.updatedAt,docHtml}));else localStorage.removeItem(SERVICE_LETTER_KEY)}catch(e){console.warn('Dokumen terlalu besar untuk localStorage',e)}
-  try{localStorage.setItem(SERVICE_STATE_KEY,JSON.stringify(payload))}catch(e){console.warn('Gagal menyimpan status layar pelayanan',e)}
-  const full=docHtml?{...payload,docHtml}:payload;
-  if(opts.open){
-    try{
-      const packed=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-      serviceWin=window.open(SERVICE_DISPLAY_URL+'#service='+encodeURIComponent(packed),'desaServiceDisplay');
-    }catch(e){try{serviceWin=window.open(SERVICE_DISPLAY_URL,'desaServiceDisplay')}catch(err){}}
-  }
-  try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload:full});setTimeout(()=>bc.close(),500)}catch(e){}
-  cloudPushDisplay(payload,docHtml);
-  // postMessage: tetap jalan walau BroadcastChannel/localStorage tidak dibagi antar jendela; diulang untuk jendela yang baru dibuka
-  if(serviceWinAlive()){
-    const send=()=>{try{serviceWin.postMessage({type:'SHOW_SERVICE',payload:full},'*')}catch(e){}};
-    send();if(opts.open){setTimeout(send,600);setTimeout(send,1800)}
-    if(opts.open){try{serviceWin.focus()}catch(e){}}
-  }
-}
-// ===== Kirim ke perangkat lain lewat Supabase (semua akun yang login boleh menampilkan) =====
-const SERVICE_CODE_KEY='DESA_SERVICE_DISPLAY_CODE';   // cache lokal; sama dengan kunci di pelayanan.html
-const SERVICE_CODE_OK=/^[A-Za-z0-9_-]{12,64}$/;
-function getServiceCode(){   // sinkron: pakai kode bersama yang sudah pernah diambil dari database
-  try{const c=localStorage.getItem(SERVICE_CODE_KEY);if(c&&SERVICE_CODE_OK.test(c))return c}catch(e){}
-  return '';
-}
-function newServiceCode(){
-  const abc='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const r=crypto.getRandomValues(new Uint8Array(24));
-  let c='';for(const b of r)c+=abc[b%abc.length];
-  return c;
-}
-// Satu kode untuk seluruh petugas: disimpan di tabel service_display_settings (baris 'main')
-let serviceCodeSync=null;
-function syncServiceCode(force){
-  if(serviceCodeSync&&!force)return serviceCodeSync;
-  serviceCodeSync=(async()=>{
-    if(!window.sb||!window.currentUser)throw new Error('belum login');
-    const T='service_display_settings';
-    let {data,error}=await window.sb.from(T).select('code').eq('id','main').maybeSingle();
-    if(error)throw error;
-    if(!data||!SERVICE_CODE_OK.test(data.code||'')){
-      const up=await window.sb.from(T).upsert({id:'main',code:newServiceCode()},{onConflict:'id',ignoreDuplicates:true});
-      if(up.error)throw up.error;
-      ({data,error}=await window.sb.from(T).select('code').eq('id','main').maybeSingle());
-      if(error)throw error;
-    }
-    if(!data||!SERVICE_CODE_OK.test(data.code||''))throw new Error('kode layar tidak valid');
-    try{localStorage.setItem(SERVICE_CODE_KEY,data.code)}catch(e){}
-    return data.code;
-  })();
-  serviceCodeSync.catch(()=>{serviceCodeSync=null});
-  return serviceCodeSync;
-}
-// ambil kode bersama begitu petugas sudah login
-(function(){let n=0;const t=setInterval(()=>{if(++n>60)return clearInterval(t);if(!window.sb||!window.currentUser)return;clearInterval(t);syncServiceCode().catch(e=>console.warn('Kode layar bersama',e))},2000)})();
-let cloudPushChain=Promise.resolve(),cloudWarned=false,cloudPushLast=null;
-// Tahan pencetakan sebentar sampai dokumen terkirim ke layar lain. Saat jendela cetak terbuka, browser membekukan
-// proses di halaman ini, jadi bila dokumen belum terkirim, layar baru menerimanya setelah jendela cetak ditutup.
-function whenServiceSent(maxMs){
-  const p=cloudPushLast;if(!p)return Promise.resolve();
-  return Promise.race([p,new Promise(r=>setTimeout(r,maxMs||1500))]);
-}
-async function gzipB64(str){
-  const s=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));
-  const buf=new Uint8Array(await new Response(s).arrayBuffer());
-  let bin='';const CH=0x8000;
-  for(let i=0;i<buf.length;i+=CH)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+CH));
-  return btoa(bin);
-}
-// Sinyal ringan (tanpa data) lewat Realtime Broadcast: layar langsung mengambil data terbaru tanpa menunggu pengecekan berkala
-let svcPingCh=null,svcPingCode='';
-function pingServiceDisplay(code){
-  try{
-    if(!window.sb||!code)return;
-    if(!svcPingCh||svcPingCode!==code){
-      if(svcPingCh)try{window.sb.removeChannel(svcPingCh)}catch(e){}
-      svcPingCode=code;svcPingCh=window.sb.channel('svc:'+code);svcPingCh.subscribe();
-    }
-    const send=()=>svcPingCh.send({type:'broadcast',event:'ping',payload:{t:Date.now()}});
-    send();setTimeout(send,700);   // diulang sekali bila kanal baru tersambung
-  }catch(e){console.warn('ping layar',e)}
-}
-function cloudPushDisplay(payload,docHtml){
-  if(!window.sb||!window.currentUser)return;
-  cloudPushLast=cloudPushChain=cloudPushChain.then(async()=>{
-    try{
-      let doc=null,enc='plain';
-      if(docHtml){
-        try{doc=await gzipB64(docHtml);enc='gzip-b64'}catch(e){doc=docHtml;enc='plain'}
-      }
-      let scode;
-      try{scode=await syncServiceCode()}catch(e){
-        const miss=/service_display_settings|42P01|PGRST205/i.test(String(e.code||'')+' '+String(e.message||''));
-        if(miss){if(!cloudWarned){cloudWarned=true;toast('Layar antar-perangkat belum aktif: jalankan ulang supabase-layar-pelayanan.sql di Supabase')}return}
-        throw e;
-      }
-      const who=window.currentProfile?.full_name||window.currentProfile?.email||window.currentUser.email||'';
-      const {error}=await window.sb.from('service_display').upsert({
-        id:scode,payload,doc,doc_enc:enc,
-        updated_by:window.currentUser.id,updated_by_name:who,updated_at:new Date().toISOString()
-      },{onConflict:'id'});
-      if(error)throw error;
-      cloudWarned=false;
-      pingServiceDisplay(scode);
-    }catch(e){
-      console.warn('Gagal kirim ke layar pelayanan (cloud)',e);
-      if(!cloudWarned){cloudWarned=true;
-        const missing=/service_display|42P01|PGRST205/i.test(String(e.code||'')+' '+String(e.message||''));
-        toast(missing?'Layar antar-perangkat belum aktif: jalankan supabase-layar-pelayanan.sql di Supabase':'Gagal mengirim ke layar pelayanan di perangkat lain');
-      }
-    }
-  });
-}
-// Tampilkan sebuah dokumen (HTML lengkap) + jenis PELAYANAN di layar ke-2
-function mirrorDocToDisplay(info,opts){
-  opts=opts||{};
-  if(!opts.force&&!autoDisplayOn())return false;
-  try{
-    lastServiceInfo={...info,docHtml:undefined};
-    sendToServiceDisplay(mkServicePayload(info,'doc'),info.docHtml,{open:!!opts.open});
-    serviceHidePending=!opts.force&&autoHideOn();   // tombol manual (force) tidak ditutup otomatis
-    return true;
-  }catch(e){console.warn('Gagal menampilkan dokumen di layar pelayanan',e);return false}
-}
-// Untuk cetak berbasis iframe (akta kelahiran/kematian): salin dokumen yang persis akan dicetak
-function mirrorFrameToDisplay(doc,info){
-  try{
-    if(mirrorDocToDisplay({...info,docHtml:'<!doctype html>'+doc.documentElement.outerHTML})){
-      try{doc.defaultView.addEventListener('afterprint',serviceAutoHide)}catch(e){}
-    }
-  }catch(e){console.warn(e)}
-}
-// Untuk cetak berbasis halaman (biodata, F-1.01, F-1.02/KTP, surat): salin area pratinjau + CSS layarnya
-function buildInPageDoc(el,page){
-  const cls=el.parentElement?.className||'';
-  const w=page?.w?page.w+'mm':'auto';
-  return '<!doctype html><html><head><meta charset="utf-8"><style>'+collectLetterCss()+'</style>'+
-    '<style>html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:hidden!important;height:auto!important;display:block!important;min-height:0!important;width:'+w+'!important}'+
-    '[class$="-wrap"]{background:#fff!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important;overflow:visible!important;height:auto!important;max-height:none!important;min-height:0!important;width:auto!important}'+
-    '#'+el.id+'{display:block!important;width:auto!important}'+
-    '[class*="paper"]{zoom:1!important;transform:none!important;box-shadow:none!important;margin-left:0!important;margin-right:0!important}</style></head>'+
-    '<body><div class="'+cls+'"><div id="'+el.id+'">'+el.innerHTML+'</div></div></body></html>';
-}
-function mirrorBodyPrint(title){
-  const cl=document.body.classList;
-  const t=String(title||'');const i=t.indexOf(' - ');
-  const label=i>=0?t.slice(0,i):t, name=i>=0?t.slice(i+3):'';
-  const A4={w:210,h:297};
-  const cfg=[
-    ['print-letter','letterPreview',label,{w:215.9,h:330.2}],
-    ['print-biodata','biodataPreview','Cetak Biodata Penduduk',A4],
-    ['print-f101','f101Preview','Kartu Keluarga — Formulir F-1.01',{w:297,h:210}],
-    ['print-f102','f102Preview','Peristiwa Kependudukan — Formulir F-1.02',A4],
-    ['print-ktp','ktpPreview','Pengajuan KTP-el — Formulir F-1.02',A4]
-  ];
-  const c=cfg.find(x=>cl.contains(x[0]));
-  if(!c)return;                                   // laporan/rekap/dashboard bukan untuk warga
-  const el=document.getElementById(c[1]);
-  if(!el||!el.innerHTML.trim())return;
-  const info={service:c[2],name,page:c[3],docHtml:buildInPageDoc(el,c[3])};
-  if(c[0]==='print-letter'&&selectedLetterPerson){
-    info.nik=String(selectedLetterPerson.NIK||'').trim();
-    info.number=String($('letterNumber')?.value||'').trim();
-    info.purpose=String($('letterPurpose')?.value||'').trim();
-  }
-  mirrorDocToDisplay(info);
-}
-function closeServiceDocument(){
-  sendToServiceDisplay(mkServicePayload(lastServiceInfo||{},'queue'),null,{});
-  toast('Layar pelayanan kembali ke tampilan antrian');
-}
-// Tombol manual di jendela surat
-function showLetterOnServiceDisplay(){
-  if(!selectedLetterPerson){showLetterPerson()}
-  if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
-  renderLetter();
-  const el=$('letterPreview'),page={w:215.9,h:330.2};
-  mirrorDocToDisplay({
-    service:letterTypeTitle($('letterType').value),
-    name:String(selectedLetterPerson['NAMA LENGKAP']||selectedLetterPerson.NAMA_LGKP||'').trim(),
-    nik:String(selectedLetterPerson.NIK||'').trim(),
-    number:String($('letterNumber').value||'').trim(),
-    purpose:String($('letterPurpose').value||'').trim(),
-    page,docHtml:buildInPageDoc(el,page)
-  },{force:true,open:!serviceWinAlive()});
-  toast('Surat ditampilkan di layar pelayanan');
-}
-function closeLetterOnServiceDisplay(){closeServiceDocument()}
-
-(function(){
-  const chk=$('chkAutoDisplay');chk.checked=autoDisplayOn();
-  chk.addEventListener('change',()=>{try{localStorage.setItem(SERVICE_AUTO_KEY,chk.checked?'1':'0')}catch(e){}toast(chk.checked?'Layar 2 otomatis menampilkan dokumen saat cetak':'Tampil otomatis di layar 2 dimatikan')});
-  const chkH=$('chkAutoHide');chkH.checked=autoHideOn();
-  chkH.addEventListener('change',()=>{try{localStorage.setItem(SERVICE_HIDE_KEY,chkH.checked?'1':'0')}catch(e){}toast(chkH.checked?'Layar 2 kembali ke antrian otomatis setelah jendela cetak ditutup':'Dokumen tetap tampil di layar 2 sampai ditutup manual')});
-  $('btnOpenDisplay').addEventListener('click',()=>{
-    if(serviceWinAlive()){try{serviceWin.focus()}catch(e){}return}
-    try{serviceWin=window.open(SERVICE_DISPLAY_URL+(getServiceCode()?'#kode='+getServiceCode():''),'desaServiceDisplay')}catch(e){}
-    if(!serviceWin)toast('Pop-up diblokir browser. Izinkan pop-up untuk membuka layar pelayanan.');
-  });
-  $('btnDisplayQueue').addEventListener('click',closeServiceDocument);
-  $('btnCopyDisplayLink').addEventListener('click',async()=>{
-    let kode='';try{kode=await syncServiceCode()}catch(e){kode=getServiceCode()}
-    if(!kode){toast('Kode layar belum tersedia. Pastikan sudah login dan file SQL terbaru sudah dijalankan.');return}
-    const url=new URL(SERVICE_DISPLAY_URL,location.href).href+'#kode='+kode;
-    try{await navigator.clipboard.writeText(url);toast('Tautan layar pelayanan disalin. Buka di perangkat lain — tidak perlu login.')}
-    catch(e){prompt('Salin tautan layar pelayanan:',url)}
-  });
-})();
 $('btnPrintLetter').addEventListener('click',()=>{
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
@@ -4965,8 +4679,7 @@ $('btnPrintLetter').addEventListener('click',()=>{
   setPrintPageOrientation('portrait');
   const name=selectedLetterPerson['NAMA LENGKAP']||selectedLetterPerson.NIK||'Penduduk';
   printWithFilename(letterTypeTitle($('letterType').value)+' - '+name,()=>window.print(),()=>{document.body.classList.remove('print-letter');clearPrintOrientation()});
-});$('btnShowServiceDisplay').addEventListener('click',showLetterOnServiceDisplay);$('btnCloseServiceDisplay').addEventListener('click',closeLetterOnServiceDisplay);
-
+});
 $('btnSaveLetter').addEventListener('click',async()=>{
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
