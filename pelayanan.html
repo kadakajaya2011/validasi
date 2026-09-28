@@ -23,7 +23,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
 .queue{font-size:clamp(70px,15vw,260px);font-weight:900;line-height:1;margin:1vh 0;color:var(--accent)}
 .queue.name{font-size:clamp(40px,7vw,120px);padding:0 2vw}
 .go{font-size:clamp(20px,2.6vw,46px);letter-spacing:3px;font-weight:700;margin-top:1vh}
-.loket{font-size:clamp(34px,5vw,90px);font-weight:900;margin-top:.5vh}
+.loket{font-size:clamp(24px,3.4vw,60px);font-weight:900;margin-top:.5vh;line-height:1.1;overflow-wrap:anywhere}
 
 /* 3. DETAIL */
 .detail{padding-top:1.6vh;padding-bottom:1.6vh;display:grid;grid-template-columns:max-content 1fr;gap:.7vh 2vw;font-size:clamp(16px,2vw,34px)}
@@ -85,13 +85,13 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
     <div class="lbl" id="lbl">NOMOR ANTRIAN</div>
     <div class="queue" id="queue">--</div>
     <div class="go" id="go">SILAKAN KE</div>
-    <div class="loket" id="loket">LOKET 1</div>
+    <div class="loket" id="loket">PETUGAS</div>
   </div>
 
   <div class="sec detail">
     <div class="k">SEDANG DILAYANI</div><div class="v" id="serving">:</div>
     <div class="k">PELAYANAN</div><div class="v" id="service">:</div>
-    <div class="k" id="k3">LOKET</div><div class="v" id="v3">:</div>
+    <div class="k" id="k3">PETUGAS</div><div class="v" id="v3">:</div>
   </div>
 
   <div class="sec info">
@@ -137,7 +137,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
 <script>
 /* ===== PENGATURAN DEFAULT (ubah sesuai kebutuhan desa) ===== */
 const DEFAULTS={
-  loket:'1',
+  petugas:'',            // dipakai bila nama akun petugas tidak tersedia (kosong = baris petugas disembunyikan)
   info:'Harap menyiapkan KTP/KK untuk keperluan pelayanan.',
   hours:['Senin–Kamis 08.00–15.00','Jumat 08.00–11.00'],
   kodeLayar:'',          // ISI dengan kode layar dari aplikasi petugas (tombol 🔗) agar layar langsung terhubung tanpa pairing/login; kosongkan bila ingin pairing manual
@@ -159,14 +159,14 @@ function showQueue(p){
 
   const q=clean(p.queue);
   const nm=clean(p.name);
-  const lk=clean(p.loket)||DEFAULTS.loket;
+  const lk=clean(p.officer)||DEFAULTS.petugas;   // nama akun petugas yang melayani
 
   // Blok tengah: pakai nomor antrian bila ada; bila belum, tampilkan nama pemohon
   if(q){
     $('lbl').textContent='NOMOR ANTRIAN';
     $('queue').textContent=q;$('queue').classList.remove('name');
-    $('go').style.display='';$('loket').style.display='';
-    $('loket').textContent='LOKET '+lk.toUpperCase();
+    $('go').style.display='';$('loket').style.display=lk?'':'none';
+    $('loket').textContent='PETUGAS '+lk.toUpperCase();
   }else if(nm){
     $('lbl').textContent='SEDANG DILAYANI';
     $('queue').textContent=nm;$('queue').classList.add('name');
@@ -182,9 +182,9 @@ function showQueue(p){
   // Detail
   $('serving').textContent=': '+(clean(p.serving)||nm||'-');
   $('service').textContent=': '+(clean(p.service)||'-');
-  if(q){$('k3').textContent='LOKET';$('v3').textContent=': '+lk}
+  if(q){$('k3').textContent='PETUGAS';$('v3').textContent=': '+(lk||'-')}
   else{
-    const extra=clean(p.number)?['NOMOR SURAT',clean(p.number)]:clean(p.purpose)?['KEPERLUAN',clean(p.purpose)]:['LOKET',lk];
+    const extra=clean(p.number)?['NOMOR SURAT',clean(p.number)]:clean(p.purpose)?['KEPERLUAN',clean(p.purpose)]:['PETUGAS',lk||'-'];
     $('k3').textContent=extra[0];$('v3').textContent=': '+extra[1];
   }
 

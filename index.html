@@ -4721,10 +4721,17 @@ function parsePageMm(css){
   if(/landscape/.test(t)&&w<h){const x=w;w=h;h=x}
   return {w,h};
 }
+function serviceOfficerName(){
+  const pr=window.currentProfile||{};
+  const n=String(pr.full_name||'').trim();
+  if(n)return n;
+  return String(pr.email||window.currentUser?.email||'').split('@')[0].trim();
+}
 function mkServicePayload(info,mode){
   info=info||{};
   return {
     version:3,mode,
+    officer:serviceOfficerName(),   // nama akun petugas yang sedang melayani (tampil sebagai PETUGAS di layar)
     village:String(desaSettings?.village||'Desa').replace(/^(desa|kelurahan)\s+/i,'').trim(),
     district:String(desaSettings?.district||'').replace(/^kecamatan\s+/i,'').trim(),
     logo:desaSettings?.logo||'',
