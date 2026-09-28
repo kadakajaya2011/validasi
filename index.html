@@ -1293,7 +1293,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
           <div class="letter-section-gap"></div>
           <label><b>Keterangan Tambahan</b><textarea class="input" id="letterNote" rows="3" placeholder="Bila diperlukan"></textarea></label>
           <div style="height:10px"></div>
-          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-dark" id="btnPreviewLetter">↻ Perbarui Surat</button><button class="btn" id="btnPrintLetter">🖨 Cetak / PDF</button><button class="btn btn-primary" id="btnShowServiceDisplay">📺 Tampilkan di Layar Pelayanan</button><button class="btn" id="btnSaveLetter">💾 Simpan Register</button></div>
           <div class="hint" style="margin-top:8px">NIK hanya dipakai untuk mengambil biodata dari Master Penduduk. Biodata tidak perlu diketik ulang.</div>
         </div>
         <div>
@@ -4671,6 +4671,31 @@ $('btnPreviewLetter').addEventListener('click',()=>{
   renderLetter();
   toast('Surat diperbarui');
 });
+function showLetterOnServiceDisplay(){
+  if(!selectedLetterPerson){showLetterPerson()}
+  if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
+  renderLetter();
+  const r=selectedLetterPerson;
+  const payload={
+    version:1,
+    village:String(desaSettings?.village||'Desa').replace(/^(desa|kelurahan)\s+/i,'').trim(),
+    district:String(desaSettings?.district||'').replace(/^kecamatan\s+/i,'').trim(),
+    logo:desaSettings?.logo||'',
+    name:String(r['NAMA LENGKAP']||r.NAMA_LGKP||'').trim(),
+    nik:String(r.NIK||'').trim(),
+    service:letterTypeTitle($('letterType').value),
+    number:String($('letterNumber').value||'').trim(),
+    purpose:String($('letterPurpose').value||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+  try{localStorage.setItem('DESA_SERVICE_DISPLAY_STATE',JSON.stringify(payload))}catch(e){console.warn('Gagal menyimpan status layar pelayanan',e)}
+  let win=null;
+  try{win=window.open('./display.html','desaServiceDisplay')}catch(e){}
+  try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload});setTimeout(()=>bc.close(),500)}catch(e){}
+  if(win){try{win.focus()}catch(e){}}
+  toast('Data pelayanan dikirim ke layar pelayanan');
+}
+
 $('btnPrintLetter').addEventListener('click',()=>{
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
@@ -4679,7 +4704,8 @@ $('btnPrintLetter').addEventListener('click',()=>{
   setPrintPageOrientation('portrait');
   const name=selectedLetterPerson['NAMA LENGKAP']||selectedLetterPerson.NIK||'Penduduk';
   printWithFilename(letterTypeTitle($('letterType').value)+' - '+name,()=>window.print(),()=>{document.body.classList.remove('print-letter');clearPrintOrientation()});
-});
+});$('btnShowServiceDisplay').addEventListener('click',showLetterOnServiceDisplay);
+
 $('btnSaveLetter').addEventListener('click',async()=>{
   if(!selectedLetterPerson){showLetterPerson()}
   if(!selectedLetterPerson){toast('Masukkan NIK yang terdaftar');return}
