@@ -829,7 +829,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
     <div class="modal-foot"><button class="btn" data-close="accountOverlay">Tutup</button></div>
   </div>
 </div>
-<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnOpenDisplay" title="Buka / fokus jendela layar pelayanan">📺 Layar 2</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
+<header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnOpenDisplay" title="Buka / fokus jendela layar pelayanan">📺 Layar 2</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><button class="btn btn-ghost" id="btnCopyDisplayLink" title="Salin tautan layar pelayanan untuk dibuka di perangkat lain">🔗</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
 <button class="menu-item menu-dashboard-item" id="btnDashboard">🏠 Dashboard</button>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">👥 <span style="flex:1">PENDAFTARAN PENDUDUK</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnInactivePopulation">♻️ Penduduk Tidak Aktif</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📜 <span style="flex:1">PENCATATAN SIPIL</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnBirthApplicationMenu">👶 Permohonan Akta Kelahiran</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button></div></div>
@@ -4740,12 +4740,88 @@ function sendToServiceDisplay(payload,docHtml,opts){
     }catch(e){try{serviceWin=window.open(SERVICE_DISPLAY_URL,'desaServiceDisplay')}catch(err){}}
   }
   try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.postMessage({type:'SHOW_SERVICE',payload:full});setTimeout(()=>bc.close(),500)}catch(e){}
+  cloudPushDisplay(payload,docHtml);
   // postMessage: tetap jalan walau BroadcastChannel/localStorage tidak dibagi antar jendela; diulang untuk jendela yang baru dibuka
   if(serviceWinAlive()){
     const send=()=>{try{serviceWin.postMessage({type:'SHOW_SERVICE',payload:full},'*')}catch(e){}};
     send();if(opts.open){setTimeout(send,600);setTimeout(send,1800)}
     if(opts.open){try{serviceWin.focus()}catch(e){}}
   }
+}
+// ===== Kirim ke perangkat lain lewat Supabase (semua akun yang login boleh menampilkan) =====
+const SERVICE_CODE_KEY='DESA_SERVICE_DISPLAY_CODE';   // cache lokal; sama dengan kunci di pelayanan.html
+const SERVICE_CODE_OK=/^[A-Za-z0-9_-]{12,64}$/;
+function getServiceCode(){   // sinkron: pakai kode bersama yang sudah pernah diambil dari database
+  try{const c=localStorage.getItem(SERVICE_CODE_KEY);if(c&&SERVICE_CODE_OK.test(c))return c}catch(e){}
+  return '';
+}
+function newServiceCode(){
+  const abc='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const r=crypto.getRandomValues(new Uint8Array(24));
+  let c='';for(const b of r)c+=abc[b%abc.length];
+  return c;
+}
+// Satu kode untuk seluruh petugas: disimpan di tabel service_display_settings (baris 'main')
+let serviceCodeSync=null;
+function syncServiceCode(force){
+  if(serviceCodeSync&&!force)return serviceCodeSync;
+  serviceCodeSync=(async()=>{
+    if(!window.sb||!window.currentUser)throw new Error('belum login');
+    const T='service_display_settings';
+    let {data,error}=await window.sb.from(T).select('code').eq('id','main').maybeSingle();
+    if(error)throw error;
+    if(!data||!SERVICE_CODE_OK.test(data.code||'')){
+      const up=await window.sb.from(T).upsert({id:'main',code:newServiceCode()},{onConflict:'id',ignoreDuplicates:true});
+      if(up.error)throw up.error;
+      ({data,error}=await window.sb.from(T).select('code').eq('id','main').maybeSingle());
+      if(error)throw error;
+    }
+    if(!data||!SERVICE_CODE_OK.test(data.code||''))throw new Error('kode layar tidak valid');
+    try{localStorage.setItem(SERVICE_CODE_KEY,data.code)}catch(e){}
+    return data.code;
+  })();
+  serviceCodeSync.catch(()=>{serviceCodeSync=null});
+  return serviceCodeSync;
+}
+// ambil kode bersama begitu petugas sudah login
+(function(){let n=0;const t=setInterval(()=>{if(++n>60)return clearInterval(t);if(!window.sb||!window.currentUser)return;clearInterval(t);syncServiceCode().catch(e=>console.warn('Kode layar bersama',e))},2000)})();
+let cloudPushChain=Promise.resolve(),cloudWarned=false;
+async function gzipB64(str){
+  const s=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buf=new Uint8Array(await new Response(s).arrayBuffer());
+  let bin='';const CH=0x8000;
+  for(let i=0;i<buf.length;i+=CH)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+CH));
+  return btoa(bin);
+}
+function cloudPushDisplay(payload,docHtml){
+  if(!window.sb||!window.currentUser)return;
+  cloudPushChain=cloudPushChain.then(async()=>{
+    try{
+      let doc=null,enc='plain';
+      if(docHtml){
+        try{doc=await gzipB64(docHtml);enc='gzip-b64'}catch(e){doc=docHtml;enc='plain'}
+      }
+      let scode;
+      try{scode=await syncServiceCode()}catch(e){
+        const miss=/service_display_settings|42P01|PGRST205/i.test(String(e.code||'')+' '+String(e.message||''));
+        if(miss){if(!cloudWarned){cloudWarned=true;toast('Layar antar-perangkat belum aktif: jalankan ulang supabase-layar-pelayanan.sql di Supabase')}return}
+        throw e;
+      }
+      const who=window.currentProfile?.full_name||window.currentProfile?.email||window.currentUser.email||'';
+      const {error}=await window.sb.from('service_display').upsert({
+        id:scode,payload,doc,doc_enc:enc,
+        updated_by:window.currentUser.id,updated_by_name:who,updated_at:new Date().toISOString()
+      },{onConflict:'id'});
+      if(error)throw error;
+      cloudWarned=false;
+    }catch(e){
+      console.warn('Gagal kirim ke layar pelayanan (cloud)',e);
+      if(!cloudWarned){cloudWarned=true;
+        const missing=/service_display|42P01|PGRST205/i.test(String(e.code||'')+' '+String(e.message||''));
+        toast(missing?'Layar antar-perangkat belum aktif: jalankan supabase-layar-pelayanan.sql di Supabase':'Gagal mengirim ke layar pelayanan di perangkat lain');
+      }
+    }
+  });
 }
 // Tampilkan sebuah dokumen (HTML lengkap) + jenis PELAYANAN di layar ke-2
 function mirrorDocToDisplay(info,opts){
@@ -4823,10 +4899,17 @@ function closeLetterOnServiceDisplay(){closeServiceDocument()}
   chk.addEventListener('change',()=>{try{localStorage.setItem(SERVICE_AUTO_KEY,chk.checked?'1':'0')}catch(e){}toast(chk.checked?'Layar 2 otomatis menampilkan dokumen saat cetak':'Tampil otomatis di layar 2 dimatikan')});
   $('btnOpenDisplay').addEventListener('click',()=>{
     if(serviceWinAlive()){try{serviceWin.focus()}catch(e){}return}
-    try{serviceWin=window.open(SERVICE_DISPLAY_URL,'desaServiceDisplay')}catch(e){}
+    try{serviceWin=window.open(SERVICE_DISPLAY_URL+(getServiceCode()?'#kode='+getServiceCode():''),'desaServiceDisplay')}catch(e){}
     if(!serviceWin)toast('Pop-up diblokir browser. Izinkan pop-up untuk membuka layar pelayanan.');
   });
   $('btnDisplayQueue').addEventListener('click',closeServiceDocument);
+  $('btnCopyDisplayLink').addEventListener('click',async()=>{
+    let kode='';try{kode=await syncServiceCode()}catch(e){kode=getServiceCode()}
+    if(!kode){toast('Kode layar belum tersedia. Pastikan sudah login dan file SQL terbaru sudah dijalankan.');return}
+    const url=new URL(SERVICE_DISPLAY_URL,location.href).href+'#kode='+kode;
+    try{await navigator.clipboard.writeText(url);toast('Tautan layar pelayanan disalin. Buka di perangkat lain — tidak perlu login.')}
+    catch(e){prompt('Salin tautan layar pelayanan:',url)}
+  });
 })();
 $('btnPrintLetter').addEventListener('click',()=>{
   if(!selectedLetterPerson){showLetterPerson()}

@@ -54,6 +54,17 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
 #letterBox{margin:0 auto;overflow:hidden;background:#fff;box-shadow:0 6px 24px #10233b33}
 #letterFrame{border:0;display:block;transform-origin:top left;background:#fff}
 .wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.4vw,40px);color:var(--mute)}
+
+/* ===== PEMASANGAN LAYAR & STATUS ===== */
+#pairOv{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:#10233bee}
+#pairOv form{background:#fff;border-radius:18px;padding:3vh 3vw;width:min(480px,90vw);display:flex;flex-direction:column;gap:12px}
+#pairOv h2{margin:0;font-size:clamp(20px,2vw,28px)}
+#pairOv p{margin:0;color:var(--mute);font-size:14px;line-height:1.4}
+#pairOv input{padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px}
+#pairOv button{padding:12px;border:0;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+#pairOv .skip{background:none;color:var(--mute);font-weight:400;font-size:13px;padding:4px}
+#pairErr{color:#b3261e;font-size:14px;min-height:18px}
+#cloudDot{position:fixed;left:10px;bottom:6px;z-index:50;font-size:12px;color:var(--mute);opacity:.55;pointer-events:none}
 .fade{animation:fade .35s ease}
 @keyframes fade{from{opacity:.2;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
 </style>
@@ -112,12 +123,26 @@ html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif
 </div>
 </div>
 
+<div id="pairOv"><form id="pairForm">
+  <h2>Pasangkan Layar Pelayanan</h2>
+  <p>Layar ini tidak perlu login. Cukup pasangkan sekali; setelah itu layar terhubung otomatis setiap dibuka. Di aplikasi petugas tekan tombol <b>🔗</b> untuk menyalin tautan layar, lalu buka tautan itu di sini — atau tempel tautan / kodenya di bawah.</p>
+  <input id="pairIn" type="text" placeholder="Tempel tautan atau kode layar" autocomplete="off" required>
+  <div id="pairErr"></div>
+  <button type="submit">Pasangkan</button>
+  <button type="button" class="skip" id="pairSkip">Lewati (hanya mode satu komputer)</button>
+</form></div>
+<div id="cloudDot"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
 <script>
 /* ===== PENGATURAN DEFAULT (ubah sesuai kebutuhan desa) ===== */
 const DEFAULTS={
   loket:'1',
   info:'Harap menyiapkan KTP/KK untuk keperluan pelayanan.',
-  hours:['Senin–Kamis 08.00–15.00','Jumat 08.00–11.00']
+  hours:['Senin–Kamis 08.00–15.00','Jumat 08.00–11.00'],
+  kodeLayar:'',          // ISI dengan kode layar dari aplikasi petugas (tombol 🔗) agar layar langsung terhubung tanpa pairing/login; kosongkan bila ingin pairing manual
+  docTimeoutMin:10,      // dokumen warga otomatis ditutup (kembali ke antrian) setelah sekian menit; 0 = tidak pernah
+  staleOnBootMin:10      // saat layar baru dinyalakan, dokumen lebih tua dari ini tidak ditampilkan
 };
 /* ========================================================== */
 
@@ -255,9 +280,15 @@ function showState(p){
   if(key===lastKey)return;               // abaikan kiriman ganda (BroadcastChannel + postMessage + storage)
   lastKey=key;
   const scr=$('screen');
-  if(isDoc){scr.classList.add('letter');showDoc(p)}
-  else{scr.classList.remove('letter');showQueue(p)}
+  clearTimeout(docTimer);
+  if(isDoc){
+    scr.classList.add('letter');showDoc(p);
+    if(DEFAULTS.docTimeoutMin>0)docTimer=setTimeout(()=>{   // privasi: jangan biarkan data warga terpajang terus
+      lastKey='';scr.classList.remove('letter');showQueue({...lastQueue,mode:'queue'});
+    },DEFAULTS.docTimeoutMin*60000);
+  }else{scr.classList.remove('letter');lastQueue=p;showQueue(p)}
 }
+let docTimer=null,lastQueue={};
 
 function decodeHashPayload(){
   try{
@@ -286,6 +317,77 @@ window.addEventListener('message',e=>{
 });
 window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{showState(JSON.parse(e.newValue))}catch(err){}}});
 window.addEventListener('hashchange',load);
+
+/* ===== ANTAR-PERANGKAT (Supabase, tanpa login: dipasangkan dengan kode layar) ===== */
+const CODE_KEY='DESA_SERVICE_DISPLAY_CODE';
+let sb=null,code='',cloudSeen=null,cloudTimer=null,cloudFirst=true;
+function setDot(t){$('cloudDot').textContent=t}
+function parseCode(v){
+  v=String(v||'').trim();
+  const m=v.match(/kode=([A-Za-z0-9_-]{12,64})/);
+  if(m)return m[1];
+  return /^[A-Za-z0-9_-]{12,64}$/.test(v)?v:'';
+}
+function readCode(){
+  const c=parseCode(location.hash)||parseCode(location.search);
+  if(c){
+    try{localStorage.setItem(CODE_KEY,c)}catch(e){}
+    try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}   // sembunyikan kode dari bilah alamat
+    return c;
+  }
+  try{const st=localStorage.getItem(CODE_KEY);if(st)return st}catch(e){}
+  return parseCode(DEFAULTS.kodeLayar)||parseCode((window.SUPABASE_CONFIG||{}).displayCode);   // kode bawaan: tanpa pairing
+}
+async function unB64gzip(b64){
+  const bin=atob(b64),u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  const s=new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(s).text();
+}
+async function cloudTick(){
+  if(!sb||!code)return;
+  try{
+    const {data,error}=await sb.rpc('get_service_display',{p_code:code,p_since:cloudSeen});
+    if(error)throw error;
+    if(data===null||data===undefined){setDot('○ Kode layar tidak dikenal — pasangkan ulang');return}
+    setDot('● Terhubung');
+    if(data.unchanged)return;
+    cloudSeen=data.updated_at;
+    const p={...(data.payload||{})};
+    if(data.doc)p.docHtml=data.doc_enc==='gzip-b64'?await unB64gzip(data.doc):data.doc;
+    // layar baru menyala: jangan menampilkan dokumen lama milik warga sebelumnya
+    if(cloudFirst){
+      const t=new Date((data.updated_at||'').replace(' ','T')).getTime();
+      const ageMin=isNaN(t)?0:(Date.now()-t)/60000;
+      if(p.mode!=='queue'&&ageMin>DEFAULTS.staleOnBootMin){p.mode='queue';delete p.docHtml}
+    }
+    cloudFirst=false;
+    showState(p);
+  }catch(e){console.warn('cloudTick',e);setDot('○ Gangguan koneksi')}
+}
+function cloudStart(){
+  $('pairOv').style.display='none';
+  clearInterval(cloudTimer);cloudSeen=null;cloudFirst=true;
+  cloudTick();cloudTimer=setInterval(cloudTick,3000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudTick()});
+}
+function cloudInit(){
+  const cfg=window.SUPABASE_CONFIG;
+  if(!window.supabase||!cfg||!cfg.url||String(cfg.url).includes('YOUR_')){setDot('○ Mode satu komputer');return}
+  // tanpa sesi login: hanya memanggil fungsi get_service_display dengan kode layar
+  sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  $('pairForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const c=parseCode($('pairIn').value);
+    if(!c){$('pairErr').textContent='Tautan atau kode tidak valid';return}
+    try{localStorage.setItem(CODE_KEY,c)}catch(err){}
+    code=c;$('pairErr').textContent='';cloudStart();
+  });
+  $('pairSkip').addEventListener('click',()=>{$('pairOv').style.display='none';setDot('○ Mode satu komputer')});
+  code=readCode();
+  if(code)cloudStart();else{$('pairOv').style.display='flex';setDot('○ Belum dipasangkan')}
+}
+cloudInit();
 </script>
 </body>
 </html>
