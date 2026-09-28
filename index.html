@@ -1675,6 +1675,12 @@ function openEdit(index){
     relationSelect?.addEventListener('change',syncReplacementVisibility);
     syncReplacementVisibility();
   }
+  // Keterangan terakhir dirubah ditampilkan paling bawah form Edit.
+  const editHistory=getHistory().filter(x=>String(x.NIK||'').trim()===String(current.NIK||'').trim());
+  const lastEdit=editHistory.length?editHistory[0]:null;
+  const lastEditText=lastEdit?.at?new Date(lastEdit.at).toLocaleString('id-ID'):'Belum ada riwayat perubahan';
+  const lastEditActor=lastEdit?.created_by_name||lastEdit?.meta?.akunPerubahan||'';
+  $('editFormBody').insertAdjacentHTML('beforeend',`<div class="hint" style="margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb"><b>Terakhir dirubah:</b> ${esc(lastEditText)}${lastEditActor?` • oleh ${esc(lastEditActor)}`:''}</div>`);
   $('editOverlay').classList.add('open');
 }
 function familyMembersByKK(kk){if(!kk)return [];const target=String(kk).trim();return sortFamilyMembers(data.filter(r=>isActiveResident(r)&&String(r['NO KK']||'').trim()===target))}
