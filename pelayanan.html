@@ -110,6 +110,21 @@ html,body{margin:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,-appl
 #pairOv .skip{background:none;color:var(--mute);font-weight:400;font-size:13px;padding:4px}
 #pairErr{color:#b3261e;font-size:14px;min-height:18px}
 #cloudDot{position:fixed;left:10px;bottom:6px;z-index:50;font-size:12px;color:var(--mute);opacity:.55;pointer-events:none}
+
+/* ===== MENU LAYAR PENUH ===== */
+#fsMenu{position:fixed;top:10px;right:10px;z-index:80;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:inherit;transition:opacity .3s}
+#fsMenu.idle{opacity:0;pointer-events:none}
+#fsMenu.open,#fsMenu:hover{opacity:1;pointer-events:auto}
+#fsBtn{width:44px;height:44px;border-radius:50%;border:1px solid #ffffff55;background:#0b2e4fcc;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 2px 10px #0006;display:flex;align-items:center;justify-content:center}
+#fsBtn:hover{background:var(--blue)}
+#fsPanel{display:none;background:#fff;border-radius:12px;padding:6px;min-width:220px;box-shadow:0 8px 28px #0b2e4f66;border:1px solid var(--line)}
+#fsMenu.open #fsPanel{display:block}
+#fsPanel button{display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;border:0;background:none;border-radius:8px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+#fsPanel button:hover{background:var(--sky)}
+#fsPanel .zrow{display:flex;gap:6px;padding:4px 6px 6px}
+#fsPanel .zrow button{justify-content:center;padding:8px 0;border:1px solid var(--line)}
+#fsPanel .zl{font-size:11px;letter-spacing:1.5px;font-weight:800;color:var(--mute);padding:6px 12px 2px}
+#fsPanel .kbd{margin-left:auto;font-size:12px;color:var(--mute);font-weight:500}
 .fade{animation:fade .35s ease}
 @keyframes fade{from{opacity:.2;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
 </style>
@@ -194,6 +209,18 @@ html,body{margin:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,-appl
   <button type="submit">Pasangkan</button>
   <button type="button" class="skip" id="pairSkip">Lewati (hanya mode satu komputer)</button>
 </form></div>
+<div id="fsMenu" class="idle">
+  <button id="fsBtn" type="button" title="Menu" aria-label="Menu">☰</button>
+  <div id="fsPanel">
+    <button type="button" id="fsToggle"><span id="fsIcon">⛶</span><span id="fsText">Layar Penuh</span><span class="kbd">F</span></button>
+    <div class="zl">ZOOM DOKUMEN</div>
+    <div class="zrow">
+      <button type="button" id="zOut">−</button>
+      <button type="button" id="zReset">3×</button>
+      <button type="button" id="zIn">+</button>
+    </div>
+  </div>
+</div>
 <div id="cloudDot"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js"></script>
@@ -204,6 +231,7 @@ const DEFAULTS={
   info:'Harap menyiapkan KTP/KK untuk keperluan pelayanan.',
   hours:['Senin–Kamis 08.00–15.00','Jumat 08.00–11.00'],
   kodeLayar:'',          // ISI dengan kode layar dari aplikasi petugas (tombol 🔗) agar layar langsung terhubung tanpa pairing/login; kosongkan bila ingin pairing manual
+  docZoom:3,             // zoom awal tampilan cetak/dokumen (3 = 3x)
   docTimeoutMin:10,      // dokumen warga otomatis ditutup (kembali ke antrian) setelah sekian menit; 0 = tidak pernah
   staleOnBootMin:10      // saat layar baru dinyalakan, dokumen lebih tua dari ini tidak ditampilkan
 };
@@ -334,7 +362,7 @@ function showDash(p){
 /* ===== MODE CEK DOKUMEN (surat, biodata, F-1.01, KTP, akta, dll.) ===== */
 const LETTER_KEY='DESA_SERVICE_DISPLAY_LETTER';
 const MM=3.7795;
-let lastDoc=null,lastKey='',zoom=1,dims=null,curPage=null,pausedUntil=0;
+let lastDoc=null,lastKey='',zoom=DEFAULTS.docZoom||1,dims=null,curPage=null,pausedUntil=0;
 
 function getDoc(p){
   if(p.docHtml)return lastDoc={updatedAt:p.updatedAt,docHtml:p.docHtml};
@@ -352,7 +380,7 @@ function showDoc(p){
   if(!l){$('lwait').style.display='flex';return}
   $('lwait').style.display='none';
   curPage={w:(p.page&&p.page.w)||215.9,h:(p.page&&p.page.h)||330.2};
-  zoom=1;dims=null;$('letterWrap').scrollTop=0;
+  fit.centered=false;zoom=DEFAULTS.docZoom||1;dims=null;$('letterWrap').scrollTop=0;$('letterWrap').scrollLeft=0;
   fr.style.width=Math.round(curPage.w*MM)+'px';fr.style.height=Math.round(curPage.h*MM)+'px';fr.style.transform='none';
   fr.onload=()=>{measure();setTimeout(measure,400);setTimeout(measure,1200)};
   fr.srcdoc=l.docHtml.replace(/<\/head>/i,'<style>html,body{overflow:hidden!important}</style></head>');
@@ -385,14 +413,15 @@ function fit(){
   fr.style.transform='scale('+sc+')';
   box.style.width=Math.floor(dims.w*sc)+'px';
   box.style.height=Math.floor(dims.h*sc)+'px';
+  if(!fit.centered){wrap.scrollLeft=Math.max(0,(wrap.scrollWidth-wrap.clientWidth)/2);fit.centered=true}
 }
 // Zoom oleh petugas: + / - / 0 (layar ke-2 ada di komputer yang sama)
 window.addEventListener('keydown',e=>{
   if(!$('screen').classList.contains('letter'))return;
   pausedUntil=Date.now()+25000;
-  if(e.key==='+'||e.key==='='){zoom=Math.min(zoom*1.15,4);fit()}
+  if(e.key==='+'||e.key==='='){zoom=Math.min(zoom*1.15,8);fit()}
   else if(e.key==='-'||e.key==='_'){zoom=Math.max(zoom/1.15,.3);fit()}
-  else if(e.key==='0'){zoom=1;fit()}
+  else if(e.key==='0'){zoom=DEFAULTS.docZoom||1;fit()}
 });
 ['wheel','touchstart','mousedown'].forEach(ev=>$('letterWrap').addEventListener(ev,()=>{pausedUntil=Date.now()+25000},{passive:true}));
 // Dokumen banyak halaman (mis. KTP beberapa anggota, F-1.01): gulir otomatis per layar agar warga bisa memeriksa semuanya
@@ -549,6 +578,46 @@ function cloudInit(){
   if(code)cloudStart();else{$('pairOv').style.display='flex';setDot('○ Belum dipasangkan')}
 }
 cloudInit();
+
+/* ===== MENU LAYAR PENUH ===== */
+(function(){
+  const menu=$('fsMenu'),root=document.documentElement;
+  let idleT=null;
+  const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  function refresh(){
+    $('fsText').textContent=isFs()?'Keluar Layar Penuh':'Layar Penuh';
+    $('fsIcon').textContent=isFs()?'🗗':'⛶';
+  }
+  function toggleFs(){
+    if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+    else{
+      const f=root.requestFullscreen||root.webkitRequestFullscreen;
+      if(f)Promise.resolve(f.call(root)).catch(()=>{});
+      else alert('Browser ini tidak mendukung mode layar penuh.');
+    }
+  }
+  function wake(){
+    menu.classList.remove('idle');clearTimeout(idleT);
+    idleT=setTimeout(()=>{if(!menu.classList.contains('open'))menu.classList.add('idle')},3000);
+  }
+  $('fsBtn').addEventListener('click',()=>{menu.classList.toggle('open');wake()});
+  $('fsToggle').addEventListener('click',()=>{toggleFs();menu.classList.remove('open')});
+  const zs=f=>{pausedUntil=Date.now()+25000;zoom=f(zoom);fit()};
+  $('zIn').addEventListener('click',()=>zs(z=>Math.min(z*1.15,8)));
+  $('zOut').addEventListener('click',()=>zs(z=>Math.max(z/1.15,.3)));
+  $('zReset').addEventListener('click',()=>zs(()=>DEFAULTS.docZoom||1));
+  $('zReset').textContent=(DEFAULTS.docZoom||1)+'×';
+  document.addEventListener('fullscreenchange',refresh);
+  document.addEventListener('webkitfullscreenchange',refresh);
+  document.addEventListener('mousemove',wake);
+  document.addEventListener('touchstart',wake,{passive:true});
+  document.addEventListener('click',e=>{if(!menu.contains(e.target))menu.classList.remove('open')});
+  window.addEventListener('keydown',e=>{
+    if(e.target&&/input|textarea/i.test(e.target.tagName))return;
+    if(e.key==='f'||e.key==='F'){toggleFs()}
+  });
+  refresh();
+})();
 </script>
 </body>
 </html>
