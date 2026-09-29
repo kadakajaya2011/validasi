@@ -429,6 +429,18 @@ function showState(p){
 }
 let docTimer=null,lastQueue={},lastBase='queue',lastDash=null;
 
+// Layar baru dibuka/di-refresh: selalu awali dengan Dashboard Kependudukan (bukan sisa tampilan antrian/dokumen sebelumnya)
+function bootDashboardPayload(p){
+  p=p||{};
+  return {
+    version:p.version||3,mode:'dashboard',
+    officer:p.officer||'',village:p.village||'',district:p.district||'',logo:p.logo||'',
+    svcInfo:p.svcInfo||'',svcHours:p.svcHours||[],
+    dash:p.dash||null,
+    updatedAt:p.updatedAt||new Date().toISOString()
+  };
+}
+
 function decodeHashPayload(){
   try{
     const m=location.hash.match(/^#service=(.+)$/);
@@ -438,9 +450,9 @@ function decodeHashPayload(){
 }
 function load(){
   const h=decodeHashPayload();
-  if(h){showState(h);try{localStorage.setItem(KEY,JSON.stringify(h))}catch(e){}return}
-  try{const p=JSON.parse(localStorage.getItem(KEY)||'null');if(p){showState(p);return}}catch(e){}
-  showState({});
+  if(h){showState(h);try{localStorage.setItem(KEY,JSON.stringify(h))}catch(e){}return}   // dibuka langsung dgn tampilan tujuan (mis. tombol Dashboard/Tampilkan Surat)
+  try{const p=JSON.parse(localStorage.getItem(KEY)||'null');if(p){showState(bootDashboardPayload(p));return}}catch(e){}
+  showState(bootDashboardPayload({}));
 }
 function clock(){
   const d=new Date();
@@ -501,13 +513,12 @@ async function cloudTickOnce(){
     cloudSeen=data.updated_at;
     const p={...(data.payload||{})};
     if(data.doc)p.docHtml=data.doc_enc==='gzip-b64'?await unB64gzip(data.doc):data.doc;
-    // layar baru menyala: jangan menampilkan dokumen lama milik warga sebelumnya
+    // layar baru menyala/tersambung: selalu awali dengan Dashboard Kependudukan, jangan menampilkan dokumen/antrian lama
     if(cloudFirst){
-      const t=new Date((data.updated_at||'').replace(' ','T')).getTime();
-      const ageMin=isNaN(t)?0:(Date.now()-t)/60000;
-      if(p.mode!=='queue'&&ageMin>DEFAULTS.staleOnBootMin){p.mode='queue';delete p.docHtml}
+      cloudFirst=false;
+      showState(bootDashboardPayload(p));
+      return;
     }
-    cloudFirst=false;
     showState(p);
   }catch(e){console.warn('cloudTick',e);setDot('○ Gangguan koneksi')}
 }

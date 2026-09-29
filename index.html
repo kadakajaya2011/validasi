@@ -5017,6 +5017,7 @@ function closeLetterOnServiceDisplay(){closeServiceDocument()}
     if(!hasPerm('dashboard'))return toast('Anda tidak memiliki hak akses Dashboard Kependudukan');
     if(!data.length)return toast('Belum ada data penduduk untuk ditampilkan');
     const open=!serviceWinAlive();
+    lastServiceInfo=null;   // klik tombol Dashboard otomatis membersihkan data yang sedang dilayani di layar antrian
     showDashboardOnDisplay({open});
     if(open&&!serviceWinAlive())toast('Pop-up diblokir browser. Izinkan pop-up untuk membuka layar pelayanan.');
     else if(!open){try{serviceWin.focus()}catch(e){}}
