@@ -50,10 +50,44 @@ html,body{margin:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,-appl
 .hours span{background:#ffffff1a;border:1px solid #ffffff2e;padding:.6vh 1.6vw;border-radius:999px;font-weight:600}
 
 /* ===== MODE CEK SURAT ===== */
-#queueView,#letterView{width:100%;height:100%;display:flex;flex-direction:column}
+#queueView,#letterView,#dashView{width:100%;height:100%;display:flex;flex-direction:column}
 #letterView{display:none;background:linear-gradient(180deg,#d9e3ee,#c2d0e0)}
+#dashView{display:none;background:linear-gradient(160deg,#f6f9fd,#dfeaf6)}
 .screen.letter #queueView{display:none}
 .screen.letter #letterView{display:flex;animation:fade .3s ease}
+.screen.dash #queueView{display:none}
+.screen.dash #dashView{display:flex;animation:fade .3s ease}
+
+/* ===== MODE DASHBOARD KEPENDUDUKAN ===== */
+.dbody{flex:1;min-height:0;padding:1.6vh 3vw 0;display:flex;flex-direction:column;gap:.8vh}
+.dpage{display:none;flex:1;min-height:0;gap:1.6vw}
+.dpage.active{display:flex;animation:fade .35s ease}
+.dcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.2vh;min-height:0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1vw}
+.kpi{background:#fff;border-radius:1vw;padding:1.3vh 1vw;text-align:center;box-shadow:0 .5vh 1.6vh #10233b14;border-top:.5vh solid var(--blue)}
+.kpi:nth-child(3n+2){border-top-color:var(--gold)}
+.kpi:nth-child(3n+3){border-top-color:#12a594}
+.kpi .n{font-size:clamp(20px,3vw,50px);font-weight:900;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:clamp(9px,.95vw,14px);letter-spacing:1.5px;font-weight:800;color:var(--mute);margin-top:.7vh}
+.panel{background:#fff;border-radius:1.2vw;padding:1.4vh 1.6vw;box-shadow:0 .5vh 1.6vh #10233b14;flex:1;min-height:0;display:flex;flex-direction:column}
+.panel h4{margin:0 0 .8vh;font-size:clamp(12px,1.3vw,22px);color:var(--navy);letter-spacing:.5px;font-weight:800}
+.panel .rows{flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:space-around;gap:.3vh}
+.dbar{display:flex;align-items:center;gap:1vw;font-size:clamp(11px,1.05vw,18px)}
+.dbar .lb{width:10vw;flex:none;color:var(--mute);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbar .tk{flex:1;height:1.5vh;background:#e8f1fa;border-radius:999px;overflow:hidden}
+.dbar .fl{height:100%;background:linear-gradient(90deg,var(--blue),#3f86c4);border-radius:999px}
+.dbar .vl{width:2.8vw;flex:none;text-align:right;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.donutWrap{flex-direction:row;align-items:center;justify-content:center;gap:2vw}
+.ddonut{width:min(24vh,22vw);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.ddonut .c{position:absolute;width:62%;aspect-ratio:1;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px #eef3f9}
+.ddonut .c b{font-size:clamp(18px,2.4vw,38px);color:var(--navy);font-variant-numeric:tabular-nums}
+.ddonut .c small{font-size:clamp(9px,.95vw,14px);color:var(--mute);font-weight:700;letter-spacing:1px}
+.legend{display:flex;flex-direction:column;gap:1.4vh;font-size:clamp(12px,1.3vw,22px);font-weight:700;color:var(--ink)}
+.legend span{display:flex;align-items:center;gap:.7vw}
+.legend i{width:1.3em;height:1.3em;border-radius:5px;display:inline-block;flex:none}
+.dots{display:flex;gap:.7vw;justify-content:center;padding:.6vh 0 0;flex:none}
+.dots i{width:1vh;height:1vh;border-radius:50%;background:#0b2e4f33;display:block}
+.dots i.on{background:var(--blue)}
 .lbar{display:flex;align-items:center;justify-content:space-between;gap:2vw;padding:1.2vh 3vw;color:#fff;background:linear-gradient(100deg,var(--navy),#164a78 60%,var(--blue));border-bottom:.6vh solid var(--gold);box-shadow:0 .6vh 2vh #0b2e4f44;position:relative;z-index:2}
 .lbar .t{font-size:clamp(18px,2.4vw,42px);font-weight:900;color:#fff;letter-spacing:1px}
 .lbar .s{font-size:clamp(13px,1.4vw,24px);color:#ffd980;margin-top:.3vh;font-weight:600}
@@ -112,6 +146,25 @@ html,body{margin:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,-appl
 
   <div class="sec bottom">
     <div class="hours" id="hours"></div>
+  </div>
+</div>
+
+<div id="dashView">
+  <div class="sec top">
+    <img id="dlogo" class="logo" alt="">
+    <div>
+      <div class="village" id="dvillage">PEMERINTAH DESA</div>
+      <div class="sub">DASHBOARD KEPENDUDUKAN</div>
+    </div>
+    <div class="clock" id="dclock"></div>
+  </div>
+  <div class="dbody" id="dbody"></div>
+  <div class="dots" id="ddots"><i class="on"></i><i></i><i></i></div>
+  <div class="sec info">
+    <div class="strip"><div class="ic">i</div><div><div class="h">INFORMASI</div><div id="dinfoText"></div></div></div>
+  </div>
+  <div class="sec bottom">
+    <div class="hours" id="dhours"></div>
   </div>
 </div>
 
@@ -198,14 +251,84 @@ function showQueue(p){
     $('k3').textContent=extra[0];$('v3').textContent=extra[1];
   }
 
-  $('infoText').textContent=clean(p.info)||DEFAULTS.info;
+  $('infoText').textContent=clean(p.svcInfo)||clean(p.info)||DEFAULTS.info;
+  renderHoursInto('hours',p.svcHours);
 
   const call=$('call');call.classList.remove('fade');void call.offsetWidth;call.classList.add('fade');
 }
 
-function renderHours(){
-  $('hours').innerHTML='';
-  DEFAULTS.hours.forEach(h=>{const s=document.createElement('span');s.textContent=h;$('hours').appendChild(s)});
+function renderHoursInto(elId,list){
+  const el=$(elId);if(!el)return;
+  el.innerHTML='';
+  (list&&list.length?list:DEFAULTS.hours).forEach(h=>{const s=document.createElement('span');s.textContent=h;el.appendChild(s)});
+}
+
+/* ===== DASHBOARD KEPENDUDUKAN ===== */
+const escd=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function dBars(entries,max){
+  entries=entries||[];
+  if(!entries.length)return '<div class="dbar"><div class="lb">Belum ada data</div></div>';
+  const m=Math.max(1,max||1,...entries.map(x=>x[1]));
+  return entries.map(([label,val])=>'<div class="dbar"><div class="lb" title="'+escd(label)+'">'+escd(label)+'</div><div class="tk"><div class="fl" style="width:'+Math.max(3,Math.round(val/m*100))+'%"></div></div><div class="vl">'+val+'</div></div>').join('');
+}
+let dashTimer=null,dashPageIdx=0;
+function renderDashPages(d){
+  d=d||{};
+  const total=d.total||0,laki=d.laki||0,perempuan=d.perempuan||0;
+  const pctL=total?Math.round(laki/total*100):0;
+  const degL=Math.round(pctL*3.6);
+  const pages=[
+    '<div class="dpage active" data-p="0">'+
+      '<div class="dcol" style="flex:1.35">'+
+        '<div class="kpis">'+
+          '<div class="kpi"><div class="n">'+total+'</div><div class="l">PENDUDUK</div></div>'+
+          '<div class="kpi"><div class="n">'+(d.kk||0)+'</div><div class="l">KEPALA KELUARGA</div></div>'+
+          '<div class="kpi"><div class="n">'+(d.rt||0)+'/'+(d.rw||0)+'</div><div class="l">RT / RW</div></div>'+
+          '<div class="kpi"><div class="n">'+(d.pemilih||0)+'</div><div class="l">POTENSI PEMILIH</div></div>'+
+          '<div class="kpi"><div class="n">'+(d.balita||0)+'</div><div class="l">BALITA 0–5 TH</div></div>'+
+          '<div class="kpi"><div class="n">'+(d.lansia||0)+'</div><div class="l">LANSIA 60+ TH</div></div>'+
+        '</div>'+
+        '<div class="panel" style="margin-top:1.2vh"><h4>KELOMPOK UMUR</h4><div class="rows">'+dBars(d.age)+'</div></div>'+
+      '</div>'+
+      '<div class="dcol" style="flex:.85">'+
+        '<div class="panel donutWrap">'+
+          '<div class="ddonut" style="background:conic-gradient(var(--blue) 0deg '+degL+'deg,var(--gold) '+degL+'deg 360deg)"><div class="c"><b>'+total+'</b><small>PENDUDUK</small></div></div>'+
+          '<div class="legend"><span><i style="background:var(--blue)"></i>Laki-laki '+laki+' ('+pctL+'%)</span><span><i style="background:var(--gold)"></i>Perempuan '+perempuan+' ('+(total?100-pctL:0)+'%)</span></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>',
+    '<div class="dpage" data-p="1">'+
+      '<div class="dcol"><div class="panel"><h4>PENDUDUK PER RW</h4><div class="rows">'+dBars(d.rwList)+'</div></div></div>'+
+      '<div class="dcol">'+
+        '<div class="panel" style="margin-bottom:1.2vh"><h4>STATUS PERKAWINAN</h4><div class="rows">'+dBars(d.status)+'</div></div>'+
+        '<div class="panel"><h4>AGAMA</h4><div class="rows">'+dBars(d.agama)+'</div></div>'+
+      '</div>'+
+    '</div>',
+    '<div class="dpage" data-p="2">'+
+      '<div class="dcol"><div class="panel"><h4>PENDIDIKAN</h4><div class="rows">'+dBars(d.edu)+'</div></div></div>'+
+      '<div class="dcol"><div class="panel"><h4>PEKERJAAN TERBANYAK</h4><div class="rows">'+dBars(d.job)+'</div></div></div>'+
+    '</div>'
+  ];
+  $('dbody').innerHTML=pages.join('');
+  const dots=$('ddots');dots.innerHTML=pages.map((_,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('');
+  dashPageIdx=0;
+  clearInterval(dashTimer);
+  const nodes=()=>Array.from($('dbody').children);
+  const dotNodes=()=>Array.from(dots.children);
+  dashTimer=setInterval(()=>{
+    const ns=nodes(),ds=dotNodes();if(ns.length<2)return;
+    ns[dashPageIdx].classList.remove('active');ds[dashPageIdx].classList.remove('on');
+    dashPageIdx=(dashPageIdx+1)%ns.length;
+    ns[dashPageIdx].classList.add('active');ds[dashPageIdx].classList.add('on');
+  },8000);
+}
+function showDash(p){
+  const desa=stripVillage(p.village)||'DESA';
+  $('dvillage').textContent='PEMERINTAH DESA '+desa.toUpperCase();
+  if(p.logo){$('dlogo').src=p.logo;$('dlogo').style.display='block'}
+  $('dinfoText').textContent=clean(p.svcInfo)||DEFAULTS.info;
+  renderHoursInto('dhours',p.svcHours);
+  renderDashPages(p.dash);
 }
 
 /* ===== MODE CEK DOKUMEN (surat, biodata, F-1.01, KTP, akta, dll.) ===== */
@@ -286,19 +409,25 @@ window.addEventListener('resize',fit);
 function showState(p){
   p=p||{};
   const isDoc=p.mode==='doc'||p.mode==='letter';
+  const isDash=p.mode==='dashboard';
   const key=[p.updatedAt||'',p.mode||'',p.docHtml?'H':'-'].join('|');
   if(key===lastKey)return;               // abaikan kiriman ganda (BroadcastChannel + postMessage + storage)
   lastKey=key;
   const scr=$('screen');
   clearTimeout(docTimer);
+  const back=()=>{lastKey='';scr.classList.remove('letter');if(lastBase==='dashboard'&&lastDash)showDash(lastDash);else showQueue({...lastQueue,mode:'queue'})};
   if(isDoc){
-    scr.classList.add('letter');showDoc(p);
-    if(DEFAULTS.docTimeoutMin>0)docTimer=setTimeout(()=>{   // privasi: jangan biarkan data warga terpajang terus
-      lastKey='';scr.classList.remove('letter');showQueue({...lastQueue,mode:'queue'});
-    },DEFAULTS.docTimeoutMin*60000);
-  }else{scr.classList.remove('letter');lastQueue=p;showQueue(p)}
+    scr.classList.remove('dash');scr.classList.add('letter');showDoc(p);
+    if(DEFAULTS.docTimeoutMin>0)docTimer=setTimeout(back,DEFAULTS.docTimeoutMin*60000);   // privasi: jangan biarkan data warga terpajang terus
+  }else if(isDash){
+    scr.classList.remove('letter');scr.classList.add('dash');
+    lastBase='dashboard';lastDash=p;showDash(p);
+  }else{
+    scr.classList.remove('letter','dash');
+    lastBase='queue';lastQueue=p;showQueue(p);
+  }
 }
-let docTimer=null,lastQueue={};
+let docTimer=null,lastQueue={},lastBase='queue',lastDash=null;
 
 function decodeHashPayload(){
   try{
@@ -317,9 +446,10 @@ function clock(){
   const d=new Date();
   const t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\./g,':');
   $('clock').textContent=t;$('clock2').textContent=t;
+  const dc=$('dclock');if(dc)dc.textContent=t;
 }
 
-renderHours();load();clock();setInterval(clock,1000);
+renderHoursInto('hours');load();clock();setInterval(clock,1000);
 try{const bc=new BroadcastChannel('DESA_SERVICE_DISPLAY');bc.onmessage=e=>{if(e.data?.type==='SHOW_SERVICE')showState(e.data.payload)}}catch(e){}
 window.addEventListener('message',e=>{
   if(e.data?.type!=='SHOW_SERVICE')return;
