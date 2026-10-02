@@ -6216,8 +6216,18 @@ async function createOperator(){
   $('operatorEmail').value='';$('operatorPassword').value='';toast('Akun operator berhasil dibuat');await loadOperatorList();
 }
 async function bootAuth(){
-  if(!window.supabase||!window.SUPABASE_CONFIG?.url||window.SUPABASE_CONFIG.url.includes('YOUR_')){showLoginError('Supabase belum dikonfigurasi. Isi supabase-config.js terlebih dahulu.');return}
-  window.sb=window.supabase.createClient(window.SUPABASE_CONFIG.url,window.SUPABASE_CONFIG.anonKey);
+  const cfg=window.SUPABASE_CONFIG;
+  if(!window.supabase||!cfg?.url||!cfg?.anonKey||cfg.url.includes('YOUR_')||cfg.anonKey.includes('YOUR_')){
+    showLoginError('Konfigurasi Supabase tidak terbaca. Pastikan supabase-config.js berada satu folder dengan index.html dan berisi Project URL serta anon/publishable key.');
+    return;
+  }
+  try{
+    window.sb=window.supabase.createClient(cfg.url.trim(),cfg.anonKey.trim());
+  }catch(e){
+    console.error('Gagal menginisialisasi Supabase:',e);
+    showLoginError('Gagal menginisialisasi koneksi Supabase. Periksa konfigurasi dan muat ulang aplikasi.');
+    return;
+  }
   try{await cloudLoadSettings();authTitleFromSettings()}catch(e){console.warn('Gagal memuat pengaturan publik',e)}
   const {data:{session}}=await window.sb.auth.getSession();
   if(session){window.currentUser=session.user;try{try{await cloudLoadSettings();authTitleFromSettings()}catch(settingsErr){console.warn('Pengaturan desa tidak dapat dimuat:',settingsErr);authTitleFromSettings()}await loadProfile();await syncCloudHistory();$('authScreen').style.display='none';renderAccountUi();await initApp()}catch(e){showLoginError(e.message||'Profil akun tidak dapat dimuat');await window.sb.auth.signOut()}}
