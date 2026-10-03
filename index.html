@@ -1503,10 +1503,15 @@ async function idbSet(key,val){
   return new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,key);tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error)});
 }
 async function loadResidents(){
+  cloudSnap=null;
   if(window.sb&&window.currentUser){
     const {data:rows,error}=await window.sb.from('residents').select('nik,data').order('nik');
     if(error)throw error;
-    return (rows||[]).map(x=>normalize(x.data||{}));
+    const list=(rows||[]).map(x=>normalize(x.data||{}));
+    const snapNew=new Map();
+    (rows||[]).forEach((x,i)=>snapNew.set(String(list[i].NIK||'').trim(),{local:canonJson(list[i]),db:canonJson(x.data||{})}));
+    cloudSnap=snapNew;
+    return list;
   }
   try{
     const fromIdb=await idbGet('residents');
@@ -1515,6 +1520,54 @@ async function loadResidents(){
     if(legacyRaw){const legacy=JSON.parse(legacyRaw);if(Array.isArray(legacy)){const normalized=legacy.map(normalize);try{await idbSet('residents',normalized);localStorage.removeItem(KEY)}catch(e){}return normalized}}
     return [];
   }catch(e){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x.map(normalize):[]}catch(_){return []}}
+}
+/* ===== Penyimpanan cloud bertahap: hanya baris yang berubah + deteksi bentrok edit antar operator ===== */
+const CLOUD_UPSERT_CHUNK=500,CLOUD_CHECK_CHUNK=150;
+let cloudSnap=null; /* Map NIK -> {local: bentuk baku baris di memori, db: bentuk baku data di database} saat terakhir dimuat/disimpan */
+function canonJson(v){
+  if(Array.isArray(v))return '['+v.map(canonJson).join(',')+']';
+  if(v&&typeof v==='object')return '{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canonJson(v[k])).join(',')+'}';
+  return JSON.stringify(v===undefined?null:v);
+}
+async function cloudSaveChanged(previousNik){
+  const sb=window.sb,uid=window.currentUser.id;
+  const oldNik=String(previousNik||'').trim();
+  const snap=cloudSnap;
+  const items=data.map(r=>({nik:String(r.NIK).trim(),row:r,canon:canonJson(r)}));
+  const changed=snap?items.filter(x=>{const s=snap.get(x.nik);return !s||s.local!==x.canon}):items;
+  if(snap&&changed.length){
+    const conflicts=[];
+    for(let i=0;i<changed.length;i+=CLOUD_CHECK_CHUNK){
+      const part=changed.slice(i,i+CLOUD_CHECK_CHUNK);
+      const {data:cur,error}=await sb.from('residents').select('nik,data').in('nik',part.map(x=>x.nik));
+      if(error)throw error;
+      const dbNow=new Map((cur||[]).map(x=>[String(x.nik||'').trim(),canonJson(x.data||{})]));
+      part.forEach(x=>{
+        const s=snap.get(x.nik),now=dbNow.get(x.nik);
+        if(s&&now===undefined)conflicts.push({x,why:'sudah dihapus pengguna lain'});
+        else if(s&&now!==s.db)conflicts.push({x,why:'sudah diubah pengguna lain'});
+        else if(!s&&now!==undefined)conflicts.push({x,why:'NIK sudah ada di database'});
+      });
+    }
+    if(conflicts.length){
+      const shown=conflicts.slice(0,5).map(c=>(c.x.row['NAMA LENGKAP']||'-')+' (NIK '+c.x.nik+') '+c.why).join('; ');
+      throw new Error('Penyimpanan dibatalkan, tidak ada data yang diubah. '+conflicts.length+' data bentrok dengan perubahan pengguna lain: '+shown+(conflicts.length>5?'; dan '+(conflicts.length-5)+' lainnya':'')+'. Muat ulang halaman (F5) agar data terbaru terambil, lalu ulangi perubahan Anda.');
+    }
+  }
+  const target=snap||new Map();
+  for(let i=0;i<changed.length;i+=CLOUD_UPSERT_CHUNK){
+    const part=changed.slice(i,i+CLOUD_UPSERT_CHUNK);
+    const {error}=await sb.from('residents').upsert(part.map(x=>({nik:x.nik,data:x.row,updated_by:uid})),{onConflict:'nik'});
+    if(error)throw error;
+    part.forEach(x=>target.set(x.nik,{local:x.canon,db:x.canon}));
+  }
+  if(!snap)cloudSnap=target;
+  if(oldNik&&!data.some(r=>String(r.NIK).trim()===oldNik)){
+    const {error}=await sb.from('residents').delete().eq('nik',oldNik);
+    if(error)throw error;
+    if(cloudSnap)cloudSnap.delete(oldNik);
+  }
+  return true;
 }
 async function persist(previousNik=null){
   const invalid=data.filter(r=>!isValidNik(r?.NIK));
@@ -1525,16 +1578,7 @@ async function persist(previousNik=null){
   const dup=data.filter(r=>{const n=String(r.NIK).trim();if(nikSeen.has(n))return true;nikSeen.add(n);return false;});
   if(dup.length)throw new Error('Penyimpanan dibatalkan: terdapat NIK duplikat.');
   if(window.sb&&window.currentUser){
-    const oldNik=String(previousNik||'').trim();
-    const clean=data.map(r=>({nik:String(r.NIK).trim(),data:r,updated_by:window.currentUser.id}));
-    if(clean.length){
-      const {error}=await window.sb.from('residents').upsert(clean,{onConflict:'nik'});
-      if(error)throw error;
-    }
-    if(oldNik && !data.some(r=>String(r.NIK).trim()===oldNik)){
-      const {error}=await window.sb.from('residents').delete().eq('nik',oldNik);
-      if(error)throw error;
-    }
+    await cloudSaveChanged(previousNik);
     return true;
   }
   try{await idbSet('residents',data);return true}catch(e){
@@ -1560,6 +1604,7 @@ async function cloudReplaceResidents(rows){
       if(error)throw error;
     }
   }
+  cloudSnap=new Map(normalized.map(r=>{const c=canonJson(r);return [String(r.NIK).trim(),{local:c,db:c}]}));
   return true;
 }
 async function persistReplace(rows){
@@ -1668,7 +1713,31 @@ function describeResidentChanges(before,after){
   }).filter(Boolean);
 }
 function normalize(r){let x={}; fields.forEach(f=>x[f]=String(r[f]??r[f.toLowerCase()]??'').trim()); x['NO_AKTA_KAWIN']=x['NO_AKTA_KAWIN']||String(r.NO_AKTA_NIKAH??r.NO_AKTA_LAHIR_KAWIN??'').trim(); x['NO_AKTA_CERAI']=x['NO_AKTA_CERAI']||String(r.NO_AKTA_PERCERAIAN??'').trim(); x['TGL_LHR']=x['TGL_LHR']||''; x.STATUS_AKTIF=String(r.STATUS_AKTIF??r.status_aktif??'AKTIF').trim().toUpperCase()||'AKTIF'; x.ALASAN_NONAKTIF=String(r.ALASAN_NONAKTIF??r.alasan_nonaktif??'').trim(); x.TGL_NONAKTIF=String(r.TGL_NONAKTIF??r.tgl_nonaktif??'').trim(); x.KETERANGAN_NONAKTIF=String(r.KETERANGAN_NONAKTIF??r.keterangan_nonaktif??'').trim(); return x}
-function age(d){if(!d)return '';const t=new Date(d),n=new Date();if(isNaN(t))return '';let a=n.getFullYear()-t.getFullYear();if(n.getMonth()<t.getMonth()||(n.getMonth()==t.getMonth()&&n.getDate()<t.getDate()))a--;return a<0?'':a}
+/* Satu pengurai tanggal & satu penghitung umur untuk seluruh aplikasi (tanpa Date.parse bawaan browser). */
+function parseLocalDate(v){
+  if(v instanceof Date)return isNaN(v.getTime())?null:new Date(v.getFullYear(),v.getMonth(),v.getDate());
+  const s=String(v??'').trim();
+  if(!s)return null;
+  let y,mo,d,m=s.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:$|[T ])/);
+  if(m){y=+m[1];mo=+m[2];d=+m[3]}
+  else{
+    m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+    if(!m)return null;
+    d=+m[1];mo=+m[2];y=+m[3];
+  }
+  if(y<1000)return null;
+  const dt=new Date(y,mo-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)return null;
+  return dt;
+}
+function ageOn(dob,ref){
+  const b=parseLocalDate(dob),e=parseLocalDate(ref);
+  if(!b||!e)return null;
+  let a=e.getFullYear()-b.getFullYear();
+  if(e.getMonth()<b.getMonth()||(e.getMonth()===b.getMonth()&&e.getDate()<b.getDate()))a--;
+  return a<0?null:a;
+}
+function age(d){const a=ageOn(d,new Date());return a===null?'':a}
 const MIN_HEAD_AGE=17;
 function isUnderageForHead(r){const a=age(r&&r.TGL_LHR);return a!==''&&Number(a)<MIN_HEAD_AGE}
 function fmtDate(v){if(!v)return '';const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;m=s.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;const d=new Date(v);if(!isNaN(d))return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();return s}
@@ -1714,12 +1783,15 @@ $('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('i
       if(error)throw error;
       if(!deletedRows||deletedRows.length===0)throw new Error('Data tidak terhapus di database. Periksa izin DELETE pada tabel residents di Supabase.');
     }
-    await addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});
     const idx=data.indexOf(r);
     if(idx>=0)data.splice(idx,1);
+    if(cloudSnap)cloudSnap.delete(String(old.NIK||'').trim());
     if(!(window.sb&&window.currentUser))await persist();
     fillFilters();page=1;render();renderInactiveResidents();
-    toast('Biodata berhasil dihapus permanen');
+    try{
+      await addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});
+      toast('Biodata berhasil dihapus permanen');
+    }catch(hErr){toast('Biodata sudah terhapus, tetapi catatan riwayat gagal disimpan: '+(hErr.message||hErr))}
   }catch(err){toast('Gagal menghapus permanen: '+(err.message||err))}
 });
 function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.top=(r.bottom+6)+'px';menuPanel.style.right=(window.innerWidth-r.right)+'px'}
@@ -1950,7 +2022,7 @@ function validatePopulationData(){
     if(!isValidNik(nik))add(r,'IDENTITAS','NIK','NIK harus terdiri dari 16 digit angka.');
     if(!isValidKK(kk))add(r,'KK','NO KK','No. KK harus terdiri dari 16 digit angka.');
     required.forEach(([f,label])=>{if(!String(r[f]??'').trim())add(r,'DATA WAJIB',f,`${label} belum diisi.`)});
-    const t=String(r.TGL_LHR||'').trim();if(t&&isNaN(new Date(t).getTime()))add(r,'IDENTITAS','TGL_LHR','Tanggal Lahir tidak valid.');
+    const t=String(r.TGL_LHR||'').trim();if(t&&!parseLocalDate(t))add(r,'IDENTITAS','TGL_LHR','Tanggal Lahir tidak valid atau formatnya tidak dikenali (gunakan TTTT-BB-HH atau HH/BB/TTTT).');
     if(isAutoSystemNik(nik))add(r,'NIK PERLU DIPERBAHARUI','NIK','NIK menggunakan nomor otomatis sistem dan perlu diperbaharui.','warning','autoNik');
   });
   const autoKkSeen=new Set();
@@ -3461,9 +3533,9 @@ $('importFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   try{
     if(typeof XLSX==='undefined')throw new Error('Library Excel belum tersedia');
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,raw:true});
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellNF:true,cellDates:false});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    const sheet=sheetToMatrix(ws);const matrix=sheet.matrix;
     if(!matrix.length)throw new Error('File Excel kosong');
     const headerInfo=findImportHeaderRow(matrix);
     if(headerInfo.score<2)throw new Error('Header kolom database tidak dikenali. Gunakan nama kolom seperti NIK, NAMA LENGKAP, NO KK, TMPT_LHR, TGL_LHR, JK, SHDRT, STATUS, TGL_NIKAH, TGL_CERAI, dan seterusnya.');
@@ -3476,41 +3548,123 @@ $('importFile').addEventListener('change',async e=>{
     if(missing.length)throw new Error('Kolom wajib tidak ditemukan: '+missing.join(', '));
     const ignored=[];
     sourceHeaders.forEach((h,i)=>{if(!mapped[i]||mapped[i]==='NO'||mapped[i]==='UMUR')ignored.push(h||'(tanpa judul)')});
-    const imported=matrix.slice(headerRow+1).map(row=>{
-      const r={};
-      fields.forEach(fld=>{
-        const i=headerIndex[fld];
-        r[fld]=i===undefined?'':excelValue(fld,row[i]);
-      });
-      return normalize(r);
-    }).filter(r=>r.NIK||r['NAMA LENGKAP']);
+    const built=buildImportRows(matrix,sheet,headerRow,headerIndex);
+    if(built.problems.length){
+      const shown=built.problems.slice(0,6).join('; ');
+      throw new Error('Import dibatalkan karena '+built.problems.length+' isian tidak dapat dibaca dengan aman — '+shown+(built.problems.length>6?'; dan '+(built.problems.length-6)+' lainnya.':'.'));
+    }
+    const imported=built.rows;
     if(!imported.length)throw new Error('Tidak ditemukan baris data yang memiliki NIK atau NAMA LENGKAP');
     const badNikCount=imported.filter(r=>!isValidNik(r.NIK)).length;
     if(badNikCount)throw new Error('Import dibatalkan: '+badNikCount+' baris memiliki NIK tidak valid. Tidak ada baris yang diabaikan.');
     const seenNik=new Set();const dupNik=imported.filter(r=>seenNik.has(r.NIK)||(seenNik.add(r.NIK),false));
     if(dupNik.length)throw new Error('Import dibatalkan: terdapat NIK duplikat di file.');
     pendingImport=imported;
-    $('importPreview').innerHTML=`<b>${pendingImport.length} baris</b> siap diimpor. Header terdeteksi pada baris ${headerRow+1}. <b>UMUR tidak diimpor</b>; umur dihitung otomatis dari TGL_LHR.${ignored.length?'<br>Kolom yang diabaikan: '+esc(ignored.join(', ')):''}`;
+    $('importPreview').innerHTML=`<b>${pendingImport.length} baris</b> siap diimpor. Header terdeteksi pada baris ${headerRow+1}. <b>UMUR tidak diimpor</b>; umur dihitung otomatis dari TGL_LHR.${ignored.length?'<br>Kolom yang diabaikan: '+esc(ignored.join(', ')):''}${built.warnings.map(w=>'<br><span style="color:#b45309">⚠ '+esc(w)+'</span>').join('')}`;
   }catch(err){pendingImport=null;$('importPreview').textContent='File Excel tidak dapat dibaca: '+(err.message||'format tidak sesuai.');}
 });
+/* ===== Impor Excel: pembacaan sel yang aman (NIK/No KK dan tanggal tidak ditebak) ===== */
+const IMPORT_SCI_RE=/^[+-]?\d+(?:[.,]\d+)?e[+-]?\d+$/i;
+const IMPORT_EMPTY_RE=/^(?:[-–—.]+|n\/?a|null|tidak ada)$/i;
+const IMPORT_MONTHS={januari:1,jan:1,februari:2,pebruari:2,feb:2,maret:3,mar:3,april:4,apr:4,mei:5,juni:6,jun:6,juli:7,jul:7,agustus:8,agu:8,agt:8,ags:8,september:9,sept:9,sep:9,oktober:10,okt:10,november:11,nopember:11,nov:11,desember:12,des:12};
+function importPad(n){return String(n).padStart(2,'0')}
+function importIso(y,m,d){
+  if(!(y>=1000&&y<=9999))return null;
+  const dt=new Date(y,m-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return null;
+  return y+'-'+importPad(m)+'-'+importPad(d);
+}
+/* Mengembalikan 'YYYY-MM-DD', '' bila kosong, atau null bila formatnya tidak dikenali. */
+function parseImportDate(v){
+  const s=String(v??'').trim();
+  if(!s)return '';
+  let m=s.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:$|[T ])/);
+  if(m)return importIso(+m[1],+m[2],+m[3]);
+  m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(m)return importIso(+m[3],+m[2],+m[1]);
+  m=s.match(/^(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})$/);
+  if(m){const mo=IMPORT_MONTHS[m[2].toLowerCase()];if(mo)return importIso(+m[3],mo,+m[1])}
+  return null;
+}
+function importIsDateCell(c){
+  try{return !!(c&&c.t==='n'&&c.z&&XLSX.SSF.is_date(c.z))}catch(e){return false}
+}
+/* Sel tanggal dibaca dari nomor seri Excel (bukan dari teks tampilan), sehingga tidak bergantung format m/d/yy atau zona waktu. */
+function importCellText(c){
+  if(!c||c.v===undefined||c.v===null)return '';
+  if(importIsDateCell(c)){
+    const p=XLSX.SSF.parse_date_code(c.v);
+    if(p&&p.y&&p.m&&p.d)return p.y+'-'+importPad(p.m)+'-'+importPad(p.d);
+  }
+  const w=XLSX.utils.format_cell(c);
+  return (w===undefined||w===null)?'':String(w);
+}
+function sheetToMatrix(ws){
+  const out={matrix:[],nums:new Map(),firstRow:0};
+  if(!ws||!ws['!ref'])return out;
+  const rg=XLSX.utils.decode_range(ws['!ref']);
+  out.firstRow=rg.s.r;
+  for(let R=rg.s.r;R<=rg.e.r;R++){
+    const row=[];
+    for(let C=rg.s.c;C<=rg.e.c;C++){
+      const c=ws[XLSX.utils.encode_cell({r:R,c:C})];
+      row.push(importCellText(c));
+      if(c&&c.t==='n'&&!importIsDateCell(c))out.nums.set((R-rg.s.r)+':'+(C-rg.s.c),c.v);
+    }
+    out.matrix.push(row);
+  }
+  return out;
+}
+function buildImportRows(matrix,sheet,headerRow,headerIndex){
+  const rows=[],problems=[],warnings=[];
+  let numericIdCells=0;
+  for(let ri=headerRow+1;ri<matrix.length;ri++){
+    const row=matrix[ri],sheetRow=sheet.firstRow+ri+1;
+    const hasKey=['NIK','NAMA LENGKAP'].some(f=>headerIndex[f]!==undefined&&String(row[headerIndex[f]]??'').trim()!=='');
+    const r={},local=[];
+    fields.forEach(fld=>{
+      const i=headerIndex[fld];
+      if(i===undefined){r[fld]='';return}
+      let raw=row[i];
+      if(fld==='NIK'||fld==='NO KK'){
+        const num=sheet.nums.get(ri+':'+i);
+        if(num!==undefined){
+          if(!Number.isSafeInteger(num)){
+            local.push('baris '+sheetRow+' kolom '+fld+': angka tidak dapat dibaca utuh sebagai angka — ubah kolom menjadi format Teks lalu isi ulang nomor lengkapnya');
+            r[fld]='';return;
+          }
+          raw=String(num);numericIdCells++;
+        }else if(IMPORT_SCI_RE.test(String(raw??'').trim())){
+          local.push('baris '+sheetRow+' kolom '+fld+': "'+String(raw).trim()+'" berbentuk notasi ilmiah sehingga digitnya hilang — ubah kolom menjadi format Teks lalu isi ulang nomor lengkapnya');
+          r[fld]='';return;
+        }
+      }else if(DATE_FIELDS.includes(fld)){
+        const t=String(raw??'').trim();
+        if(t&&!IMPORT_EMPTY_RE.test(t)&&parseImportDate(t)===null){
+          local.push('baris '+sheetRow+' kolom '+fld+': tanggal "'+t+'" tidak dikenali — gunakan HH/BB/TTTT atau TTTT-BB-HH');
+          r[fld]='';return;
+        }
+      }
+      r[fld]=excelValue(fld,raw);
+    });
+    if(!hasKey)continue;
+    problems.push(...local);
+    rows.push(normalize(r));
+  }
+  if(numericIdCells)warnings.push(numericIdCells+' sel NIK/No KK tersimpan sebagai angka, bukan teks. Excel hanya menyimpan 15 digit angka, sehingga digit ke-16 bisa berubah menjadi 0. Periksa NIK yang berakhiran 0, atau ubah kolom menjadi format Teks.');
+  return {rows,problems,warnings};
+}
 function excelValue(field,v){
   if(v===null||v===undefined||v==='')return '';
   if(DATE_FIELDS.includes(field)){
-    if(v instanceof Date && !isNaN(v))return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
-    const s=String(v).trim();
-    let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
-    if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
-    m=s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
-    if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
-    return s;
+    if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+importPad(v.getMonth()+1)+'-'+importPad(v.getDate());
+    const t=String(v).trim();
+    if(!t||IMPORT_EMPTY_RE.test(t))return '';
+    const iso=parseImportDate(t);
+    return iso===null?t:iso;
   }
   let s=String(v).trim();
-  // NIK/No KK kadang terbaca sebagai notasi ilmiah ketika file Excel menyimpan angka.
-  if((field==='NIK'||field==='NO KK') && /^[+-]?\d+(?:[.,]\d+)?e[+-]?\d+$/i.test(s)){
-    const n=Number(s.replace(',','.'));
-    if(Number.isFinite(n))s=Math.trunc(n).toString();
-  }
-  if((field==='NIK'||field==='NO KK') && /^\d+\.0+$/.test(s))s=s.split('.')[0];
+  if((field==='NIK'||field==='NO KK')&&/^\d+\.0+$/.test(s))s=s.split('.')[0];
   return s;
 }
 $('btnProcessImport').addEventListener('click',async()=>{
@@ -3624,21 +3778,7 @@ function dp4IsEverMarried(status){
   return s.includes('kawin') || s.includes('cerai hidup') || s.includes('cerai mati');
 }
 function dp4AgeOnDate(dob, dateStr){
-  if(!dob||!dateStr)return null;
-  function parseDate(v){
-    if(v instanceof Date && !isNaN(v.getTime())) return new Date(v.getFullYear(),v.getMonth(),v.getDate());
-    const s=String(v).trim();
-    let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if(m)return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
-    m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
-    if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
-    const d=new Date(s); return isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  }
-  const b=parseDate(dob), e=parseDate(dateStr);
-  if(!b||!e)return null;
-  let a=e.getFullYear()-b.getFullYear();
-  if(e.getMonth()<b.getMonth() || (e.getMonth()===b.getMonth() && e.getDate()<b.getDate()))a--;
-  return a<0?null:a;
+  return ageOn(dob,dateStr);
 }
 function dp4TniPolri(r){
   const p=String(r.PEKERJAAN||'').toLowerCase().trim();
@@ -4710,13 +4850,8 @@ function syncPowerReceiver(){
   if(!r)return;
   if($('exPowerReceiver'))$('exPowerReceiver').value=r['NAMA LENGKAP']||'';
   if($('exPowerAge')){
-    const b=r.TGL_LHR?new Date(r.TGL_LHR+'T00:00:00'):null;
-    if(b&&!isNaN(b)){
-      const t=new Date();
-      let age=t.getFullYear()-b.getFullYear();
-      if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))age--;
-      $('exPowerAge').value=String(Math.max(0,age));
-    }
+    const a=ageOn(r.TGL_LHR,new Date());
+    if(a!==null)$('exPowerAge').value=String(Math.max(0,a));
   }
   if($('exPowerJob'))$('exPowerJob').value=r.PEKERJAAN||'';
   if($('exPowerAddress'))$('exPowerAddress').value=[r.ALAMAT||'',r.RT?'RT. '+r.RT:'',r.RW?'RW. '+r.RW:''].filter(Boolean).join(' ');
