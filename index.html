@@ -731,7 +731,19 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 </div>
 
 
-<style>.svc-ctl{display:flex;align-items:center;gap:6px}.svc-auto{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap}@media(max-width:700px){.svc-ctl .btn{padding:6px 8px;font-size:12px}}</style></head>
+<style>.svc-ctl{display:flex;align-items:center;gap:6px}.svc-auto{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap}@media(max-width:700px){.svc-ctl .btn{padding:6px 8px;font-size:12px}}</style><style id="pwToggleStyle">
+.pw-wrap{position:relative;display:block;width:100%}
+.pw-wrap>input{padding-right:44px !important}
+.pw-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:#6b7a8f;cursor:pointer;padding:0}
+.pw-toggle:hover{background:#eef2f8;color:#0f2a4d}
+.pw-toggle:focus-visible{outline:2px solid var(--focus,#2f6fb0);outline-offset:1px}
+.pw-toggle svg{width:19px;height:19px;pointer-events:none}
+.pw-toggle .ic-off{display:none}
+.pw-toggle.shown .ic-on{display:none}
+.pw-toggle.shown .ic-off{display:block}
+@media print{.pw-toggle{display:none !important}}
+</style>
+</head>
 <body>
 
 <style id="cloudAuthStyles">
@@ -6322,4 +6334,46 @@ function fitAllPreviewPapers(){document.querySelectorAll(PREVIEW_FIT_WRAP_SELECT
 </script>
 
 
+<script id="pwToggleScript">
+(function(){
+  var EYE='<svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYEOFF='<svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+  function labelFor(input,shown){
+    var nama=/pin/i.test(input.id||'')?'PIN':'password';
+    return (shown?'Sembunyikan ':'Tampilkan ')+nama;
+  }
+  function setShown(input,btn,shown){
+    input.type=shown?'text':'password';
+    btn.classList.toggle('shown',shown);
+    var t=labelFor(input,shown);
+    btn.setAttribute('aria-label',t);
+    btn.setAttribute('title',t);
+    btn.setAttribute('aria-pressed',shown?'true':'false');
+  }
+  function enhance(input){
+    if(input.dataset.pwToggle)return;
+    input.dataset.pwToggle='1';
+    var wrap=document.createElement('span');
+    wrap.className='pw-wrap';
+    input.parentNode.insertBefore(wrap,input);
+    wrap.appendChild(input);
+    var btn=document.createElement('button');
+    btn.type='button';
+    btn.className='pw-toggle';
+    btn.innerHTML=EYE+EYEOFF;
+    wrap.appendChild(btn);
+    setShown(input,btn,false);
+    btn.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      setShown(input,btn,input.type==='password');
+      input.focus();
+    });
+    var form=input.closest('form');
+    if(form)form.addEventListener('submit',function(){setShown(input,btn,false)});
+  }
+  function run(){document.querySelectorAll('input[type="password"]').forEach(enhance)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+})();
+</script>
 </body></html>
