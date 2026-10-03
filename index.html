@@ -1155,7 +1155,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 <div class="overlay" id="historyOverlay">
   <div class="modal" style="width:min(1050px,97vw)">
     <div class="modal-head"><div class="modal-title">Riwayat Perubahan Penduduk</div><button class="close" data-close="historyOverlay">✕</button></div>
-    <div class="modal-body"><div class="hint" style="margin-bottom:10px">Riwayat menyimpan kejadian penduduk yang keluar/masuk data aktif dan perubahan data. Catatan ini menjadi sumber untuk modul register desa berikutnya.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px"><label><b>Jenis Riwayat</b><select class="select" id="historyTypeFilter"><option value="">Semua</option><option value="Penduduk Pindah">Pindah</option><option value="Penduduk Meninggal">Meninggal</option><option value="Perubahan Biodata">Perubahan biodata</option><option value="Perubahan Status Perkawinan">Perubahan status perkawinan</option><option value="Perubahan Pekerjaan">Perubahan pekerjaan</option><option value="Perubahan Alamat/RT/RW">Perubahan alamat/RT/RW</option><option value="Data Ditambahkan">Penambahan penduduk</option><option value="Data Dihapus">Penghapusan data</option></select></label><label><b>Cari NIK/Nama/KK</b><input class="input" id="historySearch" placeholder="Ketik NIK, nama atau No KK"></label></div><div class="history-list" id="historyBody"></div></div>
+    <div class="modal-body"><div class="hint" style="margin-bottom:10px">Riwayat menyimpan kejadian penduduk yang keluar/masuk data aktif dan perubahan data. Catatan ini menjadi sumber untuk modul register desa berikutnya.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px"><label><b>Pengguna</b><select class="select" id="historyUserFilter"><option value="">Semua pengguna</option></select></label><label><b>Jenis Riwayat</b><select class="select" id="historyTypeFilter"><option value="">Semua</option><option value="Penduduk Pindah">Pindah</option><option value="Penduduk Meninggal">Meninggal</option><option value="Perubahan Biodata">Perubahan biodata</option><option value="Perubahan Status Perkawinan">Perubahan status perkawinan</option><option value="Perubahan Pekerjaan">Perubahan pekerjaan</option><option value="Perubahan Alamat/RT/RW">Perubahan alamat/RT/RW</option><option value="Data Ditambahkan">Penambahan penduduk</option><option value="Data Dihapus">Penghapusan data</option></select></label><label><b>Cari NIK/Nama/KK</b><input class="input" id="historySearch" placeholder="Ketik NIK, nama atau No KK"></label></div><div class="history-list" id="historyBody"></div></div>
     <div class="modal-foot"><button class="btn" id="btnClearHistory">Bersihkan Riwayat</button><button class="btn" data-close="historyOverlay">Tutup</button></div>
   </div>
 </div>
@@ -1349,10 +1349,19 @@ async function cloudLoadSettings(){
   return desaSettings;
 }
 async function saveSettings(){
-  localStorage.setItem(SETTINGS_KEY,JSON.stringify(desaSettings));
-  if(window.sb&&window.currentUser){
-    const {error}=await window.sb.from('app_settings').upsert({id:'main',settings:desaSettings,updated_by:window.currentUser.id},{onConflict:'id'});
-    if(error)throw error;
+  const previous=JSON.parse(JSON.stringify(loadSettings()));
+  const next=JSON.parse(JSON.stringify(desaSettings));
+  try{
+    if(window.sb&&window.currentUser){
+      const {error}=await window.sb.from('app_settings').upsert({id:'main',settings:next,updated_by:window.currentUser.id},{onConflict:'id'});
+      if(error)throw error;
+    }
+    localStorage.setItem(SETTINGS_KEY,JSON.stringify(next));
+    return true;
+  }catch(err){
+    desaSettings=previous;
+    try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(previous))}catch(_){ }
+    throw err;
   }
 }
 function getConfiguredSigners(){
@@ -1412,10 +1421,10 @@ async function saveSettingsForm(){
   }
   try{await saveSettings()}catch(err){toast('Pengaturan gagal disimpan ke server: '+(err.message||err));return}updateAppTitle();renderLetter();try{refreshServiceAfterSettings()}catch(e){console.warn(e)}$('setPin').value='';$('setPinConfirm').value='';updatePinStatusHint();$('settingsOverlay').classList.remove('open');toast('Pengaturan identitas desa berhasil disimpan')
 }
-$('btnClearPin').addEventListener('click',()=>{
+$('btnClearPin').addEventListener('click',async()=>{
   if(!desaSettings.pinHash){toast('PIN memang belum diatur');return}
   if(!confirm('Matikan PIN keamanan? Aksi hapus/impor/pulihkan tidak akan diproteksi lagi.'))return;
-  desaSettings.pinHash='';saveSettings();updatePinStatusHint();toast('PIN keamanan dihapus');
+  const oldHash=desaSettings.pinHash;desaSettings.pinHash='';try{await saveSettings();updatePinStatusHint();toast('PIN keamanan dihapus')}catch(err){desaSettings.pinHash=oldHash;updatePinStatusHint();toast('Gagal menghapus PIN: '+(err.message||err))}
 });
 function setPrintPageOrientation(orientation){
   const o=orientation==='landscape'?'landscape':'portrait';
@@ -1496,90 +1505,147 @@ async function loadResidents(){
   }catch(e){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x.map(normalize):[]}catch(_){return []}}
 }
 async function persist(previousNik=null){
+  const invalid=data.filter(r=>!isValidNik(r?.NIK));
+  if(invalid.length){
+    throw new Error('Penyimpanan dibatalkan: '+invalid.length+' penduduk memiliki NIK tidak valid. Semua NIK harus 16 digit angka.');
+  }
+  const nikSeen=new Set();
+  const dup=data.filter(r=>{const n=String(r.NIK).trim();if(nikSeen.has(n))return true;nikSeen.add(n);return false;});
+  if(dup.length)throw new Error('Penyimpanan dibatalkan: terdapat NIK duplikat.');
   if(window.sb&&window.currentUser){
     const oldNik=String(previousNik||'').trim();
-    const clean=data.filter(r=>isValidNik(r.NIK)).map(r=>({nik:r.NIK,data:r,updated_by:window.currentUser.id}));
+    const clean=data.map(r=>({nik:String(r.NIK).trim(),data:r,updated_by:window.currentUser.id}));
     if(clean.length){
       const {error}=await window.sb.from('residents').upsert(clean,{onConflict:'nik'});
       if(error)throw error;
     }
-    // Jika NIK diubah saat edit, upsert dengan NIK baru membuat baris baru
-    // di Supabase karena NIK adalah conflict key. Hapus baris NIK lama
-    // setelah data baru berhasil di-upsert agar tidak terjadi data ganda.
-    if(oldNik){
-      const stillExists=data.some(r=>String(r?.NIK||'').trim()===oldNik);
-      const newNikForEdited=clean.find(x=>String(x.data?.NIK||'').trim()!==oldNik);
-      if(!stillExists && newNikForEdited && String(newNikForEdited.data?.NIK||'').trim()!==oldNik){
-        const {error}=await window.sb.from('residents').delete().eq('nik',oldNik);
-        if(error)throw error;
-      }
+    if(oldNik && !data.some(r=>String(r.NIK).trim()===oldNik)){
+      const {error}=await window.sb.from('residents').delete().eq('nik',oldNik);
+      if(error)throw error;
     }
-    return;
+    return true;
   }
-  try{await idbSet('residents',data)}catch(e){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e2){toast('⚠️ Gagal menyimpan data')}}
+  try{await idbSet('residents',data);return true}catch(e){
+    try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e2){throw new Error('Gagal menyimpan data lokal: '+(e2.message||e2))}
+  }
 }
+async function cloudReplaceResidents(rows){
+  if(!window.sb||!window.currentUser)return true;
+  const normalized=(rows||[]).map(normalize);
+  const wanted=new Set(normalized.map(r=>String(r.NIK||'').trim()));
+  const {data:existing,error:selErr}=await window.sb.from('residents').select('nik');
+  if(selErr)throw selErr;
+  const stale=(existing||[]).map(x=>String(x.nik||'').trim()).filter(n=>n&&!wanted.has(n));
+  for(let i=0;i<stale.length;i+=500){
+    const part=stale.slice(i,i+500);
+    if(part.length){const {error}=await window.sb.from('residents').delete().in('nik',part);if(error)throw error}
+  }
+  if(normalized.length){
+    const payload=normalized.map(r=>({nik:String(r.NIK).trim(),data:r,updated_by:window.currentUser.id}));
+    for(let i=0;i<payload.length;i+=500){
+      const part=payload.slice(i,i+500);
+      const {error}=await window.sb.from('residents').upsert(part,{onConflict:'nik'});
+      if(error)throw error;
+    }
+  }
+  return true;
+}
+async function persistReplace(rows){
+  const normalized=(rows||[]).map(normalize);
+  const invalid=normalized.filter(r=>!isValidNik(r.NIK));
+  if(invalid.length)throw new Error('Restore/Replace dibatalkan: '+invalid.length+' NIK tidak valid.');
+  const seen=new Set();
+  for(const r of normalized){
+    const nik=String(r.NIK||'').trim();
+    if(seen.has(nik))throw new Error('Restore/Replace dibatalkan: NIK duplikat '+nik);
+    seen.add(nik);
+  }
+  if(window.sb&&window.currentUser){await cloudReplaceResidents(normalized);return true}
+  try{await idbSet('residents',normalized);return true}
+  catch(e){
+    try{localStorage.setItem(KEY,JSON.stringify(normalized));return true}
+    catch(e2){throw new Error('Gagal menyimpan Replace/Restore lokal: '+(e2.message||e2))}
+  }
+}
+
+async function cloudReplaceMutationHistory(rows){
+  if(!window.sb||!window.currentUser)return true;
+  const wanted=(rows||[]).map(x=>String(x.id||'')).filter(Boolean);
+  const wantedSet=new Set(wanted);
+  const {data:existing,error:selErr}=await window.sb.from('mutation_history').select('id');
+  if(selErr)throw selErr;
+  const stale=(existing||[]).map(x=>String(x.id)).filter(id=>!wantedSet.has(id));
+  for(let i=0;i<stale.length;i+=500){const part=stale.slice(i,i+500);if(part.length){const {error}=await window.sb.from('mutation_history').delete().in('id',part);if(error)throw error}}
+  if(rows?.length){
+    const payload=rows.map(r=>({...r,created_by:r.created_by||window.currentUser.id}));
+    for(let i=0;i<payload.length;i+=500){const part=payload.slice(i,i+500);const {error}=await window.sb.from('mutation_history').upsert(part,{onConflict:'id'});if(error)throw error}
+  }
+  return true;
+}
+async function cloudReplaceLetterRegister(rows){
+  if(!window.sb||!window.currentUser)return true;
+  const normalized=(rows||[]).map(normalizeLetterRecord);
+  const wantedSet=new Set(normalized.map(x=>String(x.id)));
+  const {data:existing,error:selErr}=await window.sb.from('letter_register').select('id');
+  if(selErr)throw selErr;
+  const stale=(existing||[]).map(x=>String(x.id)).filter(id=>!wantedSet.has(id));
+  for(let i=0;i<stale.length;i+=500){const part=stale.slice(i,i+500);if(part.length){const {error}=await window.sb.from('letter_register').delete().in('id',part);if(error)throw error}}
+  if(normalized.length){
+    const payload=normalized.map(r=>({...r,created_by:r.created_by||window.currentUser.id,updated_by:window.currentUser.id,created_at:r.created_at||new Date().toISOString(),updated_at:new Date().toISOString()}));
+    for(let i=0;i<payload.length;i+=500){const part=payload.slice(i,i+500);const {error}=await window.sb.from('letter_register').upsert(part,{onConflict:'id'});if(error)throw error}
+  }
+  return true;
+}
+
 function isActiveResident(r){return String(r?.STATUS_AKTIF||'AKTIF').toUpperCase()!=='TIDAK AKTIF'}
 function markResidentsInactive(rows,reason,extra=''){const now=todayISO();(rows||[]).forEach(r=>{r.STATUS_AKTIF='TIDAK AKTIF';r.ALASAN_NONAKTIF=reason;r.TGL_NONAKTIF=now;r.KETERANGAN_NONAKTIF=extra||''})}
 function reactivateResident(r){if(!r)return;r.STATUS_AKTIF='AKTIF';r.ALASAN_NONAKTIF='';r.TGL_NONAKTIF='';r.KETERANGAN_NONAKTIF=''}
 function repairInactiveFromMoveHistory(){
-  const history=getHistory();
-  const latest=new Map();
-  history.filter(h=>h&&h.NIK&&(['Penduduk Pindah','Status Penduduk Diaktifkan Kembali'].includes(h.type))).forEach(h=>{
-    const nik=String(h.NIK).trim();
-    const old=latest.get(nik);
+  const history=getHistory(),latest=new Map();
+  history.filter(h=>h&&h.NIK&&['Penduduk Pindah','Status Penduduk Diaktifkan Kembali','Penduduk Dihapus Permanen'].includes(h.type)).forEach(h=>{
+    const nik=String(h.NIK).trim(),old=latest.get(nik);
     if(!old||String(h.at||'')>String(old.at||''))latest.set(nik,h);
   });
   let changed=false;
   latest.forEach((h,nik)=>{
-    if(h.type==='Penduduk Dihapus Permanen')return;
-    if(h.type!=='Penduduk Pindah')return;
-    const meta=h.meta||{};
-    let r=data.find(x=>String(x.NIK||'').trim()===nik);
-    if(!r){
-      r=normalize({
-        NIK:nik,
-        'NAMA LENGKAP':h.name||'',
-        'NO KK':h.kk||meta.noKK||'',
-        ALAMAT:h.address||'',
-        RT:h.rt||'',
-        RW:h.rw||'',
-        JK:h.jk||'',
-        TGL_LHR:h.tanggalLahir||meta.tanggalLahir||'',
-        SHDRT:meta.shdrt||'',
-        STATUS_AKTIF:'AKTIF'
-      });
-      data.push(r);
-      changed=true;
-    }
-    if(isActiveResident(r)){
-      r.STATUS_AKTIF='TIDAK AKTIF';
-      r.ALASAN_NONAKTIF='Pindah';
+    const r=data.find(x=>String(x.NIK||'').trim()===nik);
+    if(!r)return;
+    if(h.type==='Penduduk Dihapus Permanen'||h.type==='Status Penduduk Diaktifkan Kembali')return;
+    if(h.type==='Penduduk Pindah'&&isActiveResident(r)){
+      const meta=h.meta||{};
+      r.STATUS_AKTIF='TIDAK AKTIF';r.ALASAN_NONAKTIF='Pindah';
       r.TGL_NONAKTIF=String(meta.tanggal||'').trim()||String(h.at||'').slice(0,10);
-      r.KETERANGAN_NONAKTIF=h.detail||'';
-      changed=true;
+      r.KETERANGAN_NONAKTIF=h.detail||'';changed=true;
     }
   });
   return changed;
 }
+
 const HISTORY_KEY='residents-history-v1';
 function getHistory(){try{const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
 async function cloudInsertMutationHistory(row){
-  if(!window.sb||!window.currentUser)return;
+  if(!window.sb||!window.currentUser)return true;
   const id=String(row.id||crypto.randomUUID());
   const payload={id,at:row.at,type:row.type,nik:row.NIK,name:row.name,kk:row.kk,address:row.address,rt:row.rt,rw:row.rw,detail:row.detail,meta:row.meta||{},created_by:window.currentUser.id};
   const {error}=await window.sb.from('mutation_history').upsert(payload,{onConflict:'id'});
-  if(error)console.warn('history sync',error);
+  if(error)throw error;
+  return true;
 }
-function addHistory(type,r,detail='',meta=null){
+async function addHistory(type,r,detail='',meta=null){
   const actor=profileDisplayName();
   const baseMeta=(meta&&typeof meta==='object')?{...meta}:{};
   baseMeta.akunPerubahan=actor;
   baseMeta.akunUserId=window.currentUser?.id||'';
-  const row={id:crypto.randomUUID(),at:new Date().toISOString(),type,NIK:r?.NIK||'',name:r?.['NAMA LENGKAP']||'',kk:r?.['NO KK']||'',address:r?.ALAMAT||'',rt:r?.RT||r?.['RT']||'',rw:r?.RW||r?.['RW']||'',jk:r?.JK||'',tanggalLahir:r?.TGL_LHR||'',detail,meta:baseMeta,created_by_name:actor};
+  const row={id:crypto.randomUUID(),at:new Date().toISOString(),type,NIK:r?.NIK||'',name:r?.['NAMA LENGKAP']||'',kk:r?.['NO KK']||'',address:r?.ALAMAT||'',rt:r?.RT||r?.['RT']||'',rw:r?.RW||r?.['RW']||'',jk:r?.JK||'',tanggalLahir:r?.TGL_LHR||'',detail,meta:baseMeta,created_by:window.currentUser?.id||'',created_by_name:actor};
+  // Cloud adalah sumber kebenaran saat login. Jangan menulis riwayat lokal
+  // sebelum penyimpanan cloud berhasil, agar kegagalan sinkronisasi tidak
+  // menciptakan riwayat palsu di perangkat.
+  if(window.sb&&window.currentUser)await cloudInsertMutationHistory(row);
   const h=getHistory();h.unshift(row);localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,1000)));
-  cloudInsertMutationHistory(row);
   const m=historyToMutation(row);if(m){const reg=getMutationRegister();if(!reg.some(x=>x.id===m.id)){reg.unshift(m);localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(reg.slice(0,5000)))}}
+  return row;
 }
+
 function describeResidentChanges(before,after){
   const labels={'NIK':'NIK','NAMA LENGKAP':'Nama Lengkap','NO KK':'NO. KK','TMPT_LHR':'Tempat Lahir','TGL_LHR':'Tanggal Lahir','JK':'Jenis Kelamin','SHDRT':'SHDK / Hubungan Keluarga','STATUS':'Status Perkawinan','NO_AKTA_KAWIN':'No. Akta Kawin','TGL_NIKAH':'Tanggal Nikah','NO_AKTA_CERAI':'No. Akta Cerai','TGL_CERAI':'Tanggal Cerai','GD':'Golongan Darah','AGAMA':'Agama','PENDIDIKAN':'Pendidikan','PEKERJAAN':'Pekerjaan','NAMA_LGKP_IBU':'Nama Ibu','NAMA_LGKP_AYAH':'Nama Ayah','ALAMAT':'Alamat','RT':'RT','RW':'RW','STATUS_AKTIF':'Status Keaktifan','ALASAN_NONAKTIF':'Alasan Tidak Aktif','TGL_NONAKTIF':'Tanggal Tidak Aktif','KETERANGAN_NONAKTIF':'Keterangan Tidak Aktif'};
   const keys=[...new Set([...Object.keys(before||{}),...Object.keys(after||{})])];
@@ -1617,9 +1683,9 @@ $('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('i
     const r=data.find(x=>String(x.NIK)===String(react.dataset.reactivateNik));
     if(!r)return;
     if(!confirm('Aktifkan kembali '+(r['NAMA LENGKAP']||r.NIK)+'?'))return;
+    const fullSnapshot=data.map(x=>({...x}));
     reactivateResident(r);
-    addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});
-    try{await persist();fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){toast('Gagal menyimpan: '+(err.message||err))}
+    try{await persist();await addHistory('Status Penduduk Diaktifkan Kembali',r,'Penduduk diaktifkan kembali',{kategori:'STATUS_PENDUDUK',statusBaru:'AKTIF'});fillFilters();page=1;render();renderInactiveResidents();toast('Penduduk berhasil diaktifkan kembali')}catch(err){data=fullSnapshot;fillFilters();render();renderInactiveResidents();toast('Gagal menyimpan: '+(err.message||err))}
     return;
   }
   const del=e.target.closest('[data-permanent-delete-nik]');
@@ -1636,7 +1702,7 @@ $('btnInactivePopulation')?.addEventListener('click',openInactiveResidents);$('i
       if(error)throw error;
       if(!deletedRows||deletedRows.length===0)throw new Error('Data tidak terhapus di database. Periksa izin DELETE pada tabel residents di Supabase.');
     }
-    addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});
+    await addHistory('Penduduk Dihapus Permanen',old,'Biodata dihapus permanen dari database',{kategori:'PENGHAPUSAN_PERMANEN',alasan:'Hapus Permanen'});
     const idx=data.indexOf(r);
     if(idx>=0)data.splice(idx,1);
     if(!(window.sb&&window.currentUser))await persist();
@@ -1670,7 +1736,7 @@ $('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return t
   const fileName=`Data_Kependudukan_Desa_${namaDesa}_${dd}-${mm}-${yyyy}_${hh}.${mi}.xlsx`;
   XLSX.writeFile(wb,fileName);toast(`Database berhasil diekspor: ${fileName}`)});
 $('btnReport').addEventListener('click',()=>{if(!hasPerm('report'))return toast('Anda tidak memiliki hak akses Laporan Kependudukan');closeMenu();renderReport();$('reportOverlay').classList.add('open')});
-$('btnAdd').addEventListener('click',()=>{closeMenu();buildForm();$('addReason').value='';$('addDate').value=new Date().toISOString().slice(0,10);$('addOrigin').value='';$('addNote').value='';$('addOriginWrap').style.display='none';if($('arrivalKKMode'))$('arrivalKKMode').value='';if($('arrivalKKModeWrap'))$('arrivalKKModeWrap').style.display='none';$('addOverlay').classList.add('open');syncArrivalKKMode()});
+$('btnAdd').addEventListener('click',()=>{closeMenu();buildForm();$('addReason').value='';$('addDate').value=todayISO();$('addOrigin').value='';$('addNote').value='';$('addOriginWrap').style.display='none';if($('arrivalKKMode'))$('arrivalKKMode').value='';if($('arrivalKKModeWrap'))$('arrivalKKModeWrap').style.display='none';$('addOverlay').classList.add('open');syncArrivalKKMode()});
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.remove('open')));document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 ['search','fRT','fRW','fJK','fSH','fStatus','fAgama','fPendidikan','fPekerjaan'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{page=1;render()}));document.querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>setSort(th.dataset.sort)));$('prev').addEventListener('click',()=>{if(page>1){page--;render()}});$('next').addEventListener('click',()=>{page++;render()});
 let editingIndex=-1,deletingIndex=-1;
@@ -1746,7 +1812,7 @@ function isHead(r){return String(r?.SHDRT||'').trim().toUpperCase()==='KEPALA KE
 function familyCardIntegrity(kk,ignoreIndex=-1){
   const target=String(kk||'').trim();
   if(!target)return {ok:true,members:[],head:null,heads:[]};
-  const members=data.filter((r,i)=>i!==ignoreIndex&&String(r['NO KK']||'').trim()===target);
+  const members=data.filter((r,i)=>i!==ignoreIndex&&isActiveResident(r)&&String(r['NO KK']||'').trim()===target);
   const heads=members.filter(isHead);
   return {ok:heads.length===1,members,head:heads[0]||null,heads};
 }
@@ -1768,7 +1834,7 @@ function applyHeadAddressToMembers(kk,head){
   if(!target||!head)return 0;
   let count=0;
   data.forEach(r=>{
-    if(String(r['NO KK']||'').trim()===target){
+    if(isActiveResident(r)&&String(r['NO KK']||'').trim()===target){
       const a=r.ALAMAT||'',rt=r.RT||'',rw=r.RW||'';
       r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
       if(a!==r.ALAMAT||rt!==r.RT||rw!==r.RW)count++;
@@ -1817,6 +1883,7 @@ async function syncAllFamilyAddresses(){
     groups.get(kk).push(r);
   });
   if(!groups.size){toast('Belum ada data KK yang dapat disinkronkan');return}
+  const fullSnapshot=data.map(r=>({...r}));
   const invalid=[],changedKK=[];let changedMembers=0;
   groups.forEach((members,kk)=>{
     const heads=members.filter(isHead);
@@ -1841,24 +1908,20 @@ async function syncAllFamilyAddresses(){
   if(invalid.length)text+=`\n\n${invalid.length} KK tidak diproses karena Kepala Keluarganya tidak tepat 1. Daftarnya sudah ditampilkan.`;
   if(!confirm(text+'\n\nLanjutkan?'))return;
   try{
-    const unsaved=[];
     changedKK.forEach(({kk})=>{
       const members=groups.get(kk),head=members.find(isHead);
       members.forEach(r=>{
         r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();
-        if(!isValidNik(r.NIK))unsaved.push({kk,name:r['NAMA LENGKAP']||'-',nik:r.NIK||'(kosong)'});
       });
     });
     await persist();
-    addHistory('Sinkronisasi Alamat KK',null,`Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.` ,{kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid.map(x=>x.kk)});
+    await addHistory('Sinkronisasi Alamat KK',null,`Sinkronisasi alamat anggota berdasarkan Kepala Keluarga: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.` ,{kategori:'SINKRONISASI_ALAMAT_KK',jumlahAnggota:changedMembers,jumlahKK:changedKK.length,kk:changedKK.map(x=>x.kk),kkBermasalah:invalid.map(x=>x.kk)});
     fillFilters();render();
     let done=`Sinkronisasi selesai: ${changedMembers} anggota pada ${changedKK.length} KK diperbarui.`;
     if(invalid.length)done+=` ${invalid.length} KK belum valid; buka daftar KK belum valid untuk memperbaikinya.`;
-    if(unsaved.length){
-      done+=` ⚠️ PERHATIAN: ${unsaved.length} data TIDAK tersimpan ke database bersama karena NIK belum valid (harus 16 digit angka), sehingga alamatnya akan kembali berbeda setelah refresh: `+unsaved.map(u=>`${u.name} — NIK ${u.nik} (KK ${u.kk})`).join(', ')+'. Perbaiki NIK anggota tersebut terlebih dahulu, lalu jalankan Sinkronkan Alamat KK sekali lagi.';
-    }
     toast(done);
   }catch(err){
+    data=fullSnapshot;
     toast('Sinkronisasi gagal disimpan ke database: '+(err.message||err));
   }
 }
@@ -2236,8 +2299,8 @@ function printF101(){
   printWithFilename('F-1.01 - '+(head?.['NAMA LENGKAP']||f101KK),()=>window.print(),()=>{document.body.classList.remove('print-f101');clearPrintOrientation()});
 }
 
-function resetMoveForm(){['moveClass','moveReason','moveType','moveStayStatus','moveGoStatus'].forEach(id=>$(id).value='');['moveOther','moveSkp','moveAddress','moveRT','moveRW','movePostal','moveVillage','moveDistrict','moveRegency','moveProvince'].forEach(id=>$(id).value='');$('moveDate').value=new Date().toISOString().slice(0,10);$('moveOtherWrap').style.display='none';$('moveMembers').innerHTML='';}
-function resetDeathForm(){['deathDate','deathTime','deathReporterRelation','deathDocNo','deathDocDate','deathNote','deathCauseOther'].forEach(id=>$(id).value='');$('deathDate').value=new Date().toISOString().slice(0,10);$('deathPlaceType').value='';$('deathCause').value='';$('deathReporterType').value='';$('deathCauseOtherWrap').style.display='none';}
+function resetMoveForm(){['moveClass','moveReason','moveType','moveStayStatus','moveGoStatus'].forEach(id=>$(id).value='');['moveOther','moveSkp','moveAddress','moveRT','moveRW','movePostal','moveVillage','moveDistrict','moveRegency','moveProvince'].forEach(id=>$(id).value='');$('moveDate').value=todayISO();$('moveOtherWrap').style.display='none';$('moveMembers').innerHTML='';}
+function resetDeathForm(){['deathDate','deathTime','deathReporterRelation','deathDocNo','deathDocDate','deathNote','deathCauseOther'].forEach(id=>$(id).value='');$('deathDate').value=todayISO();$('deathPlaceType').value='';$('deathCause').value='';$('deathReporterType').value='';$('deathCauseOtherWrap').style.display='none';}
 function renderMoveMembers(){if(deletingIndex<0||!data[deletingIndex])return;const r=data[deletingIndex],members=familyMembersByKK(r['NO KK']);const type=$('moveType').value;let selected=[];if(type==='Kepala Keluarga dan Seluruh Anggota Keluarga')selected=members.map(x=>x.NIK);else if(type==='Kepala Keluarga' || type==='Anggota Keluarga')selected=[r.NIK];else if(type==='Kepala Keluarga dan Sebagian Anggota Keluarga')selected=[r.NIK];$('moveMembers').innerHTML=members.length?members.map(m=>`<label class="move-member"><input type="checkbox" class="move-member-check" value="${esc(m.NIK)}" ${selected.includes(m.NIK)?'checked':''}><span><b>${esc(m['NAMA LENGKAP'])}</b> — ${esc(m.NIK)} • ${esc(m.SHDRT||'-')} • ${esc(m.JK||'-')}</span></label>`).join(''):'<div class="hint">No KK belum memiliki anggota lain yang terdaftar.</div>';document.querySelectorAll('.move-member-check').forEach(cb=>{cb.disabled=type==='Kepala Keluarga dan Seluruh Anggota Keluarga';});}
 function openDelete(index){if(index<0||!data[index])return;deletingIndex=index;const r=data[index];$('delName').value=r['NAMA LENGKAP']||'';$('delNik').value=r.NIK||'';$('delKK').value=r['NO KK']||'';$('delReason').value='Hapus KK';$('doubleScope').value='NIK';$('doubleDeleteForm').style.display='none';$('doubleMembers').innerHTML='';resetMoveForm();resetDeathForm();$('moveDeleteForm').style.display='none';$('deathDeleteForm').style.display='none';$('deleteStandardInfo').textContent='Hapus KK akan menghapus seluruh anggota dengan No KK yang sama. Kriteria lain hanya menghapus penduduk yang dipilih.';renderMoveMembers();renderDeleteHeadReplacement();$('deleteOverlay').classList.add('open')}
 $('f101Preview').addEventListener('click',e=>{});
@@ -2267,17 +2330,18 @@ $('btnSaveEdit').addEventListener('click',async()=>{if(editingIndex<0||!data[edi
     if(afterHead&&oldKK===newKK&&oldHead){/* swap sudah disiapkan di atas */}else{if(replacementHead&&replacementHead.__previousSHDRT!==undefined){replacementHead.SHDRT=replacementHead.__previousSHDRT;delete replacementHead.__previousSHDRT;}return toast(check.message)}
   }
   if(r['NO KK']&&check.head){r.ALAMAT=String(check.head.ALAMAT||'').trim();r.RT=String(check.head.RT||'').trim();r.RW=String(check.head.RW||'').trim()}
+  const fullSnapshot=data.map(x=>({...x}));
   const beforeSnapshot={...before};data[editingIndex]=r;
   if(replacementHead){const idx=data.findIndex(x=>x.NIK===replacementHead.NIK);if(idx>=0){delete data[idx].__previousSHDRT;}}
   if(isHead(r)){applyHeadAddressToMembers(r['NO KK'],r)}else if(r['NO KK']){const card=familyCardIntegrity(r['NO KK'],editingIndex);if(card.head)applyHeadAddressToMembers(r['NO KK'],card.head)}
   if(before['NO KK']&&before['NO KK']!==r['NO KK']){const oldCard=familyCardIntegrity(before['NO KK']);if(oldCard.head)applyHeadAddressToMembers(before['NO KK'],oldCard.head)}
   const perubahanBiodata=describeResidentChanges(beforeSnapshot||{},r);
-  if(perubahanBiodata.length)addHistory('Perubahan Biodata',r,perubahanBiodata.join('; '),{kategori:'PERUBAHAN_BIODATA',perubahan:perubahanBiodata});if(replacementHead){const wasHeadSwap=beforeHead&&oldKK===newKK&&!afterHead;if(wasHeadSwap)addHistory('Perubahan Kepala Keluarga',replacementHead,`Menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} tidak lagi menjadi Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});else addHistory('Perubahan Kepala Keluarga',replacementHead,`Tidak lagi menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} ditetapkan sebagai Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});}
   try{
     await persist(String(beforeSnapshot.NIK||'').trim());
+    if(perubahanBiodata.length)await addHistory('Perubahan Biodata',r,perubahanBiodata.join('; '),{kategori:'PERUBAHAN_BIODATA',perubahan:perubahanBiodata});
+    if(replacementHead){const wasHeadSwap=beforeHead&&oldKK===newKK&&!afterHead;if(wasHeadSwap)await addHistory('Perubahan Kepala Keluarga',replacementHead,`Menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} tidak lagi menjadi Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});else await addHistory('Perubahan Kepala Keluarga',replacementHead,`Tidak lagi menjadi Kepala Keluarga karena ${r['NAMA LENGKAP']||r.NIK} ditetapkan sebagai Kepala Keluarga pada KK ${newKK}.`,{kategori:'PERUBAHAN_KK',kk:newKK});}
   }catch(err){
-    // Kembalikan data di memori jika sinkronisasi cloud gagal.
-    data[editingIndex]=beforeSnapshot;
+    data=fullSnapshot;fillFilters();render();
     toast('Gagal menyimpan perubahan NIK: '+(err.message||err));
     return;
   }
@@ -2335,7 +2399,16 @@ function prepareHeadReplacementForRemoval(removedNiks,affectedKKs){
   return {ok:true,replacements};
 }
 function applyHeadReplacements(replacements){
-  replacements.forEach((replacement,kk)=>{if(replacement&&!isHead(replacement)&&!isUnderageForHead(replacement)){const old=String(replacement.SHDRT||'').trim()||'Anggota Keluarga';replacement.SHDRT='Kepala Keluarga';applyHeadAddressToMembers(kk,replacement);addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:kk,hubunganSebelumnya:old});}});
+  const events=[];
+  for(const [kk,replacement] of replacements){
+    if(replacement&&!isHead(replacement)&&!isUnderageForHead(replacement)){
+      const old=String(replacement.SHDRT||'').trim()||'Anggota Keluarga';
+      replacement.SHDRT='Kepala Keluarga';
+      applyHeadAddressToMembers(kk,replacement);
+      events.push({replacement,kk,old});
+    }
+  }
+  return events;
 }
 
 $('btnConfirmDelete').addEventListener('click',async()=>{
@@ -2352,9 +2425,9 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
     const removedNiks=new Set([base.NIK]),affectedKKs=[String(base['NO KK']||'').trim()].filter(Boolean);
     const prep=prepareHeadReplacementForRemoval(removedNiks,affectedKKs);if(!prep.ok){toast(prep.message);return}
     if(!confirm('Catat '+(base['NAMA LENGKAP']||'penduduk')+' sebagai meninggal dan keluarkan dari data aktif?'+(prep.replacements.size?' Kepala Keluarga pengganti akan ditetapkan otomatis sesuai pilihan.':'')))return;
-    addHistory('Penduduk Meninggal',base,detail,meta);
-    applyHeadReplacements(prep.replacements);
-    markResidentsInactive([base],'Meninggal',$('deathNote')?.value?.trim()||'');try{await persist()}catch(e){toast('Gagal menyimpan status tidak aktif: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast('Data kematian dicatat dan ditandai tidak aktif');return;
+    const fullSnapshot=data.map(r=>({...r}));
+    const replacementEvents=applyHeadReplacements(prep.replacements);
+    markResidentsInactive([base],'Meninggal',$('deathNote')?.value?.trim()||'');try{await persist();await addHistory('Penduduk Meninggal',base,detail,meta);for(const ev of replacementEvents)await addHistory('Perubahan Kepala Keluarga',ev.replacement,`Menjadi Kepala Keluarga pada KK ${ev.kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:ev.kk,hubunganSebelumnya:ev.old})}catch(e){data=fullSnapshot;fillFilters();render();toast('Gagal menyimpan status meninggal dan perubahan dibatalkan: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast('Data kematian dicatat dan ditandai tidak aktif');return;
   }
   if(reason==='Hapus Pindah'){
     const members=familyMembersByKK(base['NO KK']);
@@ -2368,8 +2441,8 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
     const groupId='PINDAH-'+Date.now()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();
     const detailBase='Nomor SKP: '+$('moveSkp').value.trim()+' | Klasifikasi: '+$('moveClass').value+' | Alasan: '+($('moveReason').value==='Lainnya'?$('moveOther').value.trim():$('moveReason').value)+' | Jenis: '+$('moveType').value+' | Tanggal: '+$('moveDate').value+' | Tujuan: '+[$('moveAddress').value.trim(),$('moveVillage').value.trim(),$('moveDistrict').value.trim(),$('moveRegency').value.trim(),$('moveProvince').value.trim()].filter(Boolean).join(', ')+' | RT/RW: '+[$('moveRT').value.trim(),$('moveRW').value.trim()].filter(Boolean).join('/')+' | Status tidak pindah: '+($('moveStayStatus').value||'-')+' | Status pindah: '+($('moveGoStatus').value||'-');
     const meta={kategori:'PERPINDAHAN',groupId:groupId,nomorSKP:$('moveSkp').value.trim(),klasifikasi:$('moveClass').value,alasan:$('moveReason').value==='Lainnya'?$('moveOther').value.trim():$('moveReason').value,jenis:$('moveType').value,statusTidakPindah:$('moveStayStatus').value,statusPindah:$('moveGoStatus').value,tanggal:$('moveDate').value,tujuan:{alamat:$('moveAddress').value.trim(),rt:$('moveRT').value.trim(),rw:$('moveRW').value.trim(),kodePos:$('movePostal').value.trim(),desa:$('moveVillage').value.trim(),kecamatan:$('moveDistrict').value.trim(),kabupatenKota:$('moveRegency').value.trim(),provinsi:$('moveProvince').value.trim()}};
-    selected.forEach(r=>addHistory('Penduduk Pindah',r,detailBase,{...meta,noKK:r['NO KK'],shdrt:r.SHDRT}));
-    const names=selected.map(r=>r['NAMA LENGKAP']).join(', ');applyHeadReplacements(prep.replacements);markResidentsInactive(selected,'Pindah',detailBase);try{await persist()}catch(e){toast('Gagal menyimpan status pindah: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(selected.length+' penduduk dicatat pindah dan ditandai tidak aktif');return;
+    const fullSnapshot=data.map(r=>({...r}));
+    const names=selected.map(r=>r['NAMA LENGKAP']).join(', ');const replacementEvents=applyHeadReplacements(prep.replacements);markResidentsInactive(selected,'Pindah',detailBase);try{await persist();for(const ev of replacementEvents)await addHistory('Perubahan Kepala Keluarga',ev.replacement,`Menjadi Kepala Keluarga pada KK ${ev.kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:ev.kk,hubunganSebelumnya:ev.old});for(const r of selected)await addHistory('Penduduk Pindah',r,detailBase,{...meta,noKK:r['NO KK'],shdrt:r.SHDRT})}catch(e){data=fullSnapshot;fillFilters();render();toast('Gagal menyimpan status pindah dan perubahan dibatalkan: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(selected.length+' penduduk dicatat pindah dan ditandai tidak aktif');return;
   }
   const isDouble=reason==='Hapus Double';
   const removeByKK=reason==='Hapus KK'||(isDouble&&$('doubleScope').value==='KK');
@@ -2391,9 +2464,9 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
   if(!confirm(confirmText))return;
   // Setiap anggota yang benar-benar dihapus dicatat sebagai baris Penghapusan tersendiri.
   // Keterangan hanya memuat Alasan; Lingkup tidak ditampilkan pada register.
-  removed.forEach(r=>addHistory('Data Dihapus',r,'Alasan: '+reason,{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'}));
-  applyHeadReplacements(prep.replacements);
-  markResidentsInactive(removed,reason);try{await persist()}catch(e){toast('Gagal menyimpan status tidak aktif: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data ditandai tidak aktif ('+reason+')');
+  const fullSnapshot=data.map(r=>({...r}));
+  const replacementEvents=applyHeadReplacements(prep.replacements);
+  markResidentsInactive(removed,reason);try{await persist();for(const ev of replacementEvents)await addHistory('Perubahan Kepala Keluarga',ev.replacement,`Menjadi Kepala Keluarga pada KK ${ev.kk} karena Kepala Keluarga sebelumnya dikeluarkan dari data aktif.`,{kategori:'PERUBAHAN_KK',kk:ev.kk,hubunganSebelumnya:ev.old});for(const r of removed)await addHistory('Data Dihapus',r,'Alasan: '+reason,{kategori:'PENGHAPUSAN',alasan:reason,noKK:r['NO KK'],lingkup:isDouble?$('doubleScope').value:'INDIVIDU'})}catch(e){data=fullSnapshot;fillFilters();render();toast('Gagal menyimpan penghapusan dan perubahan dibatalkan: '+(e.message||e));return}fillFilters();page=1;render();$('deleteOverlay').classList.remove('open');deletingIndex=-1;toast(removed.length+' data ditandai tidak aktif ('+reason+')');
 });
 
 
@@ -2521,7 +2594,7 @@ function openBirthApplicationFromKK(kk,preferredNik){
 }
 function openBirthApplicationMenu(){
   closeMenu();
-  const rows=(data||[]).slice().sort((a,b)=>String(a['NAMA LENGKAP']||'').localeCompare(String(b['NAMA LENGKAP']||''),'id'));
+  const rows=(data||[]).filter(isActiveResident).slice().sort((a,b)=>String(a['NAMA LENGKAP']||'').localeCompare(String(b['NAMA LENGKAP']||''),'id'));
   $('birthAppKK').value='';
   $('birthAppSelect').innerHTML=birthOptionHtml(rows,'-- pilih anggota keluarga / anak --');
   birthApplicationNik='';
@@ -3025,23 +3098,6 @@ function openDeathApplication(){
   clearDeathApplicationForm();
   $('deathApplicationOverlay').classList.add('open');
 }
-function clearDeathApplicationForm(){
-  ['deathAppNIK','deathAppKK','deathAppName','deathAppJK','deathAppBirthPlace','deathAppBirthDate','deathAppDate','deathAppTime','deathAppPlaceType','deathAppCause','deathAppReporterType','deathAppReporterName','deathAppReporterRelation','deathAppDocNo','deathAppDocDate','deathAppNote'].forEach(id=>$(id).value='');
-  $('deathApplicationPreview').innerHTML='';
-  if($('deathApplicationSelect'))$('deathApplicationSelect').value='';
-}
-function fillDeathApplication(){
-  const i=Number($('deathApplicationSelect').value);
-  const x=Number.isInteger(i)?deathApplicationHistory[i]:null;
-  if(!x){clearDeathApplicationForm();return}
-  const m=x.meta||{};
-  $('deathAppNIK').value=x.NIK||''; $('deathAppKK').value=x.kk||m.noKK||''; $('deathAppName').value=x.name||'';
-  $('deathAppJK').value=x.meta?.jk||''; $('deathAppBirthPlace').value=x.meta?.tempatLahir||''; $('deathAppBirthDate').value=x.meta?.tanggalLahir||'';
-  $('deathAppDate').value=m.tanggal||''; $('deathAppTime').value=m.jam||''; $('deathAppPlaceType').value=m.tempatJenis||''; 
-  $('deathAppCause').value=m.penyebab||''; $('deathAppReporterType').value=m.yangMenerangkan||''; $('deathAppReporterName').value=m.namaYangMenerangkan||'';
-  $('deathAppReporterRelation').value=m.hubungan||''; $('deathAppDocNo').value=m.nomorSurat||''; $('deathAppDocDate').value=m.tanggalSurat||''; $('deathAppNote').value=m.keterangan||'';
-  renderDeathApplication();
-}
 function deathDateBoxes(v){
   if(!v)return '<span class="dateboxes"><span class="db"></span><span class="db"></span> <span>Tgl:</span> <span class="db"></span><span class="db"></span> <span>Bln:</span> <span class="db year"></span> <span>Thn:</span></span>';
   const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -3049,66 +3105,6 @@ function deathDateBoxes(v){
   return '<span class="dateboxes"><span class="db">'+esc(m[3][0])+'</span><span class="db">'+esc(m[3][1])+'</span> <span>Tgl:</span> <span class="db">'+esc(m[2][0])+'</span><span class="db">'+esc(m[2][1])+'</span> <span>Bln:</span> <span class="db year">'+esc(m[1])+'</span> <span>Thn:</span></span>';
 }
 function deathCheck(label,checked){return '<span class="checkrow"><span class="sq">'+(checked?'V':'')+'</span><span>'+esc(label)+'</span></span>'}
-function renderDeathApplication(){
-  const name=$('deathAppName').value.trim();
-  if(!name){$('deathApplicationPreview').innerHTML='<div class="hint">Pilih data kematian terlebih dahulu.</div>';return}
-  const desa=desaSettings||{};
-  const i=Number($('deathApplicationSelect').value);
-  const rec=Number.isInteger(i)?deathApplicationHistory[i]:null;
-  const mm=rec?.meta||{};
-  const reporter=$('deathAppReporterName').value||'';
-  const reporterRec=data.find(x=>String(x.NIK||'').trim()===String(mm.namaYangMenerangkan||'').trim())||null;
-  const jk=String($('deathAppJK').value||'').toUpperCase();
-  const isMale=jk.includes('L')||jk.includes('LAKI');
-  const isFemale=jk.includes('P')||jk.includes('PEREMPUAN');
-  const cause=String($('deathAppCause').value||'');
-  const causeLower=cause.toLowerCase();
-  const causeMap={
-    'Sakit/Wajar':'1. Sakit biasa/tua','Sakit biasa/tua':'1. Sakit biasa/tua','Wabah Penyakit':'2. Wabah Penyakit','Kecelakaan':'3. Kecelakaan','Kriminalitas':'4. Kriminalitas','Bunuh Diri':'5. Bunuh Diri','Belum Diketahui':'','Bencana':'','Lainnya':'6. Lainnya'
-  };
-  const causeLabel=causeMap[cause]||cause;
-  const place=String($('deathAppPlaceType').value||'');
-  const placeRS=place.toLowerCase().includes('rumah sakit')||place.toLowerCase()==='rs';
-  const reporterType=String($('deathAppReporterType').value||'');
-  const repDoctor=reporterType.toLowerCase().includes('dokter');
-  const repHealth=reporterType.toLowerCase().includes('tenaga kesehatan');
-  const repPolice=reporterType.toLowerCase().includes('kepolisian');
-  const repOther=!!reporterType && !repDoctor&&!repHealth&&!repPolice;
-  const village=desa.village||'';
-  const today=letterIndoDate(todayISO());
-  $('deathApplicationPreview').innerHTML=`<div class="death-app-paper">
-    <table class="top"><tr><td>Provinsi</td><td>: ${esc(desa.province||'')}</td><td rowspan="5" style="text-align:right;vertical-align:top"><span class="code">F-2.01</span></td></tr>
-    <tr><td>Kabupaten/Kota</td><td>: ${esc(desa.regency||'')}</td></tr><tr><td>Kecamatan</td><td>: ${esc(desa.district||'')}</td></tr><tr><td>Desa/Kelurahan</td><td>: ${esc(village)}</td></tr><tr><td>Kode Wilayah</td><td>: ${esc(desa.code||'')}</td></tr></table>
-    <div class="form-title">FORMULIR PELAPORAN PENCATATAN SIPIL DI DALAM WILAYAH NKRI</div>
-    <div class="label-title">Jenis Pelaporan Pencatatan Sipil</div>
-    <div class="box"><div class="checkgrid"><div>
-      ${deathCheck('Kelahiran',false)}${deathCheck('Lahir Mati',false)}${deathCheck('Perkawinan',false)}${deathCheck('Pembatalan Perkawinan',false)}${deathCheck('Perceraian',false)}${deathCheck('Pembatalan Perceraian',false)}${deathCheck('Kematian',true)}${deathCheck('Pengangkatan Anak',false)}
-    </div><div>
-      ${deathCheck('Pengakuan Anak',false)}${deathCheck('Pengesahan Anak',false)}${deathCheck('Perubahan Nama',false)}${deathCheck('Perubahan Status Kewarganegaraan',false)}${deathCheck('Pencatatan Peristiwa Penting Lainnya',false)}${deathCheck('Pembetulan Akta',false)}${deathCheck('Pembatalan Akta',false)}${deathCheck('Pelaporan Pencatatan Sipil dari Luar Wilayah NKRI',false)}
-    </div></div></div>
-    <div class="box"><div class="section">DATA PELAPOR</div><table class="data"><tr><td class="lbl">Nama</td><td class="colon">:</td><td>${esc(reporter)}</td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td>${esc(reporterRec?.NIK||'')}</td></tr><tr><td class="lbl">Nomor Dokumen Perjalanan*</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td>${esc($('deathAppKK').value)}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>${esc(reporterRec?.KEWARGANEGARAAN||'WNI')}</td></tr></table></div>
-    <div class="box"><div class="section">DATA SAKSI I</div><table class="data"><tr><td class="lbl">Nama</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td></td></tr></table>
-      <div class="section" style="margin-top:3mm">DATA SAKSI II</div><table class="data"><tr><td class="lbl">Nama</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">NIK</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Nomor Kartu Keluarga</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td></td></tr></table></div>
-    <div class="box"><div class="section">DATA ORANG TUA** <i>(hanya diisi untuk keperluan pencatatan kelahiran, lahir mati dan kematian)</i></div><table class="data"><tr><td class="lbl">Nama Ayah</td><td class="colon">:</td><td>${esc(mm.namaAyah||'')}</td></tr><tr><td class="lbl">NIK Ayah</td><td class="colon">:</td><td>${esc(mm.nikAyah||'')}</td></tr><tr><td class="lbl">Tempat Lahir Ayah</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Tanggal Lahir Ayah</td><td class="colon">:</td><td>${deathDateBoxes('')}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>WNI</td></tr><tr><td class="lbl">Nama Ibu</td><td class="colon">:</td><td>${esc(mm.namaIbu||'')}</td></tr><tr><td class="lbl">NIK Ibu</td><td class="colon">:</td><td>${esc(mm.nikIbu||'')}</td></tr><tr><td class="lbl">Tempat Lahir Ibu</td><td class="colon">:</td><td></td></tr><tr><td class="lbl">Tanggal Lahir Ibu</td><td class="colon">:</td><td>${deathDateBoxes('')}</td></tr><tr><td class="lbl">Kewarganegaraan</td><td class="colon">:</td><td>WNI</td></tr></table></div>
-    <div class="box"><div class="section">KEMATIAN</div><table class="data">
-      <tr><td class="lbl">1. NIK</td><td class="colon">:</td><td>${esc($('deathAppNIK').value)}</td></tr>
-      <tr><td class="lbl">2. Nama Lengkap</td><td class="colon">:</td><td>${esc(name)}</td></tr>
-      <tr><td class="lbl">3. Tanggal Kematian</td><td class="colon">:</td><td>${deathDateBoxes($('deathAppDate').value)}</td></tr>
-      <tr><td class="lbl">4. Pukul</td><td class="colon">:</td><td>${$('deathAppTime').value?'<span class="timebox"><span class="db">'+esc($('deathAppTime').value.split(':')[0])+'</span><span> :</span><span class="db">'+esc($('deathAppTime').value.split(':')[1]||'')+'</span></span>':''}</td></tr>
-      <tr><td class="lbl">5. Sebab Kematian</td><td class="colon">:</td><td><div class="death-options">${deathCheck('1. Sakit biasa/tua',causeLabel==='1. Sakit biasa/tua')} ${deathCheck('2. Wabah Penyakit',causeLabel==='2. Wabah Penyakit')} ${deathCheck('3. Kecelakaan',causeLabel==='3. Kecelakaan')} ${deathCheck('4. Kriminalitas',causeLabel==='4. Kriminalitas')} ${deathCheck('5. Bunuh Diri',causeLabel==='5. Bunuh Diri')} ${deathCheck('6. Lainnya',causeLabel==='6. Lainnya')}</div></td></tr>
-      <tr><td class="lbl">6. Tempat Kematian</td><td class="colon">:</td><td>${esc(place||'')} <span style="margin-left:6mm">${deathCheck('RS',placeRS)}</span></td></tr>
-      <tr><td class="lbl">7. Yang Menerangkan</td><td class="colon">:</td><td><div class="death-options">${deathCheck('1. Dokter',repDoctor)} ${deathCheck('2. Tenaga Kesehatan',repHealth)} ${deathCheck('3. Kepolisian',repPolice)} ${deathCheck('4. Lainnya',repOther)}</div></td></tr>
-      <tr><td class="lbl">8. Anak Ke</td><td class="colon">:</td><td><span class="death-options" style="grid-template-columns:repeat(6,1fr);display:grid">${[1,2,3,4,5].map(n=>deathCheck(String(n),false)).join('')} ${deathCheck('dst.....',false)}</span></td></tr>
-    </table></div>
-    <table class="signature"><tr><td><div>Mengetahui:</div><div>Kepala Desa/Lurah</div><div>Pejabat Dukcapil Yang Membidangi</div><div class="sigspace"></div><span class="sigline">${esc(desa.head||'')}</span></td><td><div>${esc(village||'')}, ${esc(today)}</div><div>Pelapor</div><div class="sigspace"></div><span class="sigline">${esc(reporter||'')}</span></td></tr></table>
-    <div class="muted" style="margin-top:2mm">F-2.01 &nbsp; FORMULIR PELAPORAN PENCATATAN SIPIL DI DALAM WILAYAH NKRI</div>
-  </div>`;
-}
-function deathAppDateBoxes(v){
-  if(!v)return '<span class="dateboxes"><span class="db"></span><span class="db"></span> <span>Tgl:</span> <span class="db"></span><span class="db"></span> <span>Bln:</span> <span class="db year"></span> <span>Thn:</span></span>';
-  const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m)return esc(v);
-  return '<span class="dateboxes"><span class="db">'+esc(m[3][0])+'</span><span class="db">'+esc(m[3][1])+'</span> <span>Tgl:</span> <span class="db">'+esc(m[2][0])+'</span><span class="db">'+esc(m[2][1])+'</span> <span>Bln:</span> <span class="db year">'+esc(m[1])+'</span> <span>Thn:</span></span>';
-}
 function deathFindPerson(nik){return data.find(x=>String(x.NIK||'').trim()===String(nik||'').trim())||null}
 function deathPersonData(slot){const nik=String($(slot+'Nik')?.value||'').trim();const r=deathFindPerson(nik);return {nik,name:String($(slot+'Name')?.value||r?.['NAMA LENGKAP']||'').trim(),kk:String($(slot+'KK')?.value||r?.['NO KK']||'').trim(),nation:String($(slot+'Nation')?.value||r?.KEWARGANEGARAAN||'WNI').trim(),record:r}}
 function findDeathPerson(target){
@@ -3381,12 +3377,21 @@ function normalizeRTRWInput(el){
 }
 document.addEventListener('input',e=>normalizeRTRWInput(e.target));
 document.addEventListener('change',e=>normalizeRTRWInput(e.target));
-$('btnSave').addEventListener('click',()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'');if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}
+$('btnSave').addEventListener('click',async()=>{const r={};let nik='';fields.forEach(f=>{const el=$('in_'+f.replace(/[^A-Z0-9]/gi,'_'));r[f]=el?el.value.trim():'';if(f==='RT'||f==='RW')r[f]=r[f].replace(/^0+(?=\d)/,'');if(f==='NIK')nik=r[f]});const reason=$('addReason').value;const addDate=$('addDate').value;const origin=$('addOrigin').value.trim();const note=$('addNote').value.trim();if(!reason){toast('Alasan Penambahan wajib dipilih');$('addReason').focus();return}if(!addDate){toast('Tanggal Penambahan wajib diisi');$('addDate').focus();return}if(reason==='Kedatangan'&&!origin){toast('Asal Kedatangan wajib diisi');$('addOrigin').focus();return}
 if(reason==='Kedatangan'){const mode=$('arrivalKKMode')?.value||'';if(!mode){toast('Status KK Kedatangan wajib dipilih');$('arrivalKKMode').focus();return}if(mode==='new'){const kk=String($('in_NO_KK')?.value||'').trim();if(!kk){toast('Nomor KK baru gagal dibuat');return}r['NO KK']=kk;r.SHDRT='Kepala Keluarga';r.ALAMAT=r.ALAMAT||'';r.RT=r.RT||'';r.RW=r.RW||'';}else if(mode==='existing'){const kk=String(r['NO KK']||'').trim();if(!isValidKK(kk)){toast('No KK tujuan harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga pada No KK tujuan tidak ditemukan');$('in_NO_KK').focus();return}r.ALAMAT=String(head.ALAMAT||'').trim();r.RT=String(head.RT||'').trim();r.RW=String(head.RW||'').trim();if(!r.SHDRT){toast('Hubungan Keluarga wajib dipilih untuk Numpang KK');$('in_SHDRT').focus();return}}}if(reason==='Kelahiran'){const kk=String(r['NO KK']||'').trim();if(!kk){toast('Nomor KK wajib diisi untuk penambahan karena kelahiran');$('in_NO_KK').focus();return}if(!isValidKK(kk)){toast('No KK harus terdiri dari 16 digit angka');$('in_NO_KK').focus();return}const members=familyMembersByKK(kk);const head=members.find(isHead);if(!head){toast('Kepala Keluarga tidak ditemukan. Data kelahiran tidak dapat ditambahkan.');$('in_NO_KK').focus();return}const wife=members.find(x=>String(x.SHDRT||'').trim().toUpperCase()==='ISTRI');r.NAMA_LGKP_AYAH=head['NAMA LENGKAP']||'';r.NAMA_LGKP_IBU=wife?.['NAMA LENGKAP']||'';r.ALAMAT=head.ALAMAT||'';r.RT=head.RT||'';r.RW=head.RW||'';if(!r.SHDRT)r.SHDRT='Anak';nik=generateBirthNik();$('in_NIK').value=nik;r.NIK=nik}
 if(!validateRequiredResidentFields(r,'in_'))return;if(!nik){toast('NIK wajib diisi');return}if(!isValidNik(nik)){toast('NIK harus terdiri dari 16 digit angka');return}if(r['NO KK']&&!isValidKK(r['NO KK'])){toast('No KK harus terdiri dari 16 digit angka');return}
 const kkCheck=validateFamilyCardRecord(r,-1);if(!kkCheck.ok){toast(kkCheck.message);$('in_NO_KK')?.focus();return}
 if(r['NO KK']&&kkCheck.head){r.ALAMAT=String(kkCheck.head.ALAMAT||'').trim();r.RT=String(kkCheck.head.RT||'').trim();r.RW=String(kkCheck.head.RW||'').trim()}
-if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}data.push(r);if(isHead(r))applyHeadAddressToMembers(r['NO KK'],r);else if(r['NO KK']&&kkCheck.head)applyHeadAddressToMembers(r['NO KK'],kkCheck.head);addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,tanggalLahir:r['TGL_LHR']||'',asal:origin,keterangan:note});persist();fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')')});
+if(data.some(x=>x.NIK===nik)){toast('NIK sudah ada di database');return}
+const snapshot=data.map(x=>({...x}));
+try{
+  data.push(r);
+  if(isHead(r))applyHeadAddressToMembers(r['NO KK'],r);else if(r['NO KK']&&kkCheck.head)applyHeadAddressToMembers(r['NO KK'],kkCheck.head);
+  await persist();
+  await addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+addDate+(origin?' | Asal: '+origin:'')+(note?' | Keterangan: '+note:''),{kategori:'PENAMBAHAN',alasan:reason,tanggal:addDate,tanggalLahir:r['TGL_LHR']||'',asal:origin,keterangan:note});
+  fillFilters();render();$('addOverlay').classList.remove('open');toast('Data penduduk berhasil disimpan ('+reason+')');
+}catch(err){data=snapshot;fillFilters();render();toast('Gagal menyimpan penduduk: '+(err.message||err))}
+});
 
 function toCsv(rows){const headers=fields;return '\ufeff'+headers.join(',')+'\n'+rows.map(r=>headers.map(h=>csvCell(r[h])).join(',')).join('\n')}
 function csvCell(v){v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
@@ -3463,10 +3468,12 @@ $('importFile').addEventListener('change',async e=>{
       return normalize(r);
     }).filter(r=>r.NIK||r['NAMA LENGKAP']);
     if(!imported.length)throw new Error('Tidak ditemukan baris data yang memiliki NIK atau NAMA LENGKAP');
-    const badNikCount=imported.filter(r=>r.NIK&&!isValidNik(r.NIK)).length;
-    pendingImport=imported.filter(r=>!r.NIK||isValidNik(r.NIK));
-    if(!pendingImport.length)throw new Error('Semua baris memiliki NIK dengan format tidak valid (harus 16 digit angka)');
-    $('importPreview').innerHTML=`<b>${pendingImport.length} baris</b> siap diimpor. Header terdeteksi pada baris ${headerRow+1}. <b>UMUR tidak diimpor</b>; umur dihitung otomatis dari TGL_LHR.${badNikCount?'<br><b style="color:#b42318">'+badNikCount+' baris diabaikan</b> karena NIK bukan 16 digit angka.':''}${ignored.length?'<br>Kolom yang diabaikan: '+esc(ignored.join(', ')):''}`;
+    const badNikCount=imported.filter(r=>!isValidNik(r.NIK)).length;
+    if(badNikCount)throw new Error('Import dibatalkan: '+badNikCount+' baris memiliki NIK tidak valid. Tidak ada baris yang diabaikan.');
+    const seenNik=new Set();const dupNik=imported.filter(r=>seenNik.has(r.NIK)||(seenNik.add(r.NIK),false));
+    if(dupNik.length)throw new Error('Import dibatalkan: terdapat NIK duplikat di file.');
+    pendingImport=imported;
+    $('importPreview').innerHTML=`<b>${pendingImport.length} baris</b> siap diimpor. Header terdeteksi pada baris ${headerRow+1}. <b>UMUR tidak diimpor</b>; umur dihitung otomatis dari TGL_LHR.${ignored.length?'<br>Kolom yang diabaikan: '+esc(ignored.join(', ')):''}`;
   }catch(err){pendingImport=null;$('importPreview').textContent='File Excel tidak dapat dibaca: '+(err.message||'format tidak sesuai.');}
 });
 function excelValue(field,v){
@@ -3499,33 +3506,44 @@ $('btnProcessImport').addEventListener('click',async()=>{
   if(!confirm(confirmMsg))return;
   if(!(await requirePin('Memproses impor data ('+(mode==='replace'?'mengganti seluruh database':'menggabungkan data')+')')))return;
   const dataBeforeImport=data.map(r=>({...r}));
-  const seen=new Set(),clean=[];pendingImport.forEach(r=>{if(r.NIK){if(!seen.has(r.NIK)){seen.add(r.NIK);clean.push(r)}}else clean.push(r)});
-  let added=0,updated=0;
-  if(mode==='replace'){
-    data=clean;
-  }else{
-    const byNik={};data.forEach((r,i)=>{if(r.NIK)byNik[r.NIK]=i});
-    clean.forEach(r=>{
-      if(r.NIK&&byNik[r.NIK]!==undefined){
-        const idx=byNik[r.NIK], old=data[idx]||{};
-        const merged={...old};
-        fields.forEach(fld=>{if(String(r[fld]??'').trim()!=='')merged[fld]=String(r[fld]).trim()});
-        data[idx]=normalize(merged);updated++;
-      }else{
-        data.push(normalize(r));added++;if(r.NIK)byNik[r.NIK]=data.length-1
-      }
-    });
+  const seen=new Set(),clean=[];
+  for(const raw of pendingImport){
+    const r=normalize(raw);
+    if(!r.NIK){clean.push(r);continue}
+    const nik=String(r.NIK).trim();
+    if(!isValidNik(nik))throw new Error('Impor dibatalkan: NIK tidak valid '+nik);
+    if(seen.has(nik))throw new Error('Impor dibatalkan: NIK duplikat '+nik);
+    seen.add(nik);clean.push(r);
   }
-  // Impor tidak menolak struktur KK yang belum valid.
-  // Pemeriksaan jumlah Kepala Keluarga, KK tanpa Kepala Keluarga,
-  // serta ketidaksesuaian alamat/RT/RW dilakukan melalui
-  // menu Validasi Data Kependudukan agar seluruh data tetap dapat masuk.
-  persist();fillFilters();page=1;render();$('importOverlay').classList.remove('open');
-  const detail=mode==='replace'
-    ?`Impor mengganti seluruh database: ${before} data lama digantikan dengan ${data.length} data baru.`
-    :`Impor menggabungkan data: ${added} data baru ditambahkan, ${updated} data diperbarui (total sebelumnya ${before}, sesudah ${data.length}).`;
-  addHistory('Impor Data',null,detail,{kategori:'IMPOR',mode,sebelum:before,sesudah:data.length,ditambah:added,diperbarui:updated});
-  toast(mode==='replace'?`Berhasil mengganti database dengan ${data.length} data.`:`Berhasil menggabungkan: ${added} ditambahkan, ${updated} diperbarui.`);
+  let added=0,updated=0;
+  const snapshot=data.map(r=>({...r}));
+  const historySnapshot=getHistory();
+  try{
+    if(mode==='replace'){
+      data=clean.map(normalize);
+      await persistReplace(data);
+    }else{
+      const byNik={};data.forEach((r,i)=>{if(r.NIK)byNik[r.NIK]=i});
+      clean.forEach(r=>{
+        if(r.NIK&&byNik[r.NIK]!==undefined){
+          const idx=byNik[r.NIK], old=data[idx]||{};const merged={...old};
+          fields.forEach(fld=>{if(String(r[fld]??'').trim()!=='')merged[fld]=String(r[fld]).trim()});
+          data[idx]=normalize(merged);updated++;
+        }else{data.push(normalize(r));added++;if(r.NIK)byNik[r.NIK]=data.length-1}
+      });
+      await persist();
+    }
+    const detail=mode==='replace'?`Impor mengganti seluruh database: ${before} data lama digantikan dengan ${data.length} data baru.`:`Impor menggabungkan data: ${added} data baru ditambahkan, ${updated} data diperbarui (total sebelumnya ${before}, sesudah ${data.length}).`;
+    await addHistory('Impor Data',null,detail,{kategori:'IMPOR',mode,sebelum:before,sesudah:data.length,ditambah:added,diperbarui:updated});
+    fillFilters();page=1;render();$('importOverlay').classList.remove('open');toast(mode==='replace'?`Berhasil mengganti database dengan ${data.length} data.`:`Berhasil menggabungkan: ${added} ditambahkan, ${updated} diperbarui.`);
+  }catch(err){
+    try{
+      await persistReplace(snapshot);
+      if(window.sb&&window.currentUser)await cloudReplaceMutationHistory(historySnapshot);
+    }catch(rollbackErr){console.error('rollback impor gagal',rollbackErr)}
+    data=snapshot;localStorage.setItem(HISTORY_KEY,JSON.stringify(historySnapshot));
+    fillFilters();render();toast('Impor gagal dan perubahan dibatalkan: '+(err.message||err));
+  }
 });
 function download(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function safePrintName(v){return String(v||'').trim().replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').replace(/\.+$/,'').trim()||'Dokumen'}
@@ -3859,7 +3877,7 @@ function printDp4Rekap(){
   </body></html>`);
   win.document.close();win.title='Rekap Pemilih DP4';win.focus();setTimeout(()=>win.print(),250);
 }
-$('btnDp4').addEventListener('click',()=>{if(!hasPerm('dp4'))return toast('Anda tidak memiliki hak akses Rekap DP4');closeMenu();if(!$('dp4ElectionDate').value){$('dp4ElectionDate').value=new Date().toISOString().slice(0,10)}renderDp4();$('dp4Overlay').classList.add('open')});
+$('btnDp4').addEventListener('click',()=>{if(!hasPerm('dp4'))return toast('Anda tidak memiliki hak akses Rekap DP4');closeMenu();if(!$('dp4ElectionDate').value){$('dp4ElectionDate').value=String(desaSettings?.electionDate||'').trim()||todayISO()}renderDp4();$('dp4Overlay').classList.add('open')});
 $('dp4ElectionDate').addEventListener('change',renderDp4);
 $('btnExportDp4Pdf').addEventListener('click',exportDp4Pdf);$('btnPrintDp4Rekap').addEventListener('click',printDp4Rekap);$('btnExportDp4').addEventListener('click',exportDp4Xlsx);
 
@@ -4039,7 +4057,7 @@ $('tbody').addEventListener('click',e=>{
 $('entryBioReason').addEventListener('change',syncEntryBioReason);
 $('entryBioOverlay')?.addEventListener('click',e=>{if(e.target.id==='entryBioOverlay'){const reason=$('entryBioReason')?.value;if(reason==='Kelahiran'&&$('entry_NIK'))$('entry_NIK').value='';}});
 document.querySelector('[data-close="entryBioOverlay"]')?.addEventListener('click',()=>{if($('entryBioReason')?.value==='Kelahiran'&&$('entry_NIK'))$('entry_NIK').value='';});
-$('btnSaveEntryBio').addEventListener('click',()=>{
+$('btnSaveEntryBio').addEventListener('click',async()=>{
   const head=entryBioHead(); if(!head)return toast('Kepala Keluarga tidak ditemukan');
   const reason=$('entryBioReason').value, date=$('entryBioDate').value;
   if(!reason)return toast('Alasan Penambahan wajib dipilih');
@@ -4059,9 +4077,13 @@ $('btnSaveEntryBio').addEventListener('click',()=>{
   r.NAMA_LGKP_IBU=String($('entry_NAMA_LGKP_IBU')?.value||'').trim();
   const kkCheck=validateFamilyCardRecord(r,-1);
   if(!kkCheck.ok)return toast(kkCheck.message);
-  data.push(r);
-  addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+date,{kategori:'PENAMBAHAN',alasan:reason,tanggal:date,tanggalLahir:r.TGL_LHR||'',asal:'',keterangan:'Entry Bio'});
-  persist();fillFilters();render();$('entryBioOverlay').classList.remove('open');toast('Entry Bio berhasil disimpan');
+  const snapshot=data.map(x=>({...x}));
+  try{
+    data.push(r);
+    await persist();
+    await addHistory('Data Ditambahkan',r,'Alasan Penambahan: '+reason+' | Tanggal: '+date,{kategori:'PENAMBAHAN',alasan:reason,tanggal:date,tanggalLahir:r.TGL_LHR||'',asal:'',keterangan:'Entry Bio'});
+    fillFilters();render();$('entryBioOverlay').classList.remove('open');toast('Entry Bio berhasil disimpan');
+  }catch(err){data=snapshot;fillFilters();render();toast('Entry Bio gagal disimpan: '+(err.message||err))}
 });
 
 /* ===== Pisah KK — satu orang per proses ===== */
@@ -4140,11 +4162,12 @@ $('btnConfirmChangeKK').addEventListener('click',async()=>{
   const head=members.find(r=>isHead(r));
   if(!confirm(`Ubah No. KK ${oldKK} menjadi ${newKK} untuk ${members.length} anggota${head?' (Kepala Keluarga: '+(head['NAMA LENGKAP']||'-')+')':''}?`))return;
   if(!(await requirePin('Mengubah No. KK seluruh anggota')))return;
+  const fullSnapshot=data.map(r=>({...r}));
   try{
     const changed=members.map(r=>({nik:String(r.NIK||''),name:r['NAMA LENGKAP']||''})); members.forEach(r=>{r['NO KK']=newKK});
-    await persist(); changed.forEach(c=>{const rr=data.find(r=>String(r.NIK||'')===c.nik); if(rr)addHistory('Perubahan No. KK',rr,`No. KK diubah dari ${oldKK} menjadi ${newKK}.`,{kategori:'UBAH_NO_KK',oldKK,newKK,jumlahAnggota:members.length})});
+    await persist(); for(const c of changed){const rr=data.find(r=>String(r.NIK||'')===c.nik); if(rr)await addHistory('Perubahan No. KK',rr,`No. KK diubah dari ${oldKK} menjadi ${newKK}.`,{kategori:'UBAH_NO_KK',oldKK,newKK,jumlahAnggota:members.length});}
     render();renderFamily();$('changeKKOverlay').classList.remove('open'); toast(`Berhasil mengubah No. KK ${members.length} anggota dari ${oldKK} menjadi ${newKK}.`);
-  }catch(err){console.error(err);members.forEach(r=>{r['NO KK']=oldKK});toast('Perubahan No. KK gagal: '+(err.message||err));}
+  }catch(err){console.error(err);data=fullSnapshot;fillFilters();render();toast('Perubahan No. KK gagal: '+(err.message||err));}
 });
 
 function renderSplitKKRelationOptions(){
@@ -4202,6 +4225,7 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
   if(replacement&&isUnderageForHead(replacement))return toast('Kepala Keluarga pengganti tidak boleh berusia di bawah '+MIN_HEAD_AGE+' tahun.');
   if(!confirm(`Pisahkan ${person['NAMA LENGKAP']||person.NIK} dari KK ${oldKK} ke KK ${newKK}?`))return;
   if(!(await requirePin('Memproses Pisah KK')))return;
+  const fullSnapshot=data.map(r=>({...r}));
   try{
     const oldSnapshot={...person};
     const idx=data.findIndex(r=>String(r.NIK||'').trim()===String(person.NIK||'').trim());
@@ -4217,11 +4241,11 @@ $('btnConfirmSplitKK').addEventListener('click',async()=>{
     person.ALAMAT=targetHead.ALAMAT||'';person.RT=targetHead.RT||'';person.RW=targetHead.RW||'';
     enforceFamilyCardAddresses();
     await persist();
-    addHistory('Pisah KK',person,`Dipisahkan dari KK ${oldKK} ke KK ${newKK}.`,{kategori:'PISAH_KK',oldKK,newKK,tujuan:destination==='existing'?'Gabung KK yang sudah ada':'Membuat KK Baru',statusKK:destination==='existing'?'Sudah Memiliki KK SIAK':(document.querySelector('input[name="splitKKStatus"]:checked')?.value==='siak'?'Sudah Memiliki KK SIAK':'Belum Memiliki KK SIAK'),penggantiKepalaKeluarga:replacement?.['NAMA LENGKAP']||''});
-    if(replacement)addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${oldKK} setelah ${person['NAMA LENGKAP']||person.NIK} dipisahkan.`,{kategori:'PERUBAHAN_KK',kk:oldKK});
+    await addHistory('Pisah KK',person,`Dipisahkan dari KK ${oldKK} ke KK ${newKK}.`,{kategori:'PISAH_KK',oldKK,newKK,tujuan:destination==='existing'?'Gabung KK yang sudah ada':'Membuat KK Baru',statusKK:destination==='existing'?'Sudah Memiliki KK SIAK':(document.querySelector('input[name="splitKKStatus"]:checked')?.value==='siak'?'Sudah Memiliki KK SIAK':'Belum Memiliki KK SIAK'),penggantiKepalaKeluarga:replacement?.['NAMA LENGKAP']||''});
+    if(replacement)await addHistory('Perubahan Kepala Keluarga',replacement,`Menjadi Kepala Keluarga pada KK ${oldKK} setelah ${person['NAMA LENGKAP']||person.NIK} dipisahkan.`,{kategori:'PERUBAHAN_KK',kk:oldKK});
     render();renderFamily();$('splitKKOverlay').classList.remove('open');
     toast(`Pisah KK berhasil. ${person['NAMA LENGKAP']||person.NIK} sekarang berada di KK ${newKK}.`);
-  }catch(err){console.error(err);toast('Pisah KK gagal: '+(err.message||err));}
+  }catch(err){console.error(err);data=fullSnapshot;fillFilters();render();toast('Pisah KK gagal dan perubahan dibatalkan: '+(err.message||err));}
 });
 
 
@@ -4237,28 +4261,14 @@ function normalizeLetterRecord(x){
 async function syncCloudLetterRegister(){
   if(!window.sb||!window.currentUser)return getLetterRegister();
   try{
-    let local=getLetterRegister().map(normalizeLetterRecord);
     const {data,error}=await window.sb.from('letter_register').select('*').order('date',{ascending:false}).order('created_at',{ascending:false}).limit(5000);
     if(error)throw error;
-    const byId=new Map();
-    (data||[]).forEach(x=>byId.set(String(x.id),normalizeLetterRecord(x)));
-    // Migrasikan data lokal lama ke cloud agar tidak hilang saat pertama kali sinkron.
-    for(const r of local){
-      const id=String(r.id);
-      if(!byId.has(id)){
-        const payload={...r,created_by:r.created_by||window.currentUser.id,updated_by:window.currentUser.id,created_at:r.created_at||new Date().toISOString(),updated_at:new Date().toISOString()};
-        const {error:upErr}=await window.sb.from('letter_register').upsert(payload,{onConflict:'id'});
-        if(upErr)console.warn('Migrasi register surat gagal',upErr); else byId.set(id,normalizeLetterRecord(payload));
-      }
-    }
-    const merged=[...byId.values()].sort((a,b)=>String(b.date||b.created_at||'').localeCompare(String(a.date||a.created_at||'')));
-    saveLetterRegister(merged);
-    return merged;
-  }catch(e){
-    console.warn('Gagal sinkron Register Surat Desa:',e);
-    return getLetterRegister();
-  }
+    const rows=(data||[]).map(normalizeLetterRecord);
+    saveLetterRegister(rows);
+    return rows;
+  }catch(e){console.warn('Gagal sinkron Register Surat Desa:',e);return getLetterRegister()}
 }
+
 async function upsertCloudLetterRecord(rec){
   if(!window.sb||!window.currentUser)return;
   const now=new Date().toISOString();
@@ -4271,7 +4281,7 @@ async function deleteCloudLetterRecord(id){
   const {error}=await window.sb.from('letter_register').delete().eq('id',String(id));
   if(error)throw error;
 }
-function todayISO(){return new Date().toISOString().slice(0,10)}
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function letterPersonByNik(){
   const nik=$('letterNik').value.trim();
   return data.find(r=>String(r.NIK||'').trim()===nik)||null;
@@ -4582,18 +4592,52 @@ $('btnRestoreBackup').addEventListener('click',async()=>{
   if(!pendingRestore)return;
   if(!confirm(`Ini akan MENGGANTI seluruh data saat ini (${data.length} data penduduk) dengan isi cadangan (${pendingRestore.residents.length} data penduduk). Tindakan ini tidak dapat dibatalkan. Lanjutkan?`))return;
   if(!(await requirePin('Memulihkan database dari cadangan')))return;
-  data=pendingRestore.residents.map(normalize);
-  // STATUS_AKTIF, ALASAN_NONAKTIF, TGL_NONAKTIF, dan KETERANGAN_NONAKTIF
-  // ikut dipulihkan karena merupakan bagian dari setiap biodata penduduk.
-  try{await persist()}catch(err){toast('Gagal menyimpan hasil restore: '+(err.message||err));return}
-  if(Array.isArray(pendingRestore.history))localStorage.setItem(HISTORY_KEY,JSON.stringify(pendingRestore.history));
-  if(Array.isArray(pendingRestore.letterRegister))saveLetterRegister(pendingRestore.letterRegister);
-  if(Array.isArray(pendingRestore.mutationRegister)){localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(pendingRestore.mutationRegister))}else{localStorage.removeItem(MUTATION_REGISTER_KEY);syncMutationRegister()}
-  if(pendingRestore.settings&&typeof pendingRestore.settings==='object'){desaSettings=Object.assign(loadSettings(),pendingRestore.settings);saveSettings()}
-  fillFilters();page=1;render();renderLetter();updateAppTitle();updatePinStatusHint();
-  addHistory('Pemulihan Cadangan',null,`Database dipulihkan dari cadangan (${data.length} data penduduk).`,{kategori:'RESTORE',jumlah:data.length});
-  $('backupOverlay').classList.remove('open');
-  toast('Database berhasil dipulihkan dari cadangan');
+  const backupResidents=pendingRestore.residents.map(normalize);
+  const backupHistory=Array.isArray(pendingRestore.history)?pendingRestore.history:[];
+  const backupLetters=Array.isArray(pendingRestore.letterRegister)?pendingRestore.letterRegister:[];
+  const backupMutation=Array.isArray(pendingRestore.mutationRegister)?pendingRestore.mutationRegister:[];
+  const backupSettings=pendingRestore.settings&&typeof pendingRestore.settings==='object'?pendingRestore.settings:null;
+  const oldData=data.map(r=>({...r})),oldHistory=getHistory(),oldLetters=getLetterRegister(),oldMutation=getMutationRegister(),oldSettings=JSON.parse(JSON.stringify(desaSettings));
+  let oldCloudResidents=null,oldCloudHistory=null,oldCloudLetters=null,oldCloudSettings=null;
+  try{
+    if(backupResidents.some(r=>!isValidNik(r.NIK)))throw new Error('Restore dibatalkan: terdapat NIK tidak valid pada backup.');
+    const seen=new Set();
+    for(const r of backupResidents){const nik=String(r.NIK||'').trim();if(seen.has(nik))throw new Error('Restore dibatalkan: terdapat NIK duplikat '+nik);seen.add(nik)}
+    if(window.sb&&window.currentUser){
+      const [cr,ch,cl,cs]=await Promise.all([
+        window.sb.from('residents').select('nik,data'),
+        window.sb.from('mutation_history').select('*'),
+        window.sb.from('letter_register').select('*'),
+        window.sb.from('app_settings').select('settings').eq('id','main').maybeSingle()
+      ]);
+      if(cr.error)throw cr.error;if(ch.error)throw ch.error;if(cl.error)throw cl.error;if(cs.error)throw cs.error;
+      oldCloudResidents=(cr.data||[]).map(x=>normalize(x.data||{}));
+      oldCloudHistory=(ch.data||[]).map(x=>({id:x.id,at:x.at,type:x.type,NIK:x.nik||'',name:x.name||'',kk:x.kk||'',address:x.address||'',rt:x.rt||'',rw:x.rw||'',detail:x.detail||'',meta:x.meta||{},created_by:x.created_by}));
+      oldCloudLetters=(cl.data||[]).map(normalizeLetterRecord);
+      oldCloudSettings=cs.data?.settings??null;
+    }
+    await persistReplace(backupResidents);
+    if(window.sb&&window.currentUser){await cloudReplaceMutationHistory(backupHistory);await cloudReplaceLetterRegister(backupLetters)}
+    data=backupResidents;localStorage.setItem(HISTORY_KEY,JSON.stringify(backupHistory));saveLetterRegister(backupLetters);localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(backupMutation));
+    if(backupSettings){desaSettings=Object.assign(loadSettings(),backupSettings);await saveSettings()}
+    fillFilters();page=1;render();renderLetter();updateAppTitle();updatePinStatusHint();
+    $('backupOverlay').classList.remove('open');pendingRestore=null;toast('Database berhasil dipulihkan dari cadangan');
+  }catch(err){
+    console.error('restore gagal',err);
+    try{
+      if(window.sb&&window.currentUser&&oldCloudResidents!==null){
+        await cloudReplaceResidents(oldCloudResidents);
+        await cloudReplaceMutationHistory(oldCloudHistory||[]);
+        await cloudReplaceLetterRegister(oldCloudLetters||[]);
+        if(oldCloudSettings!==null){
+          const {error}=await window.sb.from('app_settings').upsert({id:'main',settings:oldCloudSettings,updated_by:window.currentUser.id},{onConflict:'id'});if(error)throw error;
+        }else{await window.sb.from('app_settings').delete().eq('id','main')}
+      }
+      data=oldData;localStorage.setItem(HISTORY_KEY,JSON.stringify(oldHistory));saveLetterRegister(oldLetters);localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(oldMutation));desaSettings=oldSettings;localStorage.setItem(SETTINGS_KEY,JSON.stringify(oldSettings));
+      fillFilters();page=1;render();renderLetter();updateAppTitle();updatePinStatusHint();
+    }catch(rollbackErr){console.error('rollback restore gagal',rollbackErr);toast('Restore gagal dan rollback juga gagal: '+(rollbackErr.message||rollbackErr));return}
+    toast('Restore gagal; semua perubahan yang sempat tersimpan telah dikembalikan.');
+  }
 });
 $('letterRegister').addEventListener('click',async e=>{
   const load=e.target.closest('[data-letter-load]'),del=e.target.closest('[data-letter-del]'),rows=getLetterRegister();
@@ -5267,31 +5311,31 @@ async function editMoveDestination(groupId){
   const current=String(rows[0].meta?.tujuan?.alamat||'').trim();
   const value=prompt('Edit Alamat Tujuan (dusun / kampung / jalan):',current);
   if(value===null)return;
-  const alamat=String(value).trim();
-  if(!alamat){toast('Alamat tujuan wajib diisi');return}
-  const history=getHistory();
-  const ids=new Set(rows.map(x=>String(x.id)));
-  history.forEach(h=>{
-    if(!ids.has(String(h.id)))return;
-    const t={...((h.meta&&h.meta.tujuan)||{}),alamat};
-    h.meta={...(h.meta||{}),tujuan:t};
+  const alamat=String(value).trim();if(!alamat){toast('Alamat tujuan wajib diisi');return}
+  const ids=new Set(rows.map(x=>String(x.id))),history=getHistory();
+  const changed=history.filter(x=>ids.has(String(x.id))).map(h=>{
+    const copy={...h,meta:{...(h.meta||{})}},t={...(copy.meta.tujuan||{}),alamat};
+    copy.meta.tujuan=t;
     const dest=[t.alamat,t.desa,t.kecamatan,t.kabupatenKota,t.provinsi].filter(Boolean).join(', ');
-    h.detail=String(h.detail||'').replace(/Tujuan:\s*[^|]*/i,'Tujuan: '+dest+' ');
+    copy.detail=String(copy.detail||'').replace(/Tujuan:\s*[^|]*/i,'Tujuan: '+dest+' ');
+    return copy;
   });
-  localStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(0,1000)));
-  syncMutationRegister();
-  if(window.sb&&window.currentUser){
-    try{
-      for(const h of history.filter(x=>ids.has(String(x.id)))){
+  try{
+    if(window.sb&&window.currentUser){
+      for(const h of changed){
         const {error}=await window.sb.from('mutation_history').update({detail:h.detail,meta:h.meta}).eq('id',h.id);
         if(error)throw error;
       }
-    }catch(err){toast('Alamat tujuan tersimpan lokal, tetapi sinkronisasi cloud gagal: '+(err.message||err));}
-  }
-  renderMoveRegister();
-  if(moveApplicationGroupId===groupId)renderMoveApplication();
+    }
+    const byId=new Map(changed.map(x=>[String(x.id),x]));
+    history.forEach((h,i)=>{const x=byId.get(String(h.id));if(x)history[i]=x});
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(0,1000)));
+    localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(history.map(historyToMutation).filter(Boolean).slice(0,5000)));
+  }catch(err){toast('Perubahan alamat tujuan dibatalkan karena penyimpanan cloud gagal: '+(err.message||err));return}
+  renderMoveRegister();if(moveApplicationGroupId===groupId)renderMoveApplication();
   toast('Alamat tujuan berhasil diperbarui');
 }
+
 function renderMoveRegister(){
   const rows=moveRegisterRows(); const body=$('moveRegisterBody'); if(!body)return;
   body.innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${esc(fmtDate(x.date)||fmtDate(x.first.at?.slice(0,10)))}</td><td><b>${esc(x.app?.name||'-')}</b></td><td>${esc(x.app?.NIK||x.first.NIK||'-')}</td><td>${esc(x.first.kk||x.meta.noKK||'-')}</td><td>${esc(x.meta.nomorSKP||'-')}</td><td class="num">${x.members.length}</td><td>${esc(x.meta.jenis||'-')}</td><td>${esc(x.meta.alasan||'-')}</td><td style="white-space:normal">${esc(x.destination||'-')}</td><td><button class="btn-mini" data-move-register-print="${esc(x.groupId)}">🖨 Cetak</button> <button class="btn-mini" data-move-register-edit-skp="${esc(x.groupId)}">✎ Edit SKP</button> <button class="btn-mini" data-move-register-edit-dest="${esc(x.groupId)}">✎ Alamat</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Belum ada data perpindahan.</td></tr>';
@@ -5653,7 +5697,7 @@ function mutationPrintSignaturesHtml(){
   const village=String(desaSettings?.village||'').trim()||'-';
   const head=String(desaSettings?.head||'').trim()||'................................................';
   const operator=String(typeof profileDisplayName==='function'?profileDisplayName():'').trim()||'................................................';
-  const today=letterIndoDate(new Date().toISOString().slice(0,10));
+  const today=letterIndoDate(todayISO());
   return `<div class="mutation-print-signatures">
     <div class="mutation-signature">
       <div>Petugas Registrasi</div>
@@ -5778,39 +5822,84 @@ $('mutationMonth')?.addEventListener('change',renderMutationRegister);
 $('mutationYear')?.addEventListener('change',renderMutationRegister);
 $('btnPrintMutationRegister')?.addEventListener('click',printMutationRegister);
 $('btnMutationRegister')?.addEventListener('click',async()=>{if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Register Mutasi Penduduk');closeMenu();await syncCloudHistory();syncMutationRegister();renderMutationRegister();$('mutationRegisterOverlay').classList.add('open')});
+function historyActorId(x){
+  return String(x?.created_by||x?.meta?.akunUserId||'').trim();
+}
+function historyActorName(x){
+  return String(x?.created_by_name||x?.meta?.akunPerubahan||'Akun tidak tercatat').trim()||'Akun tidak tercatat';
+}
 function renderHistory(){
   const h=getHistory();
   const type=($('historyTypeFilter')?.value||'').trim();
   const q=($('historySearch')?.value||'').toLowerCase().trim();
+  const userFilter=$('historyUserFilter')?.value||'';
+  const userSelect=$('historyUserFilter');
+  if(userSelect){
+    const selected=userSelect.value;
+    const users=new Map();
+    h.forEach(x=>{
+      const id=historyActorId(x)||'__unknown__';
+      if(!users.has(id))users.set(id,historyActorName(x));
+    });
+    userSelect.innerHTML='<option value="">Semua pengguna</option>'+Array.from(users.entries())
+      .sort((a,b)=>a[1].localeCompare(b[1],'id'))
+      .map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
+    if(Array.from(userSelect.options).some(o=>o.value===selected))userSelect.value=selected;
+  }
   const rows=h.filter(x=>{
-    const typeOk=!type || x.type===type;
-    const text=((x.name||'')+' '+(x.NIK||'')+' '+(x.kk||'')+' '+(x.detail||'')).toLowerCase();
-    return typeOk && (!q||text.includes(q));
+    const typeOk=!type||x.type===type;
+    const actorId=historyActorId(x)||'__unknown__';
+    const userOk=!userFilter||actorId===userFilter;
+    const text=((x.name||'')+' '+(x.NIK||'')+' '+(x.kk||'')+' '+(x.detail||'')+' '+historyActorName(x)).toLowerCase();
+    return typeOk&&userOk&&(!q||text.includes(q));
   });
-  const seenMove=new Set();
-  $('historyBody').innerHTML=rows.length?rows.map(x=>{
-    const d=new Date(x.at);
-    const gid=x.type==='Penduduk Pindah'?x.meta?.groupId:'';
-    let action='';
-    if(gid&&!seenMove.has(gid)){seenMove.add(gid);action=`<button type="button" class="btn btn-sm" data-print-move-group="${esc(gid)}">🖨 Cetak Surat Pindah</button>`;}
-    const actor=x.created_by_name||x.meta?.akunPerubahan||'Akun tidak tercatat';
-    const changes=Array.isArray(x.meta?.perubahan)?x.meta.perubahan:[];
-    const changeHtml=changes.length?`<div style="margin-top:6px;padding:7px 9px;background:#f8fafc;border:1px solid #e1e7ef;border-radius:7px"><b>Rincian perubahan:</b><ul style="margin:5px 0 0 18px;padding:0;line-height:1.55">${changes.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:'';
-    return `<div class="history-item"><div><b>${esc(x.type)}</b> — ${esc(x.name||'-')} (${esc(x.NIK||'-')})</div><div class="hint">${d.toLocaleString('id-ID')} • KK ${esc(x.kk||'-')} • <b>Diubah oleh: ${esc(actor)}</b></div><div>${esc(x.detail||'')}</div>${changeHtml}${action?`<div style="margin-top:7px">${action}</div>`:''}</div>`
+  const seenMove=new Set(),groups=new Map();
+  rows.forEach(x=>{
+    const id=historyActorId(x)||'__unknown__';
+    if(!groups.has(id))groups.set(id,{name:historyActorName(x),rows:[]});
+    groups.get(id).rows.push(x);
+  });
+  const sortedGroups=Array.from(groups.entries()).sort((a,b)=>a[1].name.localeCompare(b[1].name,'id'));
+  $('historyBody').innerHTML=rows.length?sortedGroups.map(([actorId,g])=>{
+    const items=g.rows.map(x=>{
+      const d=new Date(x.at);
+      const dateLabel=isNaN(d.getTime())?'Tanggal tidak diketahui':d.toLocaleString('id-ID');
+      const gid=x.type==='Penduduk Pindah'?x.meta?.groupId:'';
+      let action='';
+      if(gid&&!seenMove.has(gid)){seenMove.add(gid);action=`<button type="button" class="btn btn-sm" data-print-move-group="${esc(gid)}">🖨 Cetak Surat Pindah</button>`;}
+      const changes=Array.isArray(x.meta?.perubahan)?x.meta.perubahan:[];
+      const changeHtml=changes.length?`<div style="margin-top:6px;padding:7px 9px;background:#f8fafc;border:1px solid #e1e7ef;border-radius:7px"><b>Rincian perubahan:</b><ul style="margin:5px 0 0 18px;padding:0;line-height:1.55">${changes.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:'';
+      return `<div class="history-item"><div><b>${esc(x.type||'Perubahan data')}</b> — ${esc(x.name||'-')} (${esc(x.NIK||'-')})</div><div class="hint">${esc(dateLabel)} • KK ${esc(x.kk||'-')}</div><div>${esc(x.detail||'')}</div>${changeHtml}${action?`<div style="margin-top:7px">${action}</div>`:''}</div>`;
+    }).join('');
+    return `<section style="border:1px solid #dbe3ee;border-radius:10px;padding:10px 12px;margin-bottom:12px;background:#fff"><div style="position:sticky;top:0;background:#edf3f8;border-radius:7px;padding:9px 10px;margin-bottom:5px;display:flex;justify-content:space-between;gap:8px;align-items:center"><b>👤 ${esc(g.name)}</b><span class="hint">${g.rows.length} riwayat</span></div>${items}</section>`;
   }).join(''):'<div class="hint">Tidak ada riwayat yang sesuai filter.</div>';
   document.querySelectorAll('[data-print-move-group]').forEach(btn=>btn.addEventListener('click',()=>openMoveApplication(btn.dataset.printMoveGroup)));
 }
-$('btnHistory').addEventListener('click',async()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();await syncCloudHistory();renderHistory();$('historyOverlay').classList.add('open')});$('historyTypeFilter').addEventListener('change',renderHistory);$('historySearch').addEventListener('input',renderHistory);
+$('btnHistory').addEventListener('click',async()=>{if(!hasPerm('history'))return toast('Anda tidak memiliki hak akses Riwayat Perubahan');closeMenu();await syncCloudHistory();renderHistory();$('historyOverlay').classList.add('open')});
+$('historyTypeFilter').addEventListener('change',renderHistory);
+$('historyUserFilter')?.addEventListener('change',renderHistory);
+$('historySearch').addEventListener('input',renderHistory);
 $('btnClearHistory').addEventListener('click',async()=>{
-  if(!confirm('Bersihkan seluruh riwayat perubahan?'))return;
-  if(window.sb&&window.currentUser){
-    const {error}=await window.sb.from('mutation_history').delete().not('id','is',null);
-    if(error){console.error('Gagal menghapus riwayat cloud:',error);toast('Riwayat cloud gagal dibersihkan: '+(error.message||error));return}
+  if(!window.currentUser)return toast('Silakan login terlebih dahulu');
+  if(!confirm('Bersihkan riwayat yang dibuat oleh akun Anda saja? Riwayat pengguna lain tidak akan dihapus.'))return;
+  const actorId=String(window.currentUser.id||'');
+  try{
+    if(window.sb&&actorId){
+      const {error}=await window.sb.from('mutation_history').delete().eq('created_by',actorId);
+      if(error)throw error;
+    }
+    const remaining=getHistory().filter(x=>{
+      const id=historyActorId(x);
+      return id!==actorId;
+    });
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(remaining));
+    localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(remaining.map(historyToMutation).filter(Boolean).slice(0,5000)));
+    renderHistory();
+    toast('Riwayat akun Anda berhasil dibersihkan');
+  }catch(err){
+    console.error('Gagal membersihkan riwayat akun:',err);
+    toast('Riwayat gagal dibersihkan: '+(err.message||err));
   }
-  localStorage.removeItem(HISTORY_KEY);
-  localStorage.removeItem(MUTATION_REGISTER_KEY);
-  renderHistory();
-  toast('Seluruh riwayat perubahan berhasil dibersihkan');
 });
 
 function renderReport(){
@@ -6003,25 +6092,19 @@ async function loadProfile(){
   window.currentProfile=data;return data;
 }
 async function syncCloudHistory(){
-  if(!window.sb||!window.currentUser)return;
+  if(!window.sb||!window.currentUser)return getHistory();
   const {data,error}=await window.sb.from('mutation_history').select('id,at,type,nik,name,kk,address,rt,rw,detail,meta,created_by').order('at',{ascending:false}).limit(5000);
-  if(error){
-    console.warn('Gagal mengambil riwayat mutasi bersama dari cloud:',error);
-    return;
-  }
-  if(!Array.isArray(data))return;
-  // Register Mutasi harus memakai satu sumber data bersama. Jangan mengganti
-  // riwayat lokal dengan hanya data milik sesi/akun yang sedang login.
-  const local=getHistory();
-  const byId=new Map();
-  local.forEach(x=>{if(x?.id)byId.set(String(x.id),x)});
-  data.forEach(x=>byId.set(String(x.id||`${x.at}|${x.type}|${x.nik||''}`),{
-    id:x.id||crypto.randomUUID(),at:x.at,type:x.type,NIK:x.nik||'',name:x.name||'',kk:x.kk||'',address:x.address||'',rt:x.rt||'',rw:x.rw||'',detail:x.detail||'',meta:x.meta||{},created_by_name:x.meta?.akunPerubahan||''
+  if(error){console.warn('Gagal mengambil riwayat mutasi bersama dari cloud:',error);return getHistory()}
+  const rows=(Array.isArray(data)?data:[]).map(x=>({
+    id:x.id||crypto.randomUUID(),at:x.at,type:x.type,NIK:x.nik||'',name:x.name||'',kk:x.kk||'',
+    address:x.address||'',rt:x.rt||'',rw:x.rw||'',detail:x.detail||'',meta:x.meta||{},
+    created_by:x.created_by||x.meta?.akunUserId||'',created_by_name:x.meta?.akunPerubahan||''
   }));
-  const merged=[...byId.values()].sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))).slice(0,1000);
-  localStorage.setItem(HISTORY_KEY,JSON.stringify(merged));
-  syncMutationRegister();
+  localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(0,1000)));
+  localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(rows.map(historyToMutation).filter(Boolean).slice(0,5000)));
+  return rows;
 }
+
 function profileDisplayName(){
   const full=String(window.currentProfile?.full_name||'').trim();
   return full||String(window.currentUser?.email||'-').split('@')[0]||'-';
