@@ -1328,6 +1328,15 @@ body{font-family:Arial,Helvetica,sans-serif!important}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<script>
+/* ===== Zona waktu aplikasi: semua jam memakai WIB (Asia/Jakarta) ===== */
+const WIB_TZ='Asia/Jakarta';
+function wibShift(v){const d=v instanceof Date?v:new Date(v);const p={};new Intl.DateTimeFormat('en-US',{timeZone:WIB_TZ,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}).formatToParts(d).forEach(x=>p[x.type]=x.value);return new Date(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second)}
+function wibNow(){return wibShift(new Date())}
+function wibStr(v){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '';return d.toLocaleString('id-ID',{timeZone:WIB_TZ,hour12:false})+' WIB'}
+function wibDateStr(v,opts){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '';return d.toLocaleDateString('id-ID',Object.assign({timeZone:WIB_TZ},opts||{}))}
+function wibISODate(v){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '';const p={};new Intl.DateTimeFormat('en-US',{timeZone:WIB_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).forEach(x=>p[x.type]=x.value);return p.year+'-'+p.month+'-'+p.day}
+</script>
 <script src="./supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){'use strict';
@@ -1738,7 +1747,7 @@ function ageOn(dob,ref){
   if(e.getMonth()<b.getMonth()||(e.getMonth()===b.getMonth()&&e.getDate()<b.getDate()))a--;
   return a<0?null:a;
 }
-function age(d){const a=ageOn(d,new Date());return a===null?'':a}
+function age(d){const a=ageOn(d,wibNow());return a===null?'':a}
 const MIN_HEAD_AGE=17;
 function isUnderageForHead(r){const a=age(r&&r.TGL_LHR);return a!==''&&Number(a)<MIN_HEAD_AGE}
 function fmtDate(v){if(!v)return '';const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;m=s.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;const d=new Date(v);if(!isNaN(d))return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();return s}
@@ -1814,7 +1823,7 @@ $('btnExport').addEventListener('click',()=>{if(!hasPerm('export_data'))return t
   const rows=activeRows.map((r,i)=>{const o={};exportHeaders.forEach(h=>o[h]=h==='NO'?i+1:h==='UMUR'?age(r.TGL_LHR):DATE_FIELDS.includes(h)?fmtDate(r[h]):(r[h]||''));return o});
   const ws=XLSX.utils.json_to_sheet(rows,{header:exportHeaders});
   ws['!cols']=exportHeaders.map(h=>({wch:h==='NAMA LENGKAP'||h==='ALAMAT'?24:h==='PEKERJAAN'||h==='PENDIDIKAN'?28:h==='NIK'||h==='NO KK'?18:15}));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['Urutan kolom ekspor: NO, NIK, NO KK, NAMA LENGKAP, TMPT_LHR, TGL_LHR, UMUR, JK, SHDRT, STATUS, NO_AKTA_KAWIN, TGL_NIKAH, NO_AKTA_CERAI, TGL_CERAI, GD, AGAMA, PENDIDIKAN, PEKERJAAN, NAMA_LGKP_IBU, NAMA_LGKP_AYAH, ALAMAT, RT, RW.'],['Data yang diekspor adalah seluruh penduduk AKTIF; penduduk TIDAK AKTIF tidak disertakan.'],['Baris diurutkan seperti DP4 berdasarkan RW, RT, NO KK, kemudian Nama Lengkap.'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=new Date();
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Penduduk');const info=[['Keterangan'],['Urutan kolom ekspor: NO, NIK, NO KK, NAMA LENGKAP, TMPT_LHR, TGL_LHR, UMUR, JK, SHDRT, STATUS, NO_AKTA_KAWIN, TGL_NIKAH, NO_AKTA_CERAI, TGL_CERAI, GD, AGAMA, PENDIDIKAN, PEKERJAAN, NAMA_LGKP_IBU, NAMA_LGKP_AYAH, ALAMAT, RT, RW.'],['Data yang diekspor adalah seluruh penduduk AKTIF; penduduk TIDAK AKTIF tidak disertakan.'],['Baris diurutkan seperti DP4 berdasarkan RW, RT, NO KK, kemudian Nama Lengkap.'],['NO dan UMUR pada file ekspor bersifat otomatis dan diabaikan saat impor.'],['Saat impor, kolom yang dipakai adalah NIK sampai RW sesuai nama header.'],['UMUR selalu dihitung otomatis dari TGL_LHR.']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');const now=wibNow();
   const dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yyyy=now.getFullYear();
   const hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0');
   const namaDesa=String(desaSettings?.village||'Desa').trim().replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')||'Desa';
@@ -1863,7 +1872,7 @@ function renderEditLastChanged(r){
   const el=$('editLastChangedInfo');if(!el)return;
   const nik=String(r?.NIK||'').trim();
   const h=nik?getHistory().find(x=>String(x.NIK||'').trim()===nik):null;
-  el.innerHTML=h?`🕓 Terakhir diubah: <b>${esc(new Date(h.at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}))}</b> oleh <b>${esc(h.created_by_name||h.meta?.akunPerubahan||'-')}</b>`:'🕓 Belum ada riwayat perubahan untuk data ini.';
+  el.innerHTML=h?`🕓 Terakhir diubah: <b>${esc(wibDateStr(h.at,{day:'numeric',month:'short',year:'numeric'}))}</b> oleh <b>${esc(h.created_by_name||h.meta?.akunPerubahan||'-')}</b>`:'🕓 Belum ada riwayat perubahan untuk data ini.';
 }
 function openEdit(index){
   if(index<0||!data[index])return;
@@ -2880,7 +2889,7 @@ function printPernyataanAnakKandung(withHeadSignature=true){
   const witness2=g('akWitness2')||w2.name;
   const nm=(x,n)=>'('+val(x,n)+')';
   const place=g('akPlace')||strip(regency,reRegency)||village;
-  const dateTxt=g('akDate')?esc(letterIndoDate(g('akDate'))):dots(32)+new Date().getFullYear();
+  const dateTxt=g('akDate')?esc(letterIndoDate(g('akDate'))):dots(32)+wibNow().getFullYear();
   const headName=g('akHead')||head;
   const headTitle=village?'Kepala Desa '+esc(village):'Kepala Desa/Kelurahan';
 
@@ -2952,7 +2961,7 @@ html,body{margin:0!important;padding:0!important;background:#fff!important;color
 function asiSignPlaceDate(regency,village){
   const place=birthValue('akPlace')||String(regency||'').replace(/^(kabupaten|kab\.?|kota)\s+/i,'').trim()||village;
   const dv=birthValue('akDate');
-  const dateTxt=dv?esc(letterIndoDate(dv)):esc(new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}));
+  const dateTxt=dv?esc(letterIndoDate(dv)):esc(wibDateStr(new Date(),{day:'2-digit',month:'long',year:'numeric'}));
   return {place,dateTxt};
 }
 function printASIAnak(){
@@ -3100,7 +3109,7 @@ function printSPTJM(){
   const row=(label,value)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td class="val">${esc(value||'')}</td></tr>`;
   const rowAddr=(label,lines)=>`<tr><td class="lbl">${esc(label)}</td><td class="colon">:</td><td class="val">${(lines||[]).map(l=>'<span class="al">'+esc(l)+'</span>').join('')}</td></tr>`;
   const birthTypeText=birthType?String(birthType).toUpperCase():'';
-  const now=new Date();
+  const now=wibNow();
   const printDate=String(now.getDate()).padStart(2,'0')+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+now.getFullYear();
   const h=`<div class="sptjm-paper">
     <div class="code">F-2.03</div>
@@ -3762,7 +3771,7 @@ function renderAgeReport(){
     ? `<div class="report-box" style="margin-bottom:12px"><h4>Filter yang digunakan</h4>${filters.map(x=>`<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('')}</div>`
     : `<div class="hint" style="margin-bottom:12px">Rekap menampilkan seluruh data penduduk karena tidak ada filter aktif.</div>`;
   const totalL=groups.reduce((a,g)=>a+g.laki,0),totalP=groups.reduce((a,g)=>a+g.perempuan,0),total=groups.reduce((a,g)=>a+g.total,0);
-  const now=new Date().toLocaleString('id-ID');
+  const now=wibStr(new Date());
   $('ageReportBody').innerHTML=`<div style="text-align:center;margin-bottom:12px"><div style="font-size:18px;font-weight:800">REKAP DATA KEPENDUDUKAN BERDASARKAN KELOMPOK UMUR</div><div class="hint">Dicetak/dibuat: ${esc(now)}</div></div>${filterHtml}<div class="stat" style="margin-bottom:12px">Data Terfilter<b>${total}</b></div><div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>No</th><th>Kelompok Umur (Tahun)</th><th>Laki-Laki (Jiwa)</th><th>Perempuan (Jiwa)</th><th>Total (Jiwa)</th></tr></thead><tbody>${groups.map((g,i)=>`<tr><td class="num">${i+1}</td><td>${esc(g.label)}</td><td class="num">${g.laki}</td><td class="num">${g.perempuan}</td><td class="num">${g.total}</td></tr>`).join('')}<tr style="font-weight:800"><td colspan="2">Total</td><td class="num">${totalL}</td><td class="num">${totalP}</td><td class="num">${total}</td></tr></tbody></table></div>`;
 }
 function printAgeReport(){
@@ -3872,7 +3881,7 @@ function exportDp4Xlsx(){
   XLSX.utils.book_append_sheet(wb,ws,'DP4');
   const info=[['REKAP DP4'],['Tanggal pemungutan suara',fmtDate(date)],['Jumlah DP4',eligible.length],['Urutan kolom','NO, NIK, NO KK, NAMA LENGKAP, TMPT_LHR, TGL_LHR, UMUR, JK (L/P), STATUS, NAMA_LGKP_IBU, NAMA_LGKP_AYAH, ALAMAT, RT, RW'],['Keterangan','Hanya data yang sudah genap 17 tahun pada tanggal pemungutan suara dan tidak terindikasi TNI/Polri. WNI, hak politik, dan domisili/KTP-el perlu verifikasi administratif.']];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Keterangan');
-  const cetak=new Date();
+  const cetak=wibNow();
   const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
   const tanggalCetak=`${dd}-${mm}-${yyyy}`;
   const namaDesa=String(desaSettings?.village||'Desa').trim().replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_')||'Desa';
@@ -3948,7 +3957,7 @@ function exportDp4Pdf(){
     }
   });
 
-  const cetak=new Date();
+  const cetak=wibNow();
   const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
   const tanggalCetak=`${dd}-${mm}-${yyyy}`;
   const namaDesaFile=namaDesaFull.replace(/^(desa|kelurahan)\s+/i,'').replace(/[\\/:*?"<>|]+/g,'_')||'Desa';
@@ -4094,7 +4103,7 @@ function renderFamily(){
   if(fRT)parts.push(`RT ${fRT}`);
   if(fRW)parts.push(`RW ${fRW}`);
   if(rawQ)parts.push(`Pencarian: "${rawQ}"`);
-  parts.push(`Dicetak: ${new Date().toLocaleString('id-ID')}`);
+  parts.push(`Dicetak: ${wibStr(new Date())}`);
   $('familyPrintTitle').textContent=title;
   $('familyPrintSubtitle').textContent=parts.join(' • ');
 }
@@ -4137,7 +4146,7 @@ function exportFamilyExcel(){
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Keluarga');
   const info=[['Keterangan'],['Urutan: RW ascending, kemudian RT ascending, lalu Nomor KK ascending. Contoh: 1/1, 2/1, 1/2, 2/2, 3/2, 4/2.'],['Header hanya dibuat satu kali pada baris pertama; tidak diulang pada setiap KK.'],['Isi ekspor mengikuti tampilan/filter yang sedang aktif.'],['Umur dihitung otomatis dari Tanggal Lahir.']];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Petunjuk');
-  const cetak=new Date();
+  const cetak=wibNow();
   const dd=String(cetak.getDate()).padStart(2,'0'),mm=String(cetak.getMonth()+1).padStart(2,'0'),yyyy=cetak.getFullYear();
   const hh=String(cetak.getHours()).padStart(2,'0'),mi=String(cetak.getMinutes()).padStart(2,'0');
   // Titik dipakai sebagai pemisah jam:menit karena tanda titik dua (:) tidak diizinkan pada nama file.
@@ -4429,7 +4438,7 @@ async function syncCloudLetterRegister(){
 
 async function upsertCloudLetterRecord(rec){
   if(!window.sb||!window.currentUser)return;
-  const now=new Date().toISOString();
+  const now=wibNow().toISOString();
   const payload=normalizeLetterRecord({...rec,created_by:rec.created_by||window.currentUser.id,updated_by:window.currentUser.id,created_at:rec.created_at||now,updated_at:now});
   const {error}=await window.sb.from('letter_register').upsert(payload,{onConflict:'id'});
   if(error)throw error;
@@ -4439,7 +4448,7 @@ async function deleteCloudLetterRecord(id){
   const {error}=await window.sb.from('letter_register').delete().eq('id',String(id));
   if(error)throw error;
 }
-function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function todayISO(){const d=wibNow();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function letterPersonByNik(){
   const nik=$('letterNik').value.trim();
   return data.find(r=>String(r.NIK||'').trim()===nik)||null;
@@ -4737,7 +4746,7 @@ $('restoreFile').addEventListener('change',e=>{
       const parsed=JSON.parse(rd.result);
       if(!parsed||!Array.isArray(parsed.residents))throw new Error('Format cadangan tidak dikenali (data penduduk tidak ditemukan)');
       pendingRestore=parsed;
-      $('restorePreview').innerHTML=`Cadangan valid: <b>${parsed.residents.length}</b> data penduduk, <b>${Array.isArray(parsed.history)?parsed.history.length:0}</b> riwayat, <b>${Array.isArray(parsed.letterRegister)?parsed.letterRegister.length:0}</b> surat tersimpan.${parsed.exportedAt?'<br>Dibuat pada: '+esc(new Date(parsed.exportedAt).toLocaleString('id-ID')):''}`;
+      $('restorePreview').innerHTML=`Cadangan valid: <b>${parsed.residents.length}</b> data penduduk, <b>${Array.isArray(parsed.history)?parsed.history.length:0}</b> riwayat, <b>${Array.isArray(parsed.letterRegister)?parsed.letterRegister.length:0}</b> surat tersimpan.${parsed.exportedAt?'<br>Dibuat pada: '+esc(wibStr(parsed.exportedAt)):''}`;
       $('btnRestoreBackup').disabled=false;
     }catch(err){
       pendingRestore=null;$('btnRestoreBackup').disabled=true;
@@ -4851,7 +4860,7 @@ function syncPowerReceiver(){
   if(!r)return;
   if($('exPowerReceiver'))$('exPowerReceiver').value=r['NAMA LENGKAP']||'';
   if($('exPowerAge')){
-    const a=ageOn(r.TGL_LHR,new Date());
+    const a=ageOn(r.TGL_LHR,wibNow());
     if(a!==null)$('exPowerAge').value=String(Math.max(0,a));
   }
   if($('exPowerJob'))$('exPowerJob').value=r.PEKERJAAN||'';
@@ -5288,7 +5297,7 @@ function renderDashboard(){
   // Semua rekap wilayah menggunakan urutan RT ascending lalu RW ascending:
   // 1/1, 2/1, 1/2, 2/2, 3/2, 4/2, 1/3, 2/3, 3/3, 4/3, dst.
   const locRows=Object.values(rtRw).sort((a,b)=>dashNum(a.rw)-dashNum(b.rw)||dashNum(a.rt)-dashNum(b.rt));
-  const updated=new Date().toLocaleString('id-ID');
+  const updated=wibStr(new Date());
   $('dashboardBody').innerHTML=`
     <div class="dashboard-headline"><div><div class="dashboard-title">DASHBOARD KEPENDUDUKAN DESA</div><div class="dashboard-subtitle">Rekap otomatis dari Master Penduduk • pembaruan terakhir: ${esc(updated)}</div></div><div class="dashboard-actions"><button class="btn" id="btnDashRefresh">↻ Segarkan</button></div></div>
     <div class="dashboard-print-title">DASHBOARD KEPENDUDUKAN DESA</div>
@@ -5491,7 +5500,7 @@ async function editMoveDestination(groupId){
 
 function renderMoveRegister(){
   const rows=moveRegisterRows(); const body=$('moveRegisterBody'); if(!body)return;
-  body.innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${esc(fmtDate(x.date)||fmtDate(x.first.at?.slice(0,10)))}</td><td><b>${esc(x.app?.name||'-')}</b></td><td>${esc(x.app?.NIK||x.first.NIK||'-')}</td><td>${esc(x.first.kk||x.meta.noKK||'-')}</td><td>${esc(x.meta.nomorSKP||'-')}</td><td class="num">${x.members.length}</td><td>${esc(x.meta.jenis||'-')}</td><td>${esc(x.meta.alasan||'-')}</td><td style="white-space:normal">${esc(x.destination||'-')}</td><td><button class="btn-mini" data-move-register-print="${esc(x.groupId)}">🖨 Cetak</button> <button class="btn-mini" data-move-register-edit-skp="${esc(x.groupId)}">✎ Edit SKP</button> <button class="btn-mini" data-move-register-edit-dest="${esc(x.groupId)}">✎ Alamat</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Belum ada data perpindahan.</td></tr>';
+  body.innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${esc(fmtDate(x.date)||fmtDate(x.first.at?wibISODate(x.first.at):''))}</td><td><b>${esc(x.app?.name||'-')}</b></td><td>${esc(x.app?.NIK||x.first.NIK||'-')}</td><td>${esc(x.first.kk||x.meta.noKK||'-')}</td><td>${esc(x.meta.nomorSKP||'-')}</td><td class="num">${x.members.length}</td><td>${esc(x.meta.jenis||'-')}</td><td>${esc(x.meta.alasan||'-')}</td><td style="white-space:normal">${esc(x.destination||'-')}</td><td><button class="btn-mini" data-move-register-print="${esc(x.groupId)}">🖨 Cetak</button> <button class="btn-mini" data-move-register-edit-skp="${esc(x.groupId)}">✎ Edit SKP</button> <button class="btn-mini" data-move-register-edit-dest="${esc(x.groupId)}">✎ Alamat</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Belum ada data perpindahan.</td></tr>';
   $('moveRegisterInfo').textContent=rows.length+' riwayat perpindahan';
   document.querySelectorAll('[data-move-register-print]').forEach(btn=>btn.addEventListener('click',()=>openMoveApplication(btn.dataset.moveRegisterPrint)));
   document.querySelectorAll('[data-move-register-edit-skp]').forEach(btn=>btn.addEventListener('click',()=>editMoveSkp(btn.dataset.moveRegisterEditSkp)));
@@ -5649,7 +5658,7 @@ function syncMutationRegister(){
   localStorage.setItem(MUTATION_REGISTER_KEY,JSON.stringify(normalized));
   return normalized;
 }
-function mutationDateValue(x){return String(x.tanggal||x.at||'').slice(0,10)}
+function mutationDateValue(x){return x.tanggal?String(x.tanggal).slice(0,10):(x.at?wibISODate(x.at):'')}
 function filteredMutations(){
   const type=$('mutationTypeFilter')?.value||'',from=$('mutationDateFrom')?.value||'',to=$('mutationDateTo')?.value||'',q=($('mutationSearch')?.value||'').toLowerCase().trim();
   return syncMutationRegister().filter(x=>{
@@ -5658,7 +5667,7 @@ function filteredMutations(){
   }).sort((a,b)=>mutationDateValue(b).localeCompare(mutationDateValue(a))||String(b.at).localeCompare(String(a.at)));
 }
 
-function monthKeyNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function monthKeyNow(){const d=wibNow();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function monthLabel(m){if(!m)return '';const d=new Date(m+'-01T00:00:00');return d.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
 function latestMutationPerson(x){
   const name=String(x?.name||'').trim().toLowerCase();
@@ -5718,7 +5727,7 @@ function populationSnapshotCounts(cutoff){
   // lalu mundurkan semua mutasi setelah cutoff. Dengan begitu penambahan dan
   // penghapusan/perpindahan pada bulan berjalan benar-benar memengaruhi angka.
   const state=new Map(data.filter(r=>r&&r.NIK&&isActiveResident(r)).map(r=>[String(r.NIK),r]));
-  const hist=getHistory().filter(h=>h&&h.at&&String(h.at).slice(0,10)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  const hist=getHistory().filter(h=>h&&h.at&&wibISODate(h.at)>cutoff).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
   for(const h of hist){
     const nik=String(h.NIK||'').trim(); if(!nik)continue;
     const add=h.type==='Data Ditambahkan'&&h.meta?.kategori==='PENAMBAHAN';
@@ -5793,7 +5802,7 @@ function fillMutationYearOptions(){
   const current=el.value;
   const years=new Set();
   syncMutationRegister().forEach(x=>{const d=mutationDateValue(x);if(/^\d{4}-\d{2}-\d{2}$/.test(d))years.add(d.slice(0,4));});
-  years.add(String(new Date().getFullYear()));
+  years.add(String(wibNow().getFullYear()));
   el.innerHTML='<option value="">-- Pilih Tahun --</option>'+[...years].sort((a,b)=>b.localeCompare(a)).map(y=>`<option value="${y}">${y}</option>`).join('');
   if([...years].includes(current))el.value=current;
 }
@@ -6016,7 +6025,7 @@ function renderHistory(){
   $('historyBody').innerHTML=rows.length?sortedGroups.map(([actorId,g])=>{
     const items=g.rows.map(x=>{
       const d=new Date(x.at);
-      const dateLabel=isNaN(d.getTime())?'Tanggal tidak diketahui':d.toLocaleString('id-ID');
+      const dateLabel=isNaN(d.getTime())?'Tanggal tidak diketahui':wibStr(d);
       const gid=x.type==='Penduduk Pindah'?x.meta?.groupId:'';
       let action='';
       if(gid&&!seenMove.has(gid)){seenMove.add(gid);action=`<button type="button" class="btn btn-sm" data-print-move-group="${esc(gid)}">🖨 Cetak Surat Pindah</button>`;}
@@ -6065,7 +6074,7 @@ function renderReport(){
   const filters=activeFilterLabels();
   const filterHtml=filters.length?`<div class="report-box" style="margin-bottom:12px"><h4>Filter yang digunakan</h4>${filters.map(x=>`<div><span>${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('')}</div>`:`<div class="hint" style="margin-bottom:12px">Rekap menampilkan seluruh data penduduk karena tidak ada filter aktif.</div>`;
   const kkMap={};rows.forEach(r=>{const kk=r['NO KK']||'(kosong)';kkMap[kk]=(kkMap[kk]||0)+1});
-  const now=new Date().toLocaleString('id-ID');
+  const now=wibStr(new Date());
   const ageBox=`<div class="report-box"><h4>Kelompok Umur</h4>${ageGroups.map(g=>`<div><span>${esc(g.label)}</span><b>${g.total}</b></div>`).join('')}</div>`;
   $('reportBody').innerHTML=`<div style="text-align:center;margin-bottom:12px"><div style="font-size:18px;font-weight:800">LAPORAN KEPENDUDUKAN DESA</div><div class="hint">Dibuat: ${esc(now)}</div></div>${filterHtml}<div class="summary"><div class="stat">Jumlah Penduduk<b>${total}</b></div><div class="stat">Laki-laki<b>${laki}</b></div><div class="stat">Perempuan<b>${perempuan}</b></div><div class="stat">Jumlah KK<b>${Object.keys(kkMap).length}</b></div></div><div class="report-grid">${ageBox}${box('RW',countRWRows(rows))}${box('Agama',countRows(rows,'AGAMA'))}${box('Pendidikan',countRows(rows,'PENDIDIKAN'))}${box('Pekerjaan',countRows(rows,'PEKERJAAN'))}${box('Status Perkawinan',countRows(rows,'STATUS'))}</div>`;
 }
@@ -6109,7 +6118,7 @@ function renderBiodata(r){
   const tglLahir=fmtDate(r.TGL_LHR)||'-';
   const tglNikah=fmtDate(r.TGL_NIKAH)||'-';
   const tglCerai=fmtDate(r.TGL_CERAI)||'-';
-  const now=new Date();
+  const now=wibNow();
   const tanggalCetak=`${now.getDate()} - ${now.getMonth()+1} - ${now.getFullYear()}`;
   $('biodataPreview').innerHTML=`<div class="biodata-paper">
     ${logo}
@@ -6329,8 +6338,8 @@ function formatLastLogin(v){
   const d=new Date(v);if(isNaN(d))return `<div class="last-login never"><span class="dot"></span>Terakhir login: -</div>`;
   const diff=Date.now()-d.getTime(),min=Math.floor(diff/60000),hr=Math.floor(min/60),day=Math.floor(hr/24);
   let rel=min<1?'baru saja':min<60?min+' menit lalu':hr<24?hr+' jam lalu':day<30?day+' hari lalu':day<365?Math.floor(day/30)+' bulan lalu':Math.floor(day/365)+' tahun lalu';
-  const abs=d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  return `<div class="last-login ${hr<24?'recent':''}" title="${esc(d.toLocaleString('id-ID'))}"><span class="dot"></span>Terakhir login: ${esc(abs)} (${rel})</div>`;
+  const abs=d.toLocaleString('id-ID',{timeZone:WIB_TZ,day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' WIB';
+  return `<div class="last-login ${hr<24?'recent':''}" title="${esc(d.toLocaleString('id-ID',{timeZone:'Asia/Jakarta',hour12:false})+' WIB')}"><span class="dot"></span>Terakhir login: ${esc(abs)} (${rel})</div>`;
 }
 async function loadOperatorList(){
   if(!isAdmin())return;
@@ -6341,7 +6350,7 @@ async function loadOperatorList(){
     window.__lastLoginMissing=true;
   }else window.__lastLoginMissing=false;
   if(error){$('operatorList').innerHTML='<div class="hint" style="padding:10px">Gagal memuat daftar akun: '+esc(error.message)+'</div>';return}
-  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div style="display:flex;align-items:center;gap:9px">${x.avatar_url?`<img src="${esc(x.avatar_url)}" class="account-avatar" alt="">`:''}<div><b>${esc(x.full_name||x.email||'-')}</b><small>${esc(x.email||'')} • Operator • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID'):''}</small></small>${formatLastLogin(x.last_login_at)}</div></div><div class="operator-actions"><span class="role-badge">operator</span><button type="button" class="btn-mini edit" data-edit-operator="${esc(x.id)}">✏️ Edit</button><button type="button" class="btn-mini delete" data-delete-operator="${esc(x.id)}" data-email="${esc(x.email||'')}">🗑 Hapus</button></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun operator.</div>';
+  $('operatorList').innerHTML=(data||[]).map(x=>`<div class="operator-row"><div style="display:flex;align-items:center;gap:9px">${x.avatar_url?`<img src="${esc(x.avatar_url)}" class="account-avatar" alt="">`:''}<div><b>${esc(x.full_name||x.email||'-')}</b><small>${esc(x.email||'')} • Operator • ${x.created_at?new Date(x.created_at).toLocaleString('id-ID',{timeZone:'Asia/Jakarta',hour12:false})+' WIB':''}</small>${formatLastLogin(x.last_login_at)}</div></div><div class="operator-actions"><span class="role-badge">operator</span><button type="button" class="btn-mini edit" data-edit-operator="${esc(x.id)}">✏️ Edit</button><button type="button" class="btn-mini delete" data-delete-operator="${esc(x.id)}" data-email="${esc(x.email||'')}">🗑 Hapus</button></div></div>`).join('')||'<div class="hint" style="padding:10px">Belum ada akun operator.</div>';
 }
 function openOperatorEdit(profile){
   if(!hasPerm('account'))return;
