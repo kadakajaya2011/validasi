@@ -3105,6 +3105,11 @@ function deathDateBoxes(v){
   return '<span class="dateboxes"><span class="db">'+esc(m[3][0])+'</span><span class="db">'+esc(m[3][1])+'</span> <span>Tgl:</span> <span class="db">'+esc(m[2][0])+'</span><span class="db">'+esc(m[2][1])+'</span> <span>Bln:</span> <span class="db year">'+esc(m[1])+'</span> <span>Thn:</span></span>';
 }
 function deathCheck(label,checked){return '<span class="checkrow"><span class="sq">'+(checked?'V':'')+'</span><span>'+esc(label)+'</span></span>'}
+function deathAppDateBoxes(v){
+  if(!v)return '<span class="dateboxes"><span class="db"></span><span class="db"></span> <span>Tgl:</span> <span class="db"></span><span class="db"></span> <span>Bln:</span> <span class="db year"></span> <span>Thn:</span></span>';
+  const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m)return esc(v);
+  return '<span class="dateboxes"><span class="db">'+esc(m[3][0])+'</span><span class="db">'+esc(m[3][1])+'</span> <span>Tgl:</span> <span class="db">'+esc(m[2][0])+'</span><span class="db">'+esc(m[2][1])+'</span> <span>Bln:</span> <span class="db year">'+esc(m[1])+'</span> <span>Thn:</span></span>';
+}
 function deathFindPerson(nik){return data.find(x=>String(x.NIK||'').trim()===String(nik||'').trim())||null}
 function deathPersonData(slot){const nik=String($(slot+'Nik')?.value||'').trim();const r=deathFindPerson(nik);return {nik,name:String($(slot+'Name')?.value||r?.['NAMA LENGKAP']||'').trim(),kk:String($(slot+'KK')?.value||r?.['NO KK']||'').trim(),nation:String($(slot+'Nation')?.value||r?.KEWARGANEGARAAN||'WNI').trim(),record:r}}
 function findDeathPerson(target){
