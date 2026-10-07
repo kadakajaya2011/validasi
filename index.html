@@ -845,10 +845,10 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 <header class="app-header"><div class="head-row"><div class="brand-title"><img class="app-title-logo" id="appTitleLogo" alt="Logo Desa"><div class="brand-text"><div class="title" id="appTitle">Data Kependudukan Desa</div><div class="subtitle">Database penduduk desa • satu sumber data untuk Big Aplikasi Desa</div></div></div><div class="actions"><div class="svc-ctl"><button class="btn btn-ghost" id="btnDisplayDashboard" title="Tampilkan Dashboard Kependudukan di layar pelayanan">📊 Dashboard</button><button class="btn btn-ghost" id="btnDisplayQueue" title="Kembali ke tampilan antrian">⏹ Antrian</button><button class="btn btn-ghost" id="btnCopyDisplayLink" title="Salin tautan layar pelayanan untuk dibuka di perangkat lain">🔗</button><label class="svc-auto" title="Tampilkan dokumen otomatis di layar 2 saat tombol cetak ditekan"><input type="checkbox" id="chkAutoDisplay"> Auto</label><label class="svc-auto" title="Layar 2 kembali ke antrian otomatis setelah jendela cetak ditutup"><input type="checkbox" id="chkAutoHide"> Tutup otomatis</label></div><div class="account-chip" id="accountChip">-</div><div class="account-menu"><button class="btn btn-ghost" id="btnAccount">👤 Akun</button><div class="account-panel" id="accountPanel"><div class="account-meta"><div class="account-profile-line"><img id="accountPanelAvatar" class="account-avatar" alt="Foto profil" src=""><div><b id="accountPanelName">-</b><span id="accountPanelEmail">-</span><span id="accountPanelRole">-</span></div></div></div><button class="menu-item" id="btnAccountSettings">👤 Kelola Akun</button><button class="menu-item" id="btnLogout">🚪 Keluar</button></div></div><div class="menu-wrap" id="menuWrap"><button class="btn btn-ghost" id="btnMenu" aria-expanded="false">☰ Menu</button><div class="menu-panel" id="menuPanel">
 <button class="menu-item menu-dashboard-item" id="btnDashboard">🏠 Dashboard</button>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">👥 <span style="flex:1">PENDAFTARAN PENDUDUK</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnInactivePopulation">♻️ Penduduk Tidak Aktif</button><button class="menu-item" id="btnFamily">👨‍👩‍👧 Data Keluarga</button></div></div>
-<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📜 <span style="flex:1">PENCATATAN SIPIL</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnBirthApplicationMenu">👶 Permohonan Akta Kelahiran</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button></div></div>
+<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📜 <span style="flex:1">PENCATATAN SIPIL</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnBirthApplicationMenu">👶 Permohonan Akta Kelahiran</button><button class="menu-item" id="btnDeathApplication">🕊️ Permohonan Akta Kematian</button><button class="menu-item" id="btnBurialBook">⚰️ Buku Pemakaman</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">🔍 <span style="flex:1">VALIDASI DATA</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnSyncFamilyAddress">🔄 Sinkronkan Alamat KK</button><button class="menu-item" id="btnValidationData">🔍 Validasi Data Kependudukan</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📝 <span style="flex:1">SURAT DESA</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnLetters">📝 Register Surat Desa</button></div></div>
-<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📊 <span style="flex:1">LAPORAN</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnReport">📊 Laporan Kependudukan</button><button class="menu-item" id="btnAgeReport">👥 Rekap Rentang Umur</button><button class="menu-item" id="btnDp4">🗳️ Rekap DP4</button><button class="menu-item" id="btnMutationRegister">📋 Register Mutasi Penduduk</button><button class="menu-item" id="btnBurialBook">⚰️ Buku Pemakaman</button><button class="menu-item" id="btnMoveRegister">🚚 Daftar Perpindahan</button></div></div>
+<div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">📊 <span style="flex:1">LAPORAN</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnReport">📊 Laporan Kependudukan</button><button class="menu-item" id="btnAgeReport">👥 Rekap Rentang Umur</button><button class="menu-item" id="btnDp4">🗳️ Rekap DP4</button><button class="menu-item" id="btnMutationRegister">📋 Register Mutasi Penduduk</button><button class="menu-item" id="btnMoveRegister">🚚 Daftar Perpindahan</button></div></div>
 <div class="menu-group"><button class="menu-group-title" type="button" aria-expanded="false">⚙️ <span style="flex:1">PENGATURAN</span><span class="menu-chevron">›</span></button><div class="menu-group-items"><button class="menu-item" id="btnSettings">⚙️ Pengaturan Desa</button><button class="menu-item" id="btnUserAccessMenu">👥 Pengguna &amp; Hak Akses</button><button class="menu-item" id="btnBackup">🗄️ Backup &amp; Restore</button><button class="menu-item" id="btnHistory">📜 Riwayat Perubahan</button><button class="menu-item" id="btnImport">📥 Impor Data</button><button class="menu-item" id="btnExport">📤 Ekspor Excel</button></div></div>
 </div></div><button class="btn btn-primary" id="btnAdd">＋ Tambah Data</button></div></div></header>
 <main class="page" id="mainPopulationPage"><section class="toolbar"><div class="filters"><input class="input" id="search" placeholder="Cari NIK, nama, KK, alamat..."><select class="select" id="fRT"><option value="">RT: Semua</option></select><select class="select" id="fRW"><option value="">RW: Semua</option></select><select class="select" id="fJK"><option value="">JK: Semua</option></select><select class="select" id="fSH"><option value="">Hubungan: Semua</option></select><select class="select" id="fStatus"><option value="">Status: Semua</option></select><select class="select" id="fAgama"><option value="">Agama: Semua</option></select><select class="select" id="fPendidikan"><option value="">Pendidikan: Semua</option></select><select class="select" id="fPekerjaan"><option value="">Pekerjaan: Semua</option></select></div></section><section class="table-card"><div class="table-scroll"><table id="populationTable" class="population-table"><thead><tr>
@@ -1192,39 +1192,49 @@ body{font-family:Arial,Helvetica,sans-serif!important}
     <div class="modal-foot"><button class="btn" data-close="mutationRegisterOverlay">Tutup</button></div>
   </div>
 </div>
-<div class="overlay" id="burialBookOverlay">
+<div class="overlay" id="burialOverlay">
   <div class="modal" style="width:min(1250px,98vw)">
-    <div class="modal-head"><div class="modal-title">Buku Pemakaman</div><button class="close" data-close="burialBookOverlay">✕</button></div>
+    <div class="modal-head"><div class="modal-title">Buku Pemakaman — Lampiran I &amp; II Surat Dirjen Dukcapil No. 472.12/11406/Dukcapil</div><button class="close" data-close="burialOverlay">✕</button></div>
     <div class="modal-body">
-      <div class="hint" style="margin-bottom:8px">Data diambil dari Register Mutasi (jenis Mati). Filter memakai <b>tanggal pelaporan</b>, yaitu tanggal kematian dicatat/diproses di aplikasi.</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr) auto;gap:9px;align-items:end;margin-bottom:10px">
-        <label><b>Dari Tgl Pelaporan</b><input class="input" id="burialFrom" type="date"></label>
-        <label><b>Sampai Tgl Pelaporan</b><input class="input" id="burialTo" type="date"></label>
-        <label><b>TPU</b><select class="select" id="burialTpuFilter"><option value="">Semua TPU</option></select></label>
-        <label><b>Cari NIK / Nama</b><input class="input" id="burialSearch" placeholder="Ketik pencarian"></label>
-        <div style="display:flex;gap:8px"><button class="btn" id="btnBurialRefresh">↻ Segarkan</button><button class="btn" id="btnBurialImport">⤓ Impor Buku Lama</button><button class="btn btn-dark" id="btnBurialPrint">🖨 Cetak</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;margin-bottom:10px">
+        <label><b>Nama Tempat Pemakaman</b><input class="input" id="bkCfgNama" placeholder="Contoh: TPU Kadakajaya"></label>
+        <label><b>Alamat Tempat Pemakaman</b><input class="input" id="bkCfgAlamat" placeholder="Dusun / RT / RW"></label>
+        <label><b>Petugas Pemakaman</b><input class="input" id="bkCfgPemakaman" placeholder="Nama petugas pemakaman"></label>
+        <label><b>Petugas Registrasi</b><input class="input" id="bkCfgRegistrasi" placeholder="Nama petugas registrasi"></label>
       </div>
-      <div class="table-scroll" style="max-height:56vh"><table><thead><tr><th>No</th><th>NIK</th><th>Nama Lengkap</th><th>Tempat, Tgl Meninggal</th><th>Tanggal Pemakaman</th><th>Nama Pelapor</th><th>NIK Pelapor</th><th>Keluarga yg Dapat Dihubungi</th><th>Ket</th><th>Tgl Pelaporan</th><th>Aksi</th></tr></thead><tbody id="burialBody"></tbody></table></div>
-      <div class="footer-bar"><span id="burialInfo"></span></div>
-    </div>
-    <div class="modal-foot"><button class="btn" data-close="burialBookOverlay">Tutup</button></div>
-  </div>
-</div>
-<div class="overlay" id="burialEditOverlay">
-  <div class="modal" style="width:min(560px,96vw)">
-    <div class="modal-head"><div class="modal-title">Ubah Data Pemakaman</div><button class="close" data-close="burialEditOverlay">✕</button></div>
-    <div class="modal-body">
-      <div id="burialEditWho" style="font-weight:800;margin-bottom:9px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-        <label><b>Tanggal Pemakaman</b><input class="input" id="burialEditDate" type="date"></label>
-        <label><b>Tempat Pemakaman (TPU)</b><select class="select" id="burialEditTpu"><option value="">-- pilih --</option></select></label>
-        <label><b>Nama Pelapor</b><input class="input" id="burialEditReporter"></label>
-        <label><b>NIK Pelapor</b><input class="input" id="burialEditReporterNik" inputmode="numeric"></label>
-        <label style="grid-column:1/3"><b>Keluarga yang Dapat Dihubungi (Nama &amp; No HP)</b><input class="input" id="burialEditContact"></label>
-        <label style="grid-column:1/3"><b>Keterangan Tambahan</b><input class="input" id="burialEditNote"></label>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:9px;margin-bottom:10px">
+        <label><b>Bulan (berdasarkan tanggal meninggal)</b><input class="input" id="bkMonth" type="month"></label>
+        <label><b>Cari Nama / NIK / Pelapor</b><input class="input" id="bkSearch" placeholder="Ketik pencarian"></label>
       </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn" id="btnBkImport">⬇ Ambil dari Penduduk Meninggal</button>
+        <button class="btn btn-primary" id="btnBkAdd">＋ Tambah Manual</button>
+        <button class="btn btn-dark" id="btnBkPrintPokok">🖨 Cetak Buku Pokok Pemakaman (Lampiran I)</button>
+        <button class="btn btn-dark" id="btnBkPrintLapor">🖨 Cetak Pelaporan Kematian (Lampiran II)</button>
+      </div>
+      <div id="bkFormBox" style="display:none;margin-bottom:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff">
+        <div style="font-weight:800;margin-bottom:8px" id="bkFormTitle">Tambah Data Pemakaman</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+          <label><b>NIK</b><div style="display:flex;gap:6px"><input class="input" id="bkNik" inputmode="numeric" maxlength="16"><button class="btn" type="button" id="btnBkFind">Cari</button></div></label>
+          <label><b>Nama Lengkap</b><input class="input" id="bkNama"></label>
+          <label><b>Tempat Lahir</b><input class="input" id="bkTempatLahir"></label>
+          <label><b>Tanggal Lahir</b><input class="input" id="bkTglLahir" type="date"></label>
+          <label><b>Tempat Meninggal</b><input class="input" id="bkTempatMeninggal" placeholder="Contoh: Rumah / RS / Kadakajaya"></label>
+          <label><b>Tanggal Meninggal</b><input class="input" id="bkTglMeninggal" type="date"></label>
+          <label><b>Tanggal Pemakaman</b><input class="input" id="bkTglMakam" type="date"></label>
+          <label><b>Nama Pelapor</b><input class="input" id="bkPelapor"></label>
+          <label><b>NIK Pelapor</b><input class="input" id="bkNikPelapor" inputmode="numeric" maxlength="16"></label>
+          <label><b>Nama Keluarga yang Dapat Dihubungi</b><input class="input" id="bkKeluarga"></label>
+          <label><b>No HP Keluarga</b><input class="input" id="bkHp" inputmode="tel"></label>
+          <label><b>Keterangan</b><input class="input" id="bkKet" placeholder="Opsional (blok/nomor makam, dll.)"></label>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn" id="btnBkCancel">Batal</button><button class="btn btn-primary" id="btnBkSave">Simpan</button></div>
+      </div>
+      <div class="table-scroll" style="max-height:48vh"><table><thead><tr><th>No</th><th>NIK</th><th>Nama Lengkap</th><th>Tempat, Tgl Lahir</th><th>Tempat, Tgl Meninggal</th><th>Tgl Pemakaman</th><th>Nama Pelapor</th><th>NIK Pelapor</th><th>Keluarga / No HP</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="bkBody"></tbody></table></div>
+      <div class="footer-bar"><span id="bkInfo"></span></div>
+      <div class="hint" style="margin-top:8px">Data kematian dapat diambil otomatis dari riwayat <b>Penduduk Meninggal</b> (menu Hapus Data → Hapus Meninggal), lalu dilengkapi data pemakaman dan pelapor. Data buku ini tersimpan di peramban (browser) perangkat ini.</div>
     </div>
-    <div class="modal-foot"><button class="btn" data-close="burialEditOverlay">Batal</button><button class="btn btn-primary" id="btnBurialEditSave">Simpan</button></div>
+    <div class="modal-foot"><button class="btn" data-close="burialOverlay">Tutup</button></div>
   </div>
 </div>
 <div class="overlay" id="moveRegisterOverlay">
@@ -1264,7 +1274,7 @@ body{font-family:Arial,Helvetica,sans-serif!important}
 <div class="overlay" id="invalidKKOverlay"><div class="modal" style="width:min(980px,97vw)"><div class="modal-head"><div class="modal-title">⚠️ KK Belum Valid</div><button class="close" data-close="invalidKKOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Daftar ini berisi No. KK yang belum dapat disinkronkan karena belum memiliki tepat 1 Kepala Keluarga. Gunakan pencarian untuk menemukan KK tertentu.</div><input class="input" id="invalidKKSearch" placeholder="Cari No. KK, nama, atau keterangan..." style="margin-bottom:10px"><div id="invalidKKBody"></div></div><div class="modal-foot"><button class="btn" data-close="invalidKKOverlay">Tutup</button></div></div></div><div class="overlay" id="reportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Data Kependudukan</div><button class="close" data-close="reportOverlay">✕</button></div><div class="modal-print-toolbar"><button class="btn" id="btnPrintReport">🖨 Cetak Rekap</button></div><div class="modal-body" id="reportBody"></div><div class="modal-foot"><button class="btn" data-close="reportOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="ageReportOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Rekap Berdasarkan Rentang Umur</div><button class="close" data-close="ageReportOverlay">✕</button></div><div class="modal-print-toolbar"><button class="btn" id="btnPrintAgeReport">🖨 Cetak Rekap</button></div><div class="modal-body" id="ageReportBody"></div><div class="modal-foot"><button class="btn" data-close="ageReportOverlay">Tutup</button></div></div></div>
 <div class="overlay" id="dp4Overlay"><div class="modal" style="width:min(1100px,97vw)"><div class="modal-head"><div class="modal-title">Rekap DP4 — Data Penduduk Potensial Pemilih</div><button class="close" data-close="dp4Overlay">✕</button></div><div class="modal-foot" style="justify-content:flex-end;border-top:0;border-bottom:1px solid #e5e7eb"><button class="btn" id="btnExportDp4">📤 Ekspor XLSX</button><button class="btn" id="btnExportDp4Pdf">📄 Ekspor PDF Daftar Pemilih</button><button class="btn btn-dark" id="btnPrintDp4Rekap">🖨 Cetak Rekap Pemilih</button><button class="btn" data-close="dp4Overlay">Tutup</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><label><b>Tanggal pemungutan suara</b><input class="input" type="date" id="dp4ElectionDate"></label><div class="hint" style="padding:8px 0">Kriteria umur dihitung pada tanggal pemungutan suara. Untuk laporan DP4 ini, <b>hanya penduduk yang sudah genap 17 tahun atau lebih pada tanggal pemungutan suara</b> yang ditampilkan. Penduduk yang masih di bawah 17 tahun dikecualikan. Kewarganegaraan, hak politik, domisili/KTP-el dan status aktif TNI/Polri perlu verifikasi bila belum tersedia pada database master.</div></div><div id="dp4Body"></div></div></div></div><div class="overlay" id="editOverlay"><div class="modal"><div class="modal-head"><div class="modal-title">Edit Data Penduduk</div><button class="close" data-close="editOverlay">✕</button></div><div class="modal-body" id="editFormBody"></div><div class="hint" id="editLastChangedInfo" style="padding:0 18px 12px;border-top:1px solid var(--line);margin-top:0;padding-top:10px"></div><div class="modal-foot"><button class="btn" data-close="editOverlay">Batal</button><button class="btn btn-dark" id="btnSaveEdit">Simpan Perubahan</button></div></div></div>
-<div class="overlay" id="deleteOverlay"><div class="modal" style="width:min(900px,96vw)"><div class="modal-head"><div class="modal-title">Hapus Data Penduduk</div><button class="close" data-close="deleteOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Pilih kriteria penghapusan. Data yang dikeluarkan dari database aktif tetap dicatat lengkap dalam Riwayat Perubahan. Khusus <b>Hapus KK</b>, seluruh anggota pada No KK yang sama ikut dikeluarkan.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Nama</b><input class="input" id="delName" readonly></label><label><b>NIK</b><input class="input" id="delNik" readonly></label><label><b>No KK</b><input class="input" id="delKK" readonly></label><label><b>Kriteria Penghapusan</b><select class="select" id="delReason"><option value="Hapus KK">Hapus KK</option><option value="Hapus Double">Hapus Double</option><option value="Hapus Meninggal">Hapus Meninggal</option><option value="Hapus Pindah">Hapus Pindah</option><option value="Hapus Tidak Dikenal">Hapus Tidak Dikenal</option></select></label></div><div id="doubleDeleteForm" style="display:none;margin-top:12px"><b>Kriteria Hapus Double</b><div class="hint" style="margin:6px 0">Pilih lingkup penghapusan. Semua data tetap dicatat di Riwayat Perubahan.</div><select class="select" id="doubleScope"><option value="NIK">Hanya NIK yang dipilih</option><option value="KK">Semua anggota keluarga</option></select><div id="doubleMembers" style="margin-top:10px"></div></div><div id="deleteStandardInfo" class="hint" style="margin-top:10px"></div><div id="deleteHeadReplacementWrap" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Pilih Kepala Keluarga Pengganti</b><select class="select" id="deleteHeadReplacement" style="margin-top:6px"><option value="">-- Pilih Kepala Keluarga pengganti --</option></select></label><div class="hint" style="margin-top:6px">Pilih anggota keluarga yang akan menjadi Kepala Keluarga setelah data ini dikeluarkan.</div></div><div id="moveDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Perpindahan — mengacu contoh formulir F-1.36 Dukcapil</div><div class="hint" style="margin-bottom:10px">Data asal penduduk diambil dari database. Isi klasifikasi, alasan, jenis kepindahan, status KK dan alamat tujuan. Anggota yang dipilih akan dicatat sebagai riwayat pindah sebelum dikeluarkan dari data aktif.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Klasifikasi Kepindahan</b><select class="select" id="moveClass"><option value="">-- pilih --</option><option>Dalam satu desa/kelurahan</option><option>Antar desa/kelurahan dalam satu kecamatan</option><option>Antar kecamatan dalam satu kabupaten/kota</option><option>Antar kabupaten/kota dalam satu provinsi</option><option>Antar provinsi</option></select></label><label><b>Alasan Pindah</b><select class="select" id="moveReason"><option value="">-- pilih --</option><option>Pekerjaan</option><option>Pendidikan</option><option>Keamanan</option><option>Kesehatan</option><option>Perumahan</option><option>Keluarga</option><option>Lainnya</option></select></label><label id="moveOtherWrap" style="display:none"><b>Alasan Lainnya</b><input class="input" id="moveOther" placeholder="Tuliskan alasan"></label><label><b>Jenis Kepindahan</b><select class="select" id="moveType"><option value="">-- pilih --</option><option>Kepala Keluarga</option><option>Kepala Keluarga dan Sebagian Anggota Keluarga</option><option>Kepala Keluarga dan Seluruh Anggota Keluarga</option><option>Anggota Keluarga</option></select></label><label><b>Status KK bagi yang tidak pindah</b><select class="select" id="moveStayStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option><option>Tidak Pindah</option></select></label><label><b>Status KK bagi yang pindah</b><select class="select" id="moveGoStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option></select></label><label><b>Rencana/Tanggal Pindah</b><input class="input" id="moveDate" type="date"></label><label><b>Nomor SKP</b><input class="input" id="moveSkp" placeholder="Nomor Surat Keterangan Pindah (SKP)"></label><label><b>Alamat Tujuan (Dusun / Kampung / Jalan)</b><input class="input" id="moveAddress" placeholder="Contoh: KP. BABAKAN CIMARAGAS"></label><label><b>RT Tujuan</b><input class="input" id="moveRT" placeholder="RT"></label><label><b>RW Tujuan</b><input class="input" id="moveRW" placeholder="RW"></label><label><b>Kode Pos Tujuan</b><input class="input" id="movePostal" placeholder="Kode Pos"></label><label><b>Desa/Kelurahan Tujuan</b><input class="input" id="moveVillage" placeholder="Desa/Kelurahan"></label><label><b>Kecamatan Tujuan</b><input class="input" id="moveDistrict" placeholder="Kecamatan"></label><label><b>Kabupaten/Kota Tujuan</b><input class="input" id="moveRegency" placeholder="Kabupaten/Kota"></label><label><b>Provinsi Tujuan</b><input class="input" id="moveProvince" placeholder="Provinsi"></label></div><div style="margin-top:12px"><b>Daftar Anggota Keluarga yang Pindah</b><div id="moveMembers" style="margin-top:7px"></div></div></div></div><div id="deathDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Kematian — pencatatan kematian</div><div class="hint" style="margin-bottom:10px">Data penduduk diambil dari database. Lengkapi data kematian sebelum penduduk dikeluarkan dari data aktif. Seluruh informasi pencatatan tetap disimpan di Riwayat Perubahan untuk kebutuhan Register Kematian Desa.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Tanggal Kematian</b><input class="input" id="deathDate" type="date"></label><label><b>Jam Kematian</b><input class="input" id="deathTime" type="time"></label><label><b>Tempat Kematian</b><select class="select" id="deathPlaceType"><option value="">-- pilih --</option><option>Rumah Sakit</option><option>Puskesmas</option><option>Rumah</option><option>Tempat Lainnya</option></select></label><label><b>Penyebab Kematian</b><select class="select" id="deathCause"><option value="">-- pilih --</option><option>Sakit/Wajar</option><option>Kecelakaan</option><option>Bencana</option><option>Kriminalitas</option><option>Belum Diketahui</option><option>Lainnya</option></select></label><label id="deathCauseOtherWrap" style="display:none"><b>Penyebab Lainnya</b><input class="input" id="deathCauseOther" placeholder="Tuliskan penyebab"></label><label><b>Yang Menerangkan Kematian</b><select class="select" id="deathReporterType"><option value="">-- pilih --</option><option>Dokter</option><option>Tenaga Kesehatan</option><option>Kepala Desa/Lurah</option><option>Keluarga</option><option>Lainnya</option></select></label><label><b>Hubungan dengan Yang Meninggal</b><input class="input" id="deathReporterRelation" placeholder="Hubungan keluarga/pelapor"></label><label><b>Nomor Surat/Keterangan Kematian</b><input class="input" id="deathDocNo" placeholder="Nomor surat bila ada"></label><label><b>Tanggal Surat/Keterangan</b><input class="input" id="deathDocDate" type="date"></label><label><b>Keterangan</b><input class="input" id="deathNote" placeholder="Keterangan tambahan"></label><label><b>Tanggal Pemakaman</b><input class="input" id="deathBurialDate" type="date"></label><label><b>Tempat Pemakaman (TPU)</b><select class="select" id="deathBurialTpu"><option value="">-- pilih --</option></select></label><label><b>Nama Pelapor Pemakaman</b><input class="input" id="deathBurialReporter" placeholder="Nama pelapor"></label><label><b>NIK Pelapor</b><input class="input" id="deathBurialReporterNik" placeholder="NIK pelapor" inputmode="numeric"></label><label><b>Keluarga yang Dapat Dihubungi (Nama &amp; No HP)</b><input class="input" id="deathBurialContact" placeholder="Nama dan nomor HP"></label></div></div><div class="modal-foot"><button class="btn" data-close="deleteOverlay">Batal</button><button class="btn btn-danger" id="btnConfirmDelete">Hapus Data</button></div></div></div>
+<div class="overlay" id="deleteOverlay"><div class="modal" style="width:min(900px,96vw)"><div class="modal-head"><div class="modal-title">Hapus Data Penduduk</div><button class="close" data-close="deleteOverlay">✕</button></div><div class="modal-body"><div class="hint" style="margin-bottom:10px">Pilih kriteria penghapusan. Data yang dikeluarkan dari database aktif tetap dicatat lengkap dalam Riwayat Perubahan. Khusus <b>Hapus KK</b>, seluruh anggota pada No KK yang sama ikut dikeluarkan.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Nama</b><input class="input" id="delName" readonly></label><label><b>NIK</b><input class="input" id="delNik" readonly></label><label><b>No KK</b><input class="input" id="delKK" readonly></label><label><b>Kriteria Penghapusan</b><select class="select" id="delReason"><option value="Hapus KK">Hapus KK</option><option value="Hapus Double">Hapus Double</option><option value="Hapus Meninggal">Hapus Meninggal</option><option value="Hapus Pindah">Hapus Pindah</option><option value="Hapus Tidak Dikenal">Hapus Tidak Dikenal</option></select></label></div><div id="doubleDeleteForm" style="display:none;margin-top:12px"><b>Kriteria Hapus Double</b><div class="hint" style="margin:6px 0">Pilih lingkup penghapusan. Semua data tetap dicatat di Riwayat Perubahan.</div><select class="select" id="doubleScope"><option value="NIK">Hanya NIK yang dipilih</option><option value="KK">Semua anggota keluarga</option></select><div id="doubleMembers" style="margin-top:10px"></div></div><div id="deleteStandardInfo" class="hint" style="margin-top:10px"></div><div id="deleteHeadReplacementWrap" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff"><label><b>Pilih Kepala Keluarga Pengganti</b><select class="select" id="deleteHeadReplacement" style="margin-top:6px"><option value="">-- Pilih Kepala Keluarga pengganti --</option></select></label><div class="hint" style="margin-top:6px">Pilih anggota keluarga yang akan menjadi Kepala Keluarga setelah data ini dikeluarkan.</div></div><div id="moveDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Perpindahan — mengacu contoh formulir F-1.36 Dukcapil</div><div class="hint" style="margin-bottom:10px">Data asal penduduk diambil dari database. Isi klasifikasi, alasan, jenis kepindahan, status KK dan alamat tujuan. Anggota yang dipilih akan dicatat sebagai riwayat pindah sebelum dikeluarkan dari data aktif.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Klasifikasi Kepindahan</b><select class="select" id="moveClass"><option value="">-- pilih --</option><option>Dalam satu desa/kelurahan</option><option>Antar desa/kelurahan dalam satu kecamatan</option><option>Antar kecamatan dalam satu kabupaten/kota</option><option>Antar kabupaten/kota dalam satu provinsi</option><option>Antar provinsi</option></select></label><label><b>Alasan Pindah</b><select class="select" id="moveReason"><option value="">-- pilih --</option><option>Pekerjaan</option><option>Pendidikan</option><option>Keamanan</option><option>Kesehatan</option><option>Perumahan</option><option>Keluarga</option><option>Lainnya</option></select></label><label id="moveOtherWrap" style="display:none"><b>Alasan Lainnya</b><input class="input" id="moveOther" placeholder="Tuliskan alasan"></label><label><b>Jenis Kepindahan</b><select class="select" id="moveType"><option value="">-- pilih --</option><option>Kepala Keluarga</option><option>Kepala Keluarga dan Sebagian Anggota Keluarga</option><option>Kepala Keluarga dan Seluruh Anggota Keluarga</option><option>Anggota Keluarga</option></select></label><label><b>Status KK bagi yang tidak pindah</b><select class="select" id="moveStayStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option><option>Tidak Pindah</option></select></label><label><b>Status KK bagi yang pindah</b><select class="select" id="moveGoStatus"><option value="">-- pilih --</option><option>Numpang KK</option><option>Membuat KK Baru</option></select></label><label><b>Rencana/Tanggal Pindah</b><input class="input" id="moveDate" type="date"></label><label><b>Nomor SKP</b><input class="input" id="moveSkp" placeholder="Nomor Surat Keterangan Pindah (SKP)"></label><label><b>Alamat Tujuan (Dusun / Kampung / Jalan)</b><input class="input" id="moveAddress" placeholder="Contoh: KP. BABAKAN CIMARAGAS"></label><label><b>RT Tujuan</b><input class="input" id="moveRT" placeholder="RT"></label><label><b>RW Tujuan</b><input class="input" id="moveRW" placeholder="RW"></label><label><b>Kode Pos Tujuan</b><input class="input" id="movePostal" placeholder="Kode Pos"></label><label><b>Desa/Kelurahan Tujuan</b><input class="input" id="moveVillage" placeholder="Desa/Kelurahan"></label><label><b>Kecamatan Tujuan</b><input class="input" id="moveDistrict" placeholder="Kecamatan"></label><label><b>Kabupaten/Kota Tujuan</b><input class="input" id="moveRegency" placeholder="Kabupaten/Kota"></label><label><b>Provinsi Tujuan</b><input class="input" id="moveProvince" placeholder="Provinsi"></label></div><div style="margin-top:12px"><b>Daftar Anggota Keluarga yang Pindah</b><div id="moveMembers" style="margin-top:7px"></div></div></div></div><div id="deathDeleteForm" style="display:none;margin-top:12px"><div style="font-weight:800;font-size:15px;margin-bottom:8px">Data Kematian — pencatatan kematian</div><div class="hint" style="margin-bottom:10px">Data penduduk diambil dari database. Lengkapi data kematian sebelum penduduk dikeluarkan dari data aktif. Seluruh informasi pencatatan tetap disimpan di Riwayat Perubahan untuk kebutuhan Register Kematian Desa.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><label><b>Tanggal Kematian</b><input class="input" id="deathDate" type="date"></label><label><b>Jam Kematian</b><input class="input" id="deathTime" type="time"></label><label><b>Tempat Kematian</b><select class="select" id="deathPlaceType"><option value="">-- pilih --</option><option>Rumah Sakit</option><option>Puskesmas</option><option>Rumah</option><option>Tempat Lainnya</option></select></label><label><b>Penyebab Kematian</b><select class="select" id="deathCause"><option value="">-- pilih --</option><option>Sakit/Wajar</option><option>Kecelakaan</option><option>Bencana</option><option>Kriminalitas</option><option>Belum Diketahui</option><option>Lainnya</option></select></label><label id="deathCauseOtherWrap" style="display:none"><b>Penyebab Lainnya</b><input class="input" id="deathCauseOther" placeholder="Tuliskan penyebab"></label><label><b>Yang Menerangkan Kematian</b><select class="select" id="deathReporterType"><option value="">-- pilih --</option><option>Dokter</option><option>Tenaga Kesehatan</option><option>Kepala Desa/Lurah</option><option>Keluarga</option><option>Lainnya</option></select></label><label><b>Hubungan dengan Yang Meninggal</b><input class="input" id="deathReporterRelation" placeholder="Hubungan keluarga/pelapor"></label><label><b>Nomor Surat/Keterangan Kematian</b><input class="input" id="deathDocNo" placeholder="Nomor surat bila ada"></label><label><b>Tanggal Surat/Keterangan</b><input class="input" id="deathDocDate" type="date"></label><label><b>Keterangan</b><input class="input" id="deathNote" placeholder="Keterangan tambahan"></label></div></div><div class="modal-foot"><button class="btn" data-close="deleteOverlay">Batal</button><button class="btn btn-danger" id="btnConfirmDelete">Hapus Data</button></div></div></div>
 
 <div class="overlay" id="settingsOverlay">
   <div class="modal" style="width:min(820px,96vw)">
@@ -2550,7 +2560,7 @@ $('btnConfirmDelete').addEventListener('click',async()=>{
     if($('deathCause').value==='Lainnya'&&!$('deathCauseOther').value.trim()){toast('Penyebab lainnya wajib diisi');$('deathCauseOther').focus();return}
     const cause=$('deathCause').value==='Lainnya'?$('deathCauseOther').value.trim():$('deathCause').value;
     const detail='Tanggal kematian: '+$('deathDate').value+' | Jam: '+($('deathTime').value||'-')+' | Tempat: '+$('deathPlaceType').value+' | Penyebab: '+cause+' | Yang menerangkan: '+$('deathReporterType').value+' | Hubungan: '+($('deathReporterRelation').value.trim()||'-')+' | No. surat/keterangan: '+($('deathDocNo').value.trim()||'-')+' | Tgl surat: '+($('deathDocDate').value||'-')+' | Keterangan: '+($('deathNote').value.trim()||'-');
-    const meta={kategori:'KEMATIAN',pemakaman:getBurialFormData(),tanggal:$('deathDate').value,jam:$('deathTime').value,tempatJenis:$('deathPlaceType').value,tempat:'',penyebab:cause,yangMenerangkan:$('deathReporterType').value,hubungan:$('deathReporterRelation').value.trim(),nomorSurat:$('deathDocNo').value.trim(),tanggalSurat:$('deathDocDate').value,keterangan:$('deathNote').value.trim(),noKK:base['NO KK'],alamat:base['ALAMAT']||'',rt:base['RT']||'',rw:base['RW']||'',jk:base['JK']||'',tempatLahir:base['TMPT_LHR']||'',tanggalLahir:base['TGL_LHR']||'',namaAyah:base['NAMA_LGKP_AYAH']||'',namaIbu:base['NAMA_LGKP_IBU']||'',nikAyah:base['NIK_AYAH']||'',nikIbu:base['NIK_IBU']||''};
+    const meta={kategori:'KEMATIAN',tanggal:$('deathDate').value,jam:$('deathTime').value,tempatJenis:$('deathPlaceType').value,tempat:'',penyebab:cause,yangMenerangkan:$('deathReporterType').value,hubungan:$('deathReporterRelation').value.trim(),nomorSurat:$('deathDocNo').value.trim(),tanggalSurat:$('deathDocDate').value,keterangan:$('deathNote').value.trim(),noKK:base['NO KK'],alamat:base['ALAMAT']||'',rt:base['RT']||'',rw:base['RW']||'',jk:base['JK']||'',tempatLahir:base['TMPT_LHR']||'',tanggalLahir:base['TGL_LHR']||'',namaAyah:base['NAMA_LGKP_AYAH']||'',namaIbu:base['NAMA_LGKP_IBU']||'',nikAyah:base['NIK_AYAH']||'',nikIbu:base['NIK_IBU']||''};
     const removedNiks=new Set([base.NIK]),affectedKKs=[String(base['NO KK']||'').trim()].filter(Boolean);
     const prep=prepareHeadReplacementForRemoval(removedNiks,affectedKKs);if(!prep.ok){toast(prep.message);return}
     if(!confirm('Catat '+(base['NAMA LENGKAP']||'penduduk')+' sebagai meninggal dan keluarkan dari data aktif?'+(prep.replacements.size?' Kepala Keluarga pengganti akan ditetapkan otomatis sesuai pilihan.':'')))return;
@@ -6241,6 +6251,7 @@ const PERMISSION_DEFS={
   letters:'Register Surat Desa',
   birth_application:'Permohonan Akta Kelahiran',
   death_application:'Permohonan Akta Kematian',
+  burial_book:'Buku Pemakaman',
   mutation_register:'Register Mutasi Penduduk',
   move_register:'Daftar Perpindahan',
   inactive_population:'Penduduk Tidak Aktif',
@@ -6248,7 +6259,7 @@ const PERMISSION_DEFS={
   settings:'Pengaturan Desa',
   account:'Kelola Akun Operator'
 };
-const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','validation_data','sync_address','letters','birth_application','death_application','mutation_register','move_register','inactive_population','history'];
+const DEFAULT_OPERATOR_PERMS=['view_data','add_data','edit_data','dashboard','report','age_report','dp4','family','validation_data','sync_address','letters','birth_application','death_application','burial_book','mutation_register','move_register','inactive_population','history'];
 window.currentUser=null;window.currentProfile=null;
 function isAdmin(){return String(window.currentProfile?.role||'').trim().toLowerCase()==='admin'}
 function hasPerm(p){const v=window.currentProfile?.permissions?.[p];return isAdmin()||v===true||v===1||String(v).toLowerCase()==='true'}
@@ -6272,8 +6283,8 @@ function applyPermissions(){
     btnFamily:'family',
     btnLetters:'letters',
     btnDeathApplication:'death_application',
+    btnBurialBook:'burial_book',
     btnMutationRegister:'mutation_register',
-    btnBurialBook:'mutation_register',
     btnMoveRegister:'move_register',
     btnInactivePopulation:'inactive_population',
     btnHistory:'history',
@@ -6524,120 +6535,6 @@ function fitAllPreviewPapers(){document.querySelectorAll(PREVIEW_FIT_WRAP_SELECT
   });
   window.addEventListener('resize',fitAllPreviewPapers);
 })();
-/* ===== Buku Pemakaman (turunan Register Mutasi, jenis Mati) ===== */
-const BURIAL_TPU={
- 'TPU DUSUN CIJAMBU':{addr:'DUSUN CIJAMBU RT.03 RW.03 DESA KADAKAJAYA',pelapor:'DEDENG EFENDI',nik:'3211111708840009',kontak:'ADANG SUTISNA 085315056300'},
- 'TPU DUSUN PASIRLOA':{addr:'DUSUN PASIRLOA RT.01 RW.07 DESA KADAKAJAYA',pelapor:'ENGKOS KOSDI',nik:'3211111205690013',kontak:'ADANG SUTISNA 085315056300'}
-};
-const BURIAL_LEGACY_KEY='burial-legacy-v1';
-/* nik|nama|tempat|tgl meninggal = tgl pemakaman (dd-mm-yyyy) */
-const BURIAL_LEGACY_RAW={
- 'TPU DUSUN CIJAMBU':["3211113112670024|ROHMAT|RUMAH|05-03-2021","3211117112590042|ADE ENOS|RUMAH|15-08-2020","3211116404740008|ENE|RUMAH|04-03-2020","3211113112670024|ROHMAT|RUMAH|22-09-2019","3211110107630177|TARDI|RUMAH|29-10-2019","3211115205660010|WAMAH|RUMAH|07-07-2020","3211113112550025|ROSYADI|RUMAH|27-08-2021","3211117112500052|WARIAH|RUMAH|13-07-2021","3211114107440029|CACAH|RUMAH|26-10-2020","3211110506490004|AANG EMAN|RUMAH|10-08-2021","3211113112400027|ENCUH|RUMAH|30-08-2021","3211113112690031|ROHATA|RUMAH|26-05-2022","3211114107600155|ENTIN|RUMAH|22-06-2022","3211112601330002|AJU|RUMAH|20-10-2022","3211117112400051|IYUS|RUMAH|23-10-2022","3211117112600058|KUSMIATI|RUMAH|03-12-2020","3211114701680001|TITI|RUMAH|13-06-2022","3211111602920007|EDI HADIAN|RUMAH|23-04-2021","3211114107430206|ANASIH|RUMAH|15-07-2022","3211114107530216|ONA|RUMAH|05-03-2019","3211110801600002|ENGKOS|RUMAH|12-09-2017","3211113112650043|ROHANDI|RS|10-06-2022","3211114107330205|SUTIAH|RUMAH|12-07-2022"],
- 'TPU DUSUN PASIRLOA':["3211110107290029|DUDUN|RUMAH|04-07-2022","3211110107430186|MAR'I|RUMAH|05-09-2022","3211110107480098|EMAN|RUMAH|15-02-2022","3211110206370004|SUHA JUHAERI|RUMAH|06-04-2022","3207084512980004|SOPI SITI SOPIAH|RUMAH|09-09-2020","3211114707700005|MIMI|RUMAH|02-06-2022","3211114107370083|KARSAH|RUMAH|15-02-2013","3211114107500158|JUNARIAH|RUMAH|20-01-2017","3211110107400104|DARHI|RUMAH|24-07-2021","3211114107310072|ITEN|RUMAH|05-03-2017"]
-};
-function burialLegacy(){try{const x=JSON.parse(localStorage.getItem(BURIAL_LEGACY_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-function burialIso(d){const m=String(d).match(/^(\d{2})-(\d{2})-(\d{4})$/);return m?`${m[3]}-${m[2]}-${m[1]}`:''}
-function burialImportLegacy(){
-  const cur=burialLegacy(),ids=new Set(cur.map(x=>x.id));let add=0;
-  for(const [tpu,list] of Object.entries(BURIAL_LEGACY_RAW)){
-    const t=BURIAL_TPU[tpu];
-    list.forEach((line,i)=>{
-      const [nik,name,tempat,tgl]=line.split('|'),iso=burialIso(tgl),id='L|'+tpu+'|'+i+'|'+nik;
-      if(ids.has(id))return;
-      cur.push({id,legacy:true,lapor:iso,nik,name,tempat,tglMeninggal:iso,tglMakam:iso,tpu,pelapor:t.pelapor,nikPelapor:t.nik,kontak:t.kontak,ket:''});add++;
-    });
-  }
-  localStorage.setItem(BURIAL_LEGACY_KEY,JSON.stringify(cur));
-  return add;
-}
-function getBurialFormData(){const g=i=>($(i)?.value||'').trim();return{tglMakam:g('deathBurialDate'),tpu:g('deathBurialTpu'),pelapor:g('deathBurialReporter'),nikPelapor:g('deathBurialReporterNik'),kontak:g('deathBurialContact'),ket:''}}
-function burialRows(){
-  const rows=[];
-  for(const m of syncMutationRegister()){
-    if(m.jenis!=='Mati')continue;
-    const mt=m.meta||{},p=mt.pemakaman||{},tj=String(mt.tempatJenis||'').toUpperCase();
-    rows.push({id:m.id,legacy:false,lapor:mutationDateValue(m),nik:latestMutationNik(m)||m.NIK||'',name:m.name||'',tempat:tj==='RUMAH SAKIT'?'RS':(tj||'-'),tglMeninggal:mt.tanggal||'',tglMakam:p.tglMakam||mt.tanggal||'',tpu:p.tpu||'',pelapor:p.pelapor||'',nikPelapor:p.nikPelapor||'',kontak:p.kontak||'',ket:p.ket||'',_m:m});
-  }
-  return rows.concat(burialLegacy());
-}
-function burialFiltered(){
-  const from=$('burialFrom').value,to=$('burialTo').value,tpu=$('burialTpuFilter').value,q=$('burialSearch').value.toLowerCase().trim();
-  return burialRows().filter(r=>(!from||r.lapor>=from)&&(!to||r.lapor<=to)&&(!tpu||r.tpu===tpu)&&(!q||(r.nik+' '+r.name).toLowerCase().includes(q)))
-    .sort((a,b)=>a.lapor.localeCompare(b.lapor)||String(a.tglMeninggal).localeCompare(String(b.tglMeninggal)));
-}
-function burialCells(r,i){
-  const kel=r.kontak||'-',ket=r.ket||r.tpu||'-';
-  return `<td>${i+1}</td><td>${esc(r.nik||'-')}</td><td>${esc(r.name||'-')}</td><td>${esc((r.tempat||'-')+', '+(fmtDate(r.tglMeninggal)||'-'))}</td><td>${esc('TPU, '+(fmtDate(r.tglMakam)||'-'))}</td><td>${esc(r.pelapor||'-')}</td><td>${esc(r.nikPelapor||'-')}</td><td>${esc(kel)}</td><td>${esc(ket)}</td>`;
-}
-function renderBurialBook(){
-  const rows=burialFiltered();
-  $('burialBody').innerHTML=rows.map((r,i)=>`<tr>${burialCells(r,i)}<td>${esc(fmtDate(r.lapor))}</td><td><button class="btn-mini edit" data-bid="${esc(r.id)}">Ubah</button></td></tr>`).join('')||'<tr><td colspan="11" style="text-align:center;padding:14px">Tidak ada data pada filter ini</td></tr>';
-  $('burialInfo').textContent=rows.length+' data';
-}
-function burialFillTpu(sel){
-  const keep=sel.value;sel.innerHTML=(sel.id==='burialTpuFilter'?'<option value="">Semua TPU</option>':'<option value="">-- pilih --</option>')+Object.keys(BURIAL_TPU).map(k=>`<option>${esc(k)}</option>`).join('');sel.value=keep;
-}
-function burialAutoFill(prefix,tpu){
-  const t=BURIAL_TPU[tpu];if(!t)return;
-  const f=(id,v)=>{if($(id)&&!$(id).value.trim())$(id).value=v};
-  f(prefix+'Reporter',t.pelapor);f(prefix+'ReporterNik',t.nik);f(prefix+'Contact',t.kontak);
-}
-let burialEditing=null;
-function burialOpenEdit(id){
-  const r=burialRows().find(x=>x.id===id);if(!r)return;burialEditing=r;
-  $('burialEditWho').textContent=r.name+' — '+r.nik;
-  burialFillTpu($('burialEditTpu'));
-  $('burialEditDate').value=r.tglMakam||'';$('burialEditTpu').value=r.tpu||'';
-  $('burialEditReporter').value=r.pelapor||'';$('burialEditReporterNik').value=r.nikPelapor||'';
-  $('burialEditContact').value=r.kontak||'';$('burialEditNote').value=r.ket||'';
-  $('burialEditOverlay').classList.add('open');
-}
-async function burialSaveEdit(){
-  const r=burialEditing;if(!r)return;
-  const val={tglMakam:$('burialEditDate').value,tpu:$('burialEditTpu').value,pelapor:$('burialEditReporter').value.trim(),nikPelapor:$('burialEditReporterNik').value.trim(),kontak:$('burialEditContact').value.trim(),ket:$('burialEditNote').value.trim()};
-  try{
-    if(r.legacy){const a=burialLegacy(),x=a.find(z=>z.id===r.id);Object.assign(x,val);localStorage.setItem(BURIAL_LEGACY_KEY,JSON.stringify(a))}
-    else{
-      const hs=getHistory(),h=hs.find(x=>(x.at||'')===r._m.at&&String(x.NIK||'')===String(r._m.NIK||'')&&x.type==='Penduduk Meninggal');
-      if(!h)return toast('Riwayat kematian tidak ditemukan');
-      h.meta={...(h.meta||{}),pemakaman:val};
-      if(window.sb&&window.currentUser)await cloudInsertMutationHistory(h);
-      localStorage.setItem(HISTORY_KEY,JSON.stringify(hs));
-    }
-    $('burialEditOverlay').classList.remove('open');renderBurialBook();toast('Data pemakaman disimpan');
-  }catch(e){console.error(e);toast('Gagal menyimpan: '+(e.message||e))}
-}
-function printBurialBook(){
-  const rows=burialFiltered();if(!rows.length)return toast('Tidak ada data untuk dicetak');
-  const from=$('burialFrom').value,to=$('burialTo').value;
-  const per=(from||to)?`Periode Pelaporan: ${fmtDate(from)||'...'} s/d ${fmtDate(to)||'...'}`:'Semua Periode Pelaporan';
-  const groups={};rows.forEach(r=>{const k=r.tpu||'(TPU belum diisi)';(groups[k]=groups[k]||[]).push(r)});
-  const css='<style>@page{size:A4 landscape;margin:10mm}.bb table{width:100%;border-collapse:collapse;font-size:8.5pt}.bb th,.bb td{border:1px solid #000;padding:3px 4px;vertical-align:top}.bb th{background:#eee;text-align:center}.bb h1,.bb h2{text-align:center;margin:2px 0}.bb h1{font-size:13pt}.bb h2{font-size:10pt;font-weight:600}.bb .bbi{margin:8px 0;font-size:9.5pt}.bb section{page-break-after:always}.bb section:last-of-type{page-break-after:auto}</style>';
-  const body=Object.entries(groups).map(([tpu,rs])=>`<section><h1>FORMULIR BUKU POKOK PEMAKAMAN</h1><h2>${esc(per)}</h2>${mutationPrintIdentityHtml()}<div class="bbi"><div>NAMA TEMPAT PEMAKAMAN : <b>${esc(tpu)}</b></div><div>ALAMAT : ${esc(BURIAL_TPU[tpu]?.addr||'-')}</div></div><table><thead><tr><th>NO</th><th>NIK</th><th>NAMA LENGKAP</th><th>TEMPAT, TANGGAL MENINGGAL</th><th>TANGGAL PEMAKAMAN</th><th>NAMA PELAPOR</th><th>NIK PELAPOR</th><th>NAMA DAN NO HP KELUARGA YG DAPAT DIHUBUNGI</th><th>KET</th></tr><tr>${[1,2,3,4,5,6,7,8,9].map(n=>`<th>(${n})</th>`).join('')}</tr></thead><tbody>${rs.map((r,i)=>`<tr>${burialCells(r,i)}</tr>`).join('')}</tbody></table></section>`).join('');
-  openMutationPrint('Buku Pemakaman',css+`<div class="mutation-print-wrap"><div class="mutation-print-paper bb">${body}</div></div>`);
-}
-$('btnBurialBook').addEventListener('click',async()=>{
-  if(!hasPerm('mutation_register'))return toast('Anda tidak memiliki hak akses Buku Pemakaman');
-  closeMenu();await syncCloudHistory();
-  burialFillTpu($('burialTpuFilter'));
-  if(!$('burialFrom').value&&!$('burialTo').value){const mk=monthKeyNow();$('burialFrom').value=mk+'-01';$('burialTo').value=mk+'-31'}
-  renderBurialBook();$('burialBookOverlay').classList.add('open');
-});
-['burialFrom','burialTo','burialTpuFilter'].forEach(id=>$(id).addEventListener('change',renderBurialBook));
-$('burialSearch').addEventListener('input',renderBurialBook);
-$('btnBurialRefresh').addEventListener('click',async()=>{await syncCloudHistory();renderBurialBook()});
-$('btnBurialPrint').addEventListener('click',printBurialBook);
-$('btnBurialImport').addEventListener('click',()=>{const n=burialImportLegacy();$('burialFrom').value='';$('burialTo').value='';renderBurialBook();toast(n?n+' data buku lama diimpor':'Data buku lama sudah pernah diimpor')});
-$('burialBody').addEventListener('click',e=>{const b=e.target.closest('[data-bid]');if(b)burialOpenEdit(b.dataset.bid)});
-$('btnBurialEditSave').addEventListener('click',burialSaveEdit);
-$('burialEditTpu').addEventListener('change',e=>{
-  const t=BURIAL_TPU[e.target.value];if(!t)return;
-  const set=(id,v)=>{if(!$(id).value.trim())$(id).value=v};set('burialEditReporter',t.pelapor);set('burialEditReporterNik',t.nik);set('burialEditContact',t.kontak);
-});
-burialFillTpu($('deathBurialTpu'));
-$('deathBurialTpu').addEventListener('change',e=>burialAutoFill('deathBurial',e.target.value));
-$('deathDate')?.addEventListener('change',e=>{if(!$('deathBurialDate').value)$('deathBurialDate').value=e.target.value});
-
 })();
 
 </script>
@@ -6684,5 +6581,110 @@ $('deathDate')?.addEventListener('change',e=>{if(!$('deathBurialDate').value)$('
   function run(){document.querySelectorAll('input[type="password"]').forEach(enhance)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
 })();
+
+/* ===== Buku Pemakaman (Lampiran I & II Surat Dirjen Dukcapil 472.12/11406/Dukcapil) ===== */
+const BURIAL_KEY='bukuPemakaman_v1',BURIAL_CFG_KEY='bukuPemakamanCfg_v1';
+const BURIAL_MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+let burialEditId='';
+function burialLoad(){try{const x=JSON.parse(localStorage.getItem(BURIAL_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+function burialSave(v){localStorage.setItem(BURIAL_KEY,JSON.stringify(v))}
+function burialCfg(){const d={nama:'',alamat:'',petugasPemakaman:'',petugasRegistrasi:''};try{return Object.assign(d,JSON.parse(localStorage.getItem(BURIAL_CFG_KEY)||'{}'))}catch(e){return d}}
+function burialCfgRead(){const c={nama:$('bkCfgNama').value.trim(),alamat:$('bkCfgAlamat').value.trim(),petugasPemakaman:$('bkCfgPemakaman').value.trim(),petugasRegistrasi:$('bkCfgRegistrasi').value.trim()};localStorage.setItem(BURIAL_CFG_KEY,JSON.stringify(c));return c}
+function burialVillage(){return String((desaSettings||{}).village||'').replace(/^desa\s+/i,'').trim()}
+function burialMonthLabel(ym){const m=String(ym||'').match(/^(\d{4})-(\d{2})/);return m?BURIAL_MONTHS[+m[2]-1]+' '+m[1]:''}
+function burialPlaceDate(place,date){const d=date?fmtDateIndo(date):'';return [place,d].filter(Boolean).join(', ')}
+function burialRows(){
+  const ym=$('bkMonth').value,q=$('bkSearch').value.trim().toLowerCase();
+  return burialLoad().filter(x=>{
+    if(ym&&String(x.tglMeninggal||'').slice(0,7)!==ym)return false;
+    if(q&&![x.nik,x.nama,x.pelapor,x.nikPelapor,x.keluarga].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>String(a.tglMeninggal||'').localeCompare(String(b.tglMeninggal||''))||String(a.nama||'').localeCompare(String(b.nama||'')));
+}
+function burialFamily(x){return [x.keluarga,x.hp].filter(Boolean).join(' / ')}
+function renderBurial(){
+  const rows=burialRows(),body=$('bkBody');
+  body.innerHTML=rows.length?rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${esc(x.nik||'-')}</td><td><b>${esc(x.nama||'-')}</b></td><td style="white-space:normal">${esc(burialPlaceDate(x.tempatLahir,x.tglLahir)||'-')}</td><td style="white-space:normal">${esc(burialPlaceDate(x.tempatMeninggal,x.tglMeninggal)||'-')}</td><td>${esc(x.tglMakam?fmtDateIndo(x.tglMakam):'-')}</td><td>${esc(x.pelapor||'-')}</td><td>${esc(x.nikPelapor||'-')}</td><td style="white-space:normal">${esc(burialFamily(x)||'-')}</td><td style="white-space:normal">${esc(x.ket||'')}</td><td><button class="btn-mini" data-bk-edit="${esc(x.id)}">✎ Edit</button> <button class="btn-mini" data-bk-del="${esc(x.id)}">🗑 Hapus</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Belum ada data pemakaman. Gunakan “Ambil dari Penduduk Meninggal” atau “Tambah Manual”.</td></tr>';
+  $('bkInfo').textContent=rows.length+' data pemakaman';
+  body.querySelectorAll('[data-bk-edit]').forEach(b=>b.addEventListener('click',()=>burialOpenForm(b.dataset.bkEdit)));
+  body.querySelectorAll('[data-bk-del]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('Hapus data pemakaman ini dari buku?'))return;burialSave(burialLoad().filter(x=>x.id!==b.dataset.bkDel));renderBurial();toast('Data pemakaman dihapus')}));
+}
+const BURIAL_FIELDS={nik:'bkNik',nama:'bkNama',tempatLahir:'bkTempatLahir',tglLahir:'bkTglLahir',tempatMeninggal:'bkTempatMeninggal',tglMeninggal:'bkTglMeninggal',tglMakam:'bkTglMakam',pelapor:'bkPelapor',nikPelapor:'bkNikPelapor',keluarga:'bkKeluarga',hp:'bkHp',ket:'bkKet'};
+function burialOpenForm(id){
+  burialEditId=id||'';
+  const x=id?burialLoad().find(r=>r.id===id)||{}:{};
+  Object.entries(BURIAL_FIELDS).forEach(([k,el])=>{$(el).value=x[k]||''});
+  if(!id&&!$('bkTempatMeninggal').value)$('bkTempatMeninggal').value=burialVillage();
+  $('bkFormTitle').textContent=id?'Edit Data Pemakaman':'Tambah Data Pemakaman';
+  $('bkFormBox').style.display='block';$('bkNik').focus();
+}
+function burialCloseForm(){burialEditId='';$('bkFormBox').style.display='none'}
+function burialFind(){
+  const nik=$('bkNik').value.trim();if(!nik){toast('Masukkan NIK terlebih dahulu');return}
+  const r=deathFindPerson(nik);if(!r){toast('NIK tidak ditemukan di database. Data dapat diketik manual.');return}
+  if(!$('bkNama').value.trim())$('bkNama').value=r['NAMA LENGKAP']||'';
+  if(!$('bkTempatLahir').value.trim())$('bkTempatLahir').value=r.TMPT_LHR||'';
+  if(!$('bkTglLahir').value)$('bkTglLahir').value=/^\d{4}-\d{2}-\d{2}/.test(String(r.TGL_LHR||''))?String(r.TGL_LHR).slice(0,10):'';
+  const h=getDeathHistory().find(x=>String(x.NIK||'').trim()===nik);
+  if(h&&h.meta){if(!$('bkTglMeninggal').value)$('bkTglMeninggal').value=h.meta.tanggal||'';}
+}
+function burialSaveForm(){
+  const rec={};Object.entries(BURIAL_FIELDS).forEach(([k,el])=>{rec[k]=$(el).value.trim()});
+  if(!rec.nama){toast('Nama lengkap wajib diisi');return}
+  if(!rec.tglMeninggal){toast('Tanggal meninggal wajib diisi');return}
+  const list=burialLoad();
+  if(burialEditId){const i=list.findIndex(r=>r.id===burialEditId);if(i>=0)list[i]=Object.assign({},list[i],rec)}
+  else list.push(Object.assign({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()),historyId:''},rec));
+  burialSave(list);burialCloseForm();renderBurial();toast('Data pemakaman disimpan');
+}
+async function burialImport(){
+  try{await syncCloudHistory()}catch(e){}
+  const list=burialLoad(),have=new Set(list.map(x=>x.historyId).filter(Boolean)),haveNik=new Set(list.map(x=>String(x.nik||'').trim()).filter(Boolean));
+  let added=0;
+  getDeathHistory().forEach(h=>{
+    const nik=String(h.NIK||'').trim();
+    if(have.has(String(h.id))||(nik&&haveNik.has(nik)))return;
+    const m=h.meta||{},r=deathFindPerson(nik)||{};
+    list.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()),historyId:String(h.id||''),nik,nama:h.name||r['NAMA LENGKAP']||'',tempatLahir:m.tempatLahir||r.TMPT_LHR||'',tglLahir:m.tanggalLahir||(/^\d{4}-\d{2}-\d{2}/.test(String(r.TGL_LHR||''))?String(r.TGL_LHR).slice(0,10):''),tempatMeninggal:m.tempat||burialVillage()||m.tempatJenis||'',tglMeninggal:m.tanggal||'',tglMakam:m.tanggal||'',pelapor:'',nikPelapor:'',keluarga:'',hp:'',ket:''});
+    added++;
+  });
+  if(added)burialSave(list);
+  renderBurial();toast(added?added+' data meninggal ditambahkan ke buku. Lengkapi data pelapor dan pemakaman.':'Tidak ada data meninggal baru untuk diambil');
+}
+function burialPrintCss(){return '@page{size:A4 landscape;margin:12mm}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:10pt}.bk-ref{font-size:8.5pt;line-height:1.35;margin-bottom:6mm}.bk-ref td{padding:0 2px;vertical-align:top}.bk-title{text-align:center;font-weight:700;font-size:13pt;margin:0 0 5mm}.bk-meta{border-collapse:collapse;margin-bottom:4mm}.bk-meta td{padding:1px 4px;font-weight:700;vertical-align:top}.bk-table{width:100%;border-collapse:collapse;table-layout:fixed}.bk-table th,.bk-table td{border:1px solid #000;padding:2mm 1.5mm;vertical-align:top;word-wrap:break-word;overflow-wrap:anywhere}.bk-table th{text-align:center;font-weight:700;font-size:9pt}.bk-table .nr td{text-align:center;font-size:8.5pt;padding:1mm}.bk-table td{height:9mm;font-size:9pt}.bk-table td.c{text-align:center}.bk-table thead{display:table-header-group}.bk-table tr{page-break-inside:avoid}.bk-sign{display:flex;justify-content:space-between;margin-top:8mm;page-break-inside:avoid}.bk-sign>div{width:75mm;text-align:center;line-height:1.35}.bk-sign .sp{height:20mm}.bk-sign .nm{font-weight:700}'}
+function burialRefBlock(lamp){return '<table class="bk-ref"><tr><td>Lampiran '+lamp+'</td><td>:</td><td>Surat Direktur Jenderal Kependudukan dan Pencatatan Sipil</td></tr><tr><td></td><td>:</td><td>Nomor : 472.12/11406/Dukcapil</td></tr><tr><td></td><td></td><td>Tanggal : 30 Agustus 2021</td></tr></table>'}
+function burialPadRows(rows,cols,min){const out=rows.slice();while(out.length<min)out.push(null);return out}
+function burialSignMonth(){const ym=$('bkMonth').value||wibISODate(new Date()).slice(0,7);return burialMonthLabel(ym)}
+function printBurialMain(){
+  const rows=burialRows();if(!rows.length){toast('Tidak ada data pemakaman untuk dicetak');return}
+  const c=burialCfgRead(),vill=burialVillage();
+  const th='<tr><th style="width:9mm">NO</th><th style="width:38mm">NIK</th><th style="width:42mm">NAMA LENGKAP</th><th style="width:44mm">TEMPAT TANGGAL MENINGGAL</th><th style="width:28mm">TANGGAL PEMAKAMAN</th><th style="width:36mm">NAMA PELAPOR</th><th style="width:38mm">NIK PELAPOR</th><th>NAMA DAN NO HP KELUARGA YG DAPAT DIHUBUNGI</th><th style="width:22mm">KET</th></tr><tr class="nr">'+[1,2,3,4,5,6,7,8,9].map(n=>'<td>('+n+')</td>').join('')+'</tr>';
+  const body=burialPadRows(rows,9,10).map((x,i)=>x?`<tr><td class="c">${i+1}</td><td>${esc(x.nik)}</td><td>${esc(x.nama)}</td><td>${esc(burialPlaceDate(x.tempatMeninggal,x.tglMeninggal))}</td><td class="c">${esc(x.tglMakam?fmtDateIndo(x.tglMakam):'')}</td><td>${esc(x.pelapor)}</td><td>${esc(x.nikPelapor)}</td><td>${esc(burialFamily(x))}</td><td>${esc(x.ket)}</td></tr>`:'<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('');
+  const html=`<div>${burialRefBlock('I')}<div class="bk-title">FORMULIR BUKU POKOK PEMAKAMAN</div><table class="bk-meta"><tr><td>NAMA TEMPAT PEMAKAMAN</td><td>:</td><td>${esc(c.nama)}</td></tr><tr><td>ALAMAT</td><td>:</td><td>${esc(c.alamat)}</td></tr></table><table class="bk-table"><thead>${th}</thead><tbody>${body}</tbody></table><div class="bk-sign"><div></div><div>${esc(vill)}, ${esc(burialSignMonth())}<br>Petugas Pemakaman,<div class="sp"></div><div class="nm">${esc(c.petugasPemakaman||'............................................')}</div></div></div></div>`;
+  printSupportDocument('Buku Pokok Pemakaman - '+safePrintName(burialSignMonth()),html,burialPrintCss());
+}
+function printBurialReport(){
+  const rows=burialRows();if(!rows.length){toast('Tidak ada data pemakaman untuk dicetak');return}
+  const c=burialCfgRead(),ds=desaSettings||{},vill=burialVillage(),bulan=burialSignMonth();
+  const th='<tr><th style="width:9mm">NO</th><th style="width:38mm">NIK</th><th style="width:44mm">NAMA LENGKAP</th><th style="width:44mm">TEMPAT TANGGAL LAHIR</th><th style="width:44mm">TEMPAT TANGGAL MENINGGAL</th><th style="width:38mm">NAMA PELAPOR</th><th style="width:38mm">NIK PELAPOR</th><th>NAMA DAN NO HP KELUARGA YG DAPAT DIHUBUNGI</th></tr><tr class="nr">'+[1,2,3,4,5,6,7,8].map(n=>'<td>('+n+')</td>').join('')+'</tr>';
+  const body=burialPadRows(rows,8,10).map((x,i)=>x?`<tr><td class="c">${i+1}</td><td>${esc(x.nik)}</td><td>${esc(x.nama)}</td><td>${esc(burialPlaceDate(x.tempatLahir,x.tglLahir))}</td><td>${esc(burialPlaceDate(x.tempatMeninggal,x.tglMeninggal))}</td><td>${esc(x.pelapor)}</td><td>${esc(x.nikPelapor)}</td><td>${esc(burialFamily(x))}</td></tr>`:'<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('');
+  const html=`<div>${burialRefBlock('II')}<div class="bk-title">FORMULIR PELAPORAN KEMATIAN DI DESA/KELURAHAN</div><table class="bk-meta"><tr><td>DESA/KELURAHAN</td><td>:</td><td>${esc(vill.toUpperCase())}</td></tr><tr><td>KECAMATAN</td><td>:</td><td>${esc(String(ds.district||'').toUpperCase())}</td></tr><tr><td>KABUPATEN/KOTA</td><td>:</td><td>${esc(String(ds.regency||'').replace(/^kabupaten\s+/i,'').toUpperCase())}</td></tr><tr><td>BULAN</td><td>:</td><td>${esc(bulan.toUpperCase())}</td></tr></table><table class="bk-table"><thead>${th}</thead><tbody>${body}</tbody></table><div class="bk-sign"><div>Mengetahui,<br>Kepala Desa ${esc(vill)}<div class="sp"></div><div class="nm">${esc(String(ds.head||'............................................').toUpperCase())}</div></div><div>${esc(vill)}, ${esc(bulan)}<br>Petugas Registrasi,<div class="sp"></div><div class="nm">${esc(c.petugasRegistrasi||'............................................')}</div></div></div></div>`;
+  printSupportDocument('Pelaporan Kematian - '+safePrintName(bulan),html,burialPrintCss());
+}
+$('btnBurialBook')?.addEventListener('click',()=>{
+  if(!hasPerm('burial_book'))return toast('Anda tidak memiliki hak akses Buku Pemakaman');
+  closeMenu();const c=burialCfg();
+  $('bkCfgNama').value=c.nama;$('bkCfgAlamat').value=c.alamat;$('bkCfgPemakaman').value=c.petugasPemakaman;$('bkCfgRegistrasi').value=c.petugasRegistrasi;
+  burialCloseForm();renderBurial();$('burialOverlay').classList.add('open');
+});
+['bkMonth','bkSearch'].forEach(id=>$(id)?.addEventListener('input',renderBurial));
+['bkCfgNama','bkCfgAlamat','bkCfgPemakaman','bkCfgRegistrasi'].forEach(id=>$(id)?.addEventListener('change',burialCfgRead));
+$('btnBkAdd')?.addEventListener('click',()=>burialOpenForm(''));
+$('btnBkCancel')?.addEventListener('click',burialCloseForm);
+$('btnBkSave')?.addEventListener('click',burialSaveForm);
+$('btnBkFind')?.addEventListener('click',burialFind);
+$('btnBkImport')?.addEventListener('click',burialImport);
+$('btnBkPrintPokok')?.addEventListener('click',printBurialMain);
+$('btnBkPrintLapor')?.addEventListener('click',printBurialReport);
 </script>
 </body></html>
