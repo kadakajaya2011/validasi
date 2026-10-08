@@ -1853,6 +1853,12 @@ function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
 document.querySelectorAll('.menu-group-title').forEach(title=>{title.addEventListener('click',e=>{e.stopPropagation();const group=title.closest('.menu-group');const willOpen=!group.classList.contains('open');document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')});if(willOpen){group.classList.add('open');title.setAttribute('aria-expanded','true')}})});
+
+// Tutup submenu/panel menu setelah item submenu dipilih.
+document.querySelectorAll('.menu-group .menu-item').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')}); closeMenu(); }); });
+
+// Item Menu Akun juga selalu menutup panel utama.
+document.querySelectorAll('[data-menu="akun"], #btnAccount, #btnAkun').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')}); closeMenu(); }); });
 btnMenu.addEventListener('click',e=>{e.stopPropagation();menuPanel.classList.contains('open')?closeMenu():openMenu()});document.addEventListener('click',e=>{if(!menuWrap.contains(e.target))closeMenu()});window.addEventListener('resize',()=>{if(menuPanel.classList.contains('open'))positionMenu()});window.addEventListener('scroll',()=>{if(menuPanel.classList.contains('open'))closeMenu()},true);
 $('btnImport').addEventListener('click',()=>{if(!hasPerm('import_data'))return toast('Anda tidak memiliki hak akses Impor');closeMenu();pendingImport=null;$('importFile').value='';$('importPreview').textContent='';$('importOverlay').classList.add('open')});
 $('btnBirthApplicationMenu')?.addEventListener('click',()=>openBirthApplicationMenu());
