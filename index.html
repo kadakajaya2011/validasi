@@ -6689,4 +6689,53 @@ $('btnBkPrintLapor')?.addEventListener('click',printBurialReport);
 })();
 
 </script>
+
+<style id="sessionTimeoutEnhancement">
+.menu-item,.menu-group-title{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;transition:background .14s ease,transform .08s ease}
+.menu-item:active,.menu-group-title:active,.menu-item.is-pressed,.menu-group-title.is-pressed{transform:scale(.985)}
+.menu-item.is-pressed,.menu-group-title.is-pressed{background:#e8eef6}
+.menu-item::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:rgba(29,75,125,.15);transform:translate(-50%,-50%) scale(0);pointer-events:none}
+.menu-item.is-ripple::after{animation:menuRipple .32s ease-out}
+@keyframes menuRipple{from{transform:translate(-50%,-50%) scale(0);opacity:.7}to{transform:translate(-50%,-50%) scale(18);opacity:0}}
+.session-timeout-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(8,20,38,.62);backdrop-filter:blur(2px)}
+.session-timeout-overlay.open{display:flex}
+.session-timeout-box{width:min(430px,94vw);background:#fff;border:1px solid #d9e1ea;border-radius:16px;box-shadow:0 24px 70px rgba(6,15,30,.35);padding:22px;text-align:center;animation:sessionIn .18s ease-out}
+.session-timeout-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:#fff4df;color:#9a6813;font-size:23px;font-weight:800}
+.session-timeout-title{color:var(--navy);font-size:18px;font-weight:800;margin-bottom:6px}
+.session-timeout-text{color:var(--muted);font-size:13px;line-height:1.55;margin-bottom:14px}
+.session-timeout-count{display:inline-block;min-width:42px;padding:6px 10px;border-radius:8px;background:#f3f6fa;color:var(--navy);font-size:18px;font-weight:800;margin-bottom:14px}
+.session-timeout-actions{display:flex;justify-content:center;gap:8px}
+@keyframes sessionIn{from{opacity:0;transform:translateY(7px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:560px){.session-timeout-box{padding:18px}.session-timeout-actions{flex-direction:column}.session-timeout-actions .btn{width:100%}}
+</style>
+<div id="sessionTimeoutOverlay" class="session-timeout-overlay" aria-hidden="true">
+<div class="session-timeout-box" role="dialog" aria-modal="true" aria-labelledby="sessionTimeoutTitle">
+<div class="session-timeout-icon">⏱</div><div id="sessionTimeoutTitle" class="session-timeout-title">Sesi akan berakhir</div>
+<div class="session-timeout-text">Tidak ada aktivitas selama beberapa waktu. Untuk keamanan, Anda akan otomatis keluar.</div>
+<div id="sessionTimeoutCount" class="session-timeout-count">60</div>
+<div class="session-timeout-actions"><button type="button" class="btn btn-primary" id="btnKeepSession">Tetap Masuk</button><button type="button" class="btn" id="btnTimeoutLogout">Keluar</button></div>
+</div></div>
+<script id="sessionTimeoutEnhancement">
+(function(){
+'use strict';
+var IDLE_MS=30*60*1000,WARNING_MS=60*1000,idleTimer=null,warningTimer=null,countdownTimer=null,lastActivity=0,throttleAt=0,busy=false;
+function $(id){return document.getElementById(id)}
+function loggedIn(){return !!(window.currentUser||window.currentProfile)}
+function warningOpen(){return $('sessionTimeoutOverlay')?.classList.contains('open')}
+function hideWarning(){var o=$('sessionTimeoutOverlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true')}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}}
+function schedule(){clearTimeout(idleTimer);clearTimeout(warningTimer);if(!loggedIn()||busy)return;idleTimer=setTimeout(showWarning,Math.max(1000,IDLE_MS-WARNING_MS));warningTimer=setTimeout(function(){if(!warningOpen())showWarning()},IDLE_MS)}
+function activity(force){if(!loggedIn()||busy)return;var now=Date.now();if(!force&&now-throttleAt<1000)return;throttleAt=now;lastActivity=now;if(warningOpen())hideWarning();schedule()}
+function showWarning(){if(!loggedIn()||busy)return;var o=$('sessionTimeoutOverlay'),c=$('sessionTimeoutCount');if(!o)return;o.classList.add('open');o.setAttribute('aria-hidden','false');var n=60;if(c)c.textContent=n;if(countdownTimer)clearInterval(countdownTimer);countdownTimer=setInterval(function(){n--;if(c)c.textContent=Math.max(0,n);if(n<=0){clearInterval(countdownTimer);countdownTimer=null;logout('Sesi berakhir karena tidak ada aktivitas.')}},1000)}
+async function logout(msg){if(busy)return;busy=true;hideWarning();clearTimeout(idleTimer);clearTimeout(warningTimer);try{if(window.sb?.auth?.signOut)await window.sb.auth.signOut()}catch(e){console.warn('Logout timeout:',e)}busy=false;if(typeof window.toast==='function')window.toast(msg||'Anda telah keluar dari aplikasi.')}
+['click','keydown','touchstart','pointerdown','scroll'].forEach(function(type){document.addEventListener(type,function(){activity(false)},{passive:true})});
+document.addEventListener('click',function(e){if(e.target.closest('#btnKeepSession')){e.preventDefault();e.stopPropagation();activity(true);return}if(e.target.closest('#btnTimeoutLogout')){e.preventDefault();e.stopPropagation();logout('Anda telah keluar dari aplikasi.');return}});
+function bindAuth(){if(!window.sb?.auth?.onAuthStateChange)return;window.sb.auth.onAuthStateChange(function(_event,session){if(session){window.currentUser=session.user;activity(true)}else{hideWarning();clearTimeout(idleTimer);clearTimeout(warningTimer);lastActivity=0}});if(loggedIn())activity(true)}
+var tries=0,boot=setInterval(function(){tries++;if(window.sb?.auth){clearInterval(boot);bindAuth()}else if(tries>100)clearInterval(boot)},100);
+document.addEventListener('pointerdown',function(e){var item=e.target.closest('.menu-item,.menu-group-title');if(item)item.classList.add('is-pressed')},{passive:true});
+document.addEventListener('pointerup',function(e){var item=e.target.closest('.menu-item,.menu-group-title');if(item)item.classList.remove('is-pressed')},{passive:true});
+document.addEventListener('click',function(e){var item=e.target.closest('.menu-item,.menu-group-title');if(!item)return;item.classList.remove('is-pressed','is-ripple');if(item.classList.contains('menu-item')){void item.offsetWidth;item.classList.add('is-ripple');setTimeout(function(){document.querySelectorAll('.menu-panel.open').forEach(function(panel){panel.classList.remove('open');var wrap=panel.closest('.menu-wrap');var button=wrap?.querySelector('[aria-expanded="true"]');if(button)button.setAttribute('aria-expanded','false')})},70);setTimeout(function(){item.classList.remove('is-ripple')},350)}},false);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&loggedIn()){if(lastActivity&&Date.now()-lastActivity>=IDLE_MS-WARNING_MS)showWarning();else schedule()}});
+})();
+</script>
+
 </body></html>
