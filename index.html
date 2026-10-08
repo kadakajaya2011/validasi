@@ -1853,6 +1853,13 @@ function positionMenu(){const r=btnMenu.getBoundingClientRect();menuPanel.style.
 function openMenu(){positionMenu();menuPanel.classList.add('open');btnMenu.setAttribute('aria-expanded','true')}
 function closeMenu(){menuPanel.classList.remove('open');btnMenu.setAttribute('aria-expanded','false')}
 document.querySelectorAll('.menu-group-title').forEach(title=>{title.addEventListener('click',e=>{e.stopPropagation();const group=title.closest('.menu-group');const willOpen=!group.classList.contains('open');document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')});if(willOpen){group.classList.add('open');title.setAttribute('aria-expanded','true')}})});
+// Pastikan hanya satu submenu yang terbuka pada satu waktu.
+document.querySelectorAll('.menu-group-title').forEach(title=>{title.addEventListener('click',()=>{
+  const current=title.closest('.menu-group');
+  document.querySelectorAll('.menu-group').forEach(g=>{
+    if(g!==current){g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false');}
+  });
+});});
 
 // Tutup submenu/panel menu setelah item submenu dipilih.
 document.querySelectorAll('.menu-group .menu-item').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.menu-group').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.menu-group-title');if(t)t.setAttribute('aria-expanded','false')}); closeMenu(); }); });
